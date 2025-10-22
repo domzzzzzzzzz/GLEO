@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${event.name} + ' - Cart'">Cart</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+  <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <a th:href="@{|/e/${event.code}|}" class="btn btn-muted">&larr; Continue browsing</a>
+      <h2 style="margin-top:16px;" th:text="${event.name} + ' - Cart'">Event Cart</h2>
+      <p class="muted" th:text="'QR required: ' + (${cartSummary.groups.isEmpty()} ? 'No' : 'Ready when placing order')">Info</p>
+    </div>
+    <div class="policies-chip">
+      <span>Cart mode:</span>
+      <strong th:text="${isMultiVendor} ? 'Multi-vendor' : 'Single vendor'">Mode</strong>
+    </div>
+  </div>
+
+  <div class="split-layout">
+    <section class="panel" style="min-height:320px;">
+      <h3>Order Overview</h3>
+      <div th:if="${cartSummary.groups.isEmpty()}" class="empty-state">
+        <h4 style="margin:0 0 8px;">No items yet</h4>
+        <p class="muted" style="margin:0;">Browse vendors and add dishes to start an order.</p>
+      </div>
+
+      <div th:if="${!cartSummary.groups.isEmpty()}" class="cart-groups">
+        <div class="cart-vendor" th:each="group : ${cartSummary.groups}">
+          <div class="cart-vendor-header">
+            <div>
+              <div style="font-weight:600;" th:text="${group.vendorName}">Vendor</div>
+              <span class="muted" th:text="${group.lines.size()} + ' item(s)'">items</span>
+            </div>
+            <form th:action="@{|/e/${event.code}/cart/remove-group|}" method="post" class="inline-form">
+              <input type="hidden" name="vendorId" th:value="${group.vendorId}"/>
+              <button class="btn btn-muted" type="submit">Remove</button>
+            </form>
+          </div>
+          <div class="cart-lines">
+            <div class="cart-line" th:each="line : ${group.lines}">
+              <div>
+                <strong th:text="${line.itemName}">Item</strong>
+                <span class="muted" th:text="'x ' + ${line.qty}">x1</span>
+              </div>
+              <span th:text="${#numbers.formatDecimal(line.subtotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
+            </div>
+          </div>
+          <div class="cart-total">
+            <span>Vendor total</span>
+            <span th:text="${#numbers.formatDecimal(group.total, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div th:if="${!cartSummary.groups.isEmpty()}" class="cart-total" style="margin-top:24px;">
+        <span>Order total</span>
+        <span th:text="${#numbers.formatDecimal(cartSummary.grandTotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h3>Confirm &amp; Pay</h3>
+      <p class="muted">Review your order and place it when ready. Ticket QR codes are no longer required.</p>
+
+      <form th:if="${!cartSummary.groups.isEmpty()}" th:action="@{|/e/${event.code}/checkout|}" method="post" class="qr-tools" id="cart-page-checkout">
+        <div class="card-actions" style="margin:0;">
+          <button class="btn btn-primary" type="submit">Place Order</button>
+        </div>
+        <div class="muted" style="margin-top:12px;">
+          Orders are submitted as walk-ins unless a ticket was previously linked to this device.
+        </div>
+      </form>
+
+      <div th:if="${cartSummary.groups.isEmpty()}" class="empty-state" style="margin-top:12px;">
+        <p class="muted" style="margin:0;">Add items first to unlock checkout.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.setupCartPanel) {
+      window.setupCartPanel();
+    }
+  });
+</script>
+</body>
+</html>

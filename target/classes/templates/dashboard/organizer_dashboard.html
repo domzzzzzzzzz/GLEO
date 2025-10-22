@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Organizer Control · GLEO</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 th:text="'Welcome, ' + (${user != null ? user.username : 'Organizer'})">Welcome, organizer</h2>
+      <p class="muted">Manage your event, onboard vendors, and keep ticket data up to date.</p>
+    </div>
+    <div class="card" style="padding:12px 18px;">
+      <div class="muted">Quick actions</div>
+      <div class="card-actions" style="margin-top:10px;">
+        <a th:if="${event != null}" th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-outline">Event policies</a>
+        <a href="/logout" class="btn btn-muted">Sign out</a>
+      </div>
+    </div>
+  </div>
+
+  <div th:if="${toastMessage}" class="toast toast-success" th:text="${toastMessage}">Saved</div>
+  <div th:if="${toastError}" class="toast toast-error" th:text="${toastError}">Error</div>
+
+  <section class="split-layout" th:if="${event != null}">
+    <div class="panel">
+      <h3 th:text="'Event · ' + ${event.name}">Your event</h3>
+      <p class="muted" th:text="'Code: ' + ${event.code}">Event code</p>
+
+      <div class="policy-grid" th:if="${tierPolicies != null}">
+        <div class="tier-card" th:each="policy : ${tierPolicies}">
+          <h4 th:text="${policy.tierCode} + ' tier'">Tier</h4>
+          <p class="muted"
+             th:text="${policy.unlimited} ? 'Full vendor access' : 'Limited to ' + ${policy.maxItemsPerVendor} + ' item(s) per vendor'">
+            Tier info
+          </p>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <a th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-primary">Adjust policies</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Onboard vendors</h3>
+      <form th:action="@{|/organizer/events/${event.code}/vendors|}" method="post"
+            style="display:flex;flex-direction:column;gap:12px;">
+        <input class="qty-input" type="text" name="name" placeholder="Vendor name" required>
+        <input class="qty-input" type="text" name="pin" placeholder="Optional pickup PIN">
+        <button class="btn btn-primary" type="submit">Add vendor</button>
+      </form>
+
+      <h3 style="margin-top:28px;">Import tickets</h3>
+      <form th:action="@{|/organizer/events/${event.code}/tickets/upload|}" method="post"
+            enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:12px;">
+        <input type="file" name="file" accept=".csv" required>
+        <button class="btn btn-outline" type="submit">Upload CSV</button>
+      </form>
+      <p class="muted" style="margin-top:8px; font-size:0.85rem;">Format: QR,TIER(VIP|REG),Holder name,Phone[,Serial]</p>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top:24px;" th:if="${vendors != null}">
+    <h3>Active vendors</h3>
+    <p class="muted" th:if="${vendors.isEmpty()}">No vendors registered yet.</p>
+    <div class="cart-groups" th:if="${!vendors.isEmpty()}">
+      <div class="cart-vendor" th:each="vendor : ${vendors}">
+        <div class="cart-vendor-header">
+          <div>
+            <div style="font-weight:600;" th:text="${vendor.name}">Vendor</div>
+            <span class="muted" th:text="${vendor.active} ? 'Active' : 'Inactive'">Active</span>
+          </div>
+        </div>
+        <p class="muted" th:text="${vendor.pinPlain} != null ? 'PIN: ' + ${vendor.pinPlain} : 'No PIN set'">PIN</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top:24px;" th:if="${orders != null}">
+    <h3>Order flow</h3>
+    <p class="muted" th:if="${orders.isEmpty()}">No orders received yet.</p>
+    <div class="policy-grid" th:if="${statusSummary != null}">
+      <div class="tier-card" th:each="entry : ${statusSummary}">
+        <h4 th:text="${entry.key}">Status</h4>
+        <p class="muted" th:text="${entry.value} + ' order(s)'">Count</p>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

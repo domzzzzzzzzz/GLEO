@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard · GLEO</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/tailwind.css}">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>Welcome, <span th:text="${user != null ? user.username : 'Admin'}">Admin</span></h2>
+      <p class="muted">Manage global policies, create events, and oversee operations.</p>
+    </div>
+    <div class="card" style="padding:12px 18px;">
+      <div class="muted">Quick links</div>
+      <div class="card-actions" style="margin-top:10px;">
+        <a href="/logout" class="btn btn-muted">Sign out</a>
+      </div>
+    </div>
+  </div>
+
+  <div th:if="${toastMessage}" class="toast toast-success" th:text="${toastMessage}">Saved</div>
+  <div th:if="${toastError}" class="toast toast-error" th:text="${toastError}">Error</div>
+
+  <section class="split-layout">
+    <div class="panel">
+      <h3>Create a new event</h3>
+      <form action="/admin/events" method="post" style="display:flex;flex-direction:column;gap:12px;">
+        <input class="qty-input" type="text" name="code" placeholder="Event code (e.g. G2026)" required>
+        <input class="qty-input" type="text" name="name" placeholder="Event name" required>
+        <label class="muted" style="font-size:0.85rem;">Start time (ISO format: 2025-10-20T18:00)</label>
+        <input class="qty-input" type="text" name="startAt" placeholder="Optional start (ISO)">
+        <label class="muted" style="font-size:0.85rem;">End time (ISO format: 2025-10-20T23:00)</label>
+        <input class="qty-input" type="text" name="endAt" placeholder="Optional end (ISO)">
+        <button class="btn btn-primary" type="submit">Create event</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h3>Existing events</h3>
+      <p class="muted" th:if="${events == null || events.isEmpty()}">No events yet.</p>
+      <div class="cart-groups" th:if="${events != null && !events.isEmpty()}">
+        <div class="cart-vendor" th:each="event : ${events}">
+          <div class="cart-vendor-header">
+            <div>
+              <div style="font-weight:600;" th:text="${event.name}">Event</div>
+              <span class="muted" th:text="'Code: ' + ${event.code}">Code</span>
+            </div>
+            <a th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-outline">Policies</a>
+          </div>
+          <p class="muted" th:text="'Running from ' + ${event.startAt} + ' to ' + ${event.endAt}">Dates</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

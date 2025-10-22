@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <div th:fragment="success">
+    <div class="toast toast-success" th:text="${message} ?: 'Action completed successfully.'"></div>
+  </div>
+  <div th:fragment="error">
+    <div class="toast toast-error" th:text="${message} ?: 'Something went wrong.'"></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sign in · GLEO Control Center</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+</head>
+<body>
+<div class="page" style="max-width:420px;">
+  <div class="card" style="text-align:center;">
+    <h2 style="margin-top:0;">GLEO Control Center</h2>
+    <p class="muted">Sign in to manage events, vendors, or on-site operations.</p>
+
+    <form method="post" action="/login" style="display:flex;flex-direction:column;gap:16px;margin-top:22px;">
+      <input class="qty-input" style="width:100%;" type="text" name="username" placeholder="Username" required/>
+      <input class="qty-input" style="width:100%;" type="password" name="password" placeholder="Password" required/>
+      <button class="btn btn-primary" type="submit" style="width:100%;">Sign in</button>
+    </form>
+
+    <div class="muted" style="margin-top:18px;font-size:0.85rem;">
+      Demo accounts: admin / Organizer / Vendor1 / Staff1 (passwords end with @123)
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order Confirmation - GLEO</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>Order confirmation</h2>
+      <p class="muted">
+        <span th:text="${createdCount} + ' order(s) dispatched'">0 orders</span>
+        <span th:if="${rejectedCount > 0}" th:text="' - ' + ${rejectedCount} + ' vendor(s) rejected'"> - 0 rejected</span>
+      </p>
+    </div>
+    <a th:href="@{|/e/${#lists.isEmpty(orders) ? eventCode : orders[0].event.code}|}" class="btn btn-muted">
+      &larr; Back to vendors
+    </a>
+  </div>
+
+  <section class="card">
+    <h3 style="margin-top:0;">Orders dispatched</h3>
+    <div th:if="${#lists.isEmpty(orders)}" class="empty-state">
+      <h4 style="margin:0 0 8px;">No orders created</h4>
+      <p class="muted" style="margin:0;">All vendor groups were rejected. Review the reasons below.</p>
+    </div>
+    <div class="cart-groups" th:if="${!#lists.isEmpty(orders)}">
+      <div class="cart-vendor" th:each="order : ${orders}">
+        <div class="cart-vendor-header">
+          <div>
+            <div style="font-weight:600;">Order
+              <a th:href="@{|/e/${order.event.code}/orders/${order.id}|}" th:text="'#' + ${order.id}">#1</a>
+            </div>
+            <span class="muted" th:text="${order.vendor.name}">Vendor</span>
+          </div>
+          <span class="badge" th:text="${order.status}">NEW</span>
+        </div>
+        <div class="muted">
+          Guest pickup status:
+          <strong th:text="${order.confirmedByGuest} ? 'Confirmed' : 'Awaiting confirmation'">Awaiting</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:24px;" th:if="${!#maps.isEmpty(rejected)}">
+    <h3 style="margin-top:0;">Rejected vendor groups</h3>
+    <div class="cart-lines" th:each="entry : ${rejected.entrySet()}">
+      <div class="cart-line">
+        <strong th:text="'Vendor ID ' + ${entry.key}">Vendor</strong>
+        <span class="muted" th:text="${entry.value}">Reason</span>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

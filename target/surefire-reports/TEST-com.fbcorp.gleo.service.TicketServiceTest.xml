@@ -1,0 +1,1409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.fbcorp.gleo.service.TicketServiceTest" time="8.118" tests="1" errors="0" skipped="0" failures="0">
+  <properties>
+    <property name="java.specification.version" value="17"/>
+    <property name="sun.cpu.isalist" value="amd64"/>
+    <property name="sun.jnu.encoding" value="Cp1252"/>
+    <property name="java.class.path" value="C:\Users\ahmed ghobashy\Desktop\gleo\target\test-classes;C:\Users\ahmed ghobashy\Desktop\gleo\target\classes;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-web\3.3.4\spring-boot-starter-web-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter\3.3.4\spring-boot-starter-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot\3.3.4\spring-boot-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-autoconfigure\3.3.4\spring-boot-autoconfigure-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-logging\3.3.4\spring-boot-starter-logging-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\ch\qos\logback\logback-classic\1.5.8\logback-classic-1.5.8.jar;C:\Users\ahmed ghobashy\.m2\repository\ch\qos\logback\logback-core\1.5.8\logback-core-1.5.8.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\logging\log4j\log4j-to-slf4j\2.23.1\log4j-to-slf4j-2.23.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\logging\log4j\log4j-api\2.23.1\log4j-api-2.23.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\slf4j\jul-to-slf4j\2.0.16\jul-to-slf4j-2.0.16.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\annotation\jakarta.annotation-api\2.1.1\jakarta.annotation-api-2.1.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\yaml\snakeyaml\2.2\snakeyaml-2.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-json\3.3.4\spring-boot-starter-json-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.17.2\jackson-databind-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.17.2\jackson-annotations-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.17.2\jackson-core-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jdk8\2.17.2\jackson-datatype-jdk8-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.17.2\jackson-datatype-jsr310-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\module\jackson-module-parameter-names\2.17.2\jackson-module-parameter-names-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-tomcat\3.3.4\spring-boot-starter-tomcat-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\tomcat\embed\tomcat-embed-core\10.1.30\tomcat-embed-core-10.1.30.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\tomcat\embed\tomcat-embed-websocket\10.1.30\tomcat-embed-websocket-10.1.30.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-web\6.1.13\spring-web-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-beans\6.1.13\spring-beans-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\io\micrometer\micrometer-observation\1.13.4\micrometer-observation-1.13.4.jar;C:\Users\ahmed ghobashy\.m2\repository\io\micrometer\micrometer-commons\1.13.4\micrometer-commons-1.13.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-webmvc\6.1.13\spring-webmvc-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-context\6.1.13\spring-context-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-expression\6.1.13\spring-expression-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-thymeleaf\3.3.4\spring-boot-starter-thymeleaf-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\thymeleaf\thymeleaf-spring6\3.1.2.RELEASE\thymeleaf-spring6-3.1.2.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\thymeleaf\thymeleaf\3.1.2.RELEASE\thymeleaf-3.1.2.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\attoparser\attoparser\2.0.7.RELEASE\attoparser-2.0.7.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\unbescape\unbescape\1.1.6.RELEASE\unbescape-1.1.6.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-data-jpa\3.3.4\spring-boot-starter-data-jpa-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-aop\3.3.4\spring-boot-starter-aop-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\aspectj\aspectjweaver\1.9.22.1\aspectjweaver-1.9.22.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-jdbc\3.3.4\spring-boot-starter-jdbc-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\com\zaxxer\HikariCP\5.1.0\HikariCP-5.1.0.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-jdbc\6.1.13\spring-jdbc-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\hibernate\orm\hibernate-core\6.5.3.Final\hibernate-core-6.5.3.Final.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\persistence\jakarta.persistence-api\3.1.0\jakarta.persistence-api-3.1.0.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\transaction\jakarta.transaction-api\2.0.1\jakarta.transaction-api-2.0.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\jboss\logging\jboss-logging\3.5.3.Final\jboss-logging-3.5.3.Final.jar;C:\Users\ahmed ghobashy\.m2\repository\org\hibernate\common\hibernate-commons-annotations\6.0.6.Final\hibernate-commons-annotations-6.0.6.Final.jar;C:\Users\ahmed ghobashy\.m2\repository\io\smallrye\jandex\3.1.2\jandex-3.1.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\classmate\1.7.0\classmate-1.7.0.jar;C:\Users\ahmed ghobashy\.m2\repository\net\bytebuddy\byte-buddy\1.14.19\byte-buddy-1.14.19.jar;C:\Users\ahmed ghobashy\.m2\repository\org\glassfish\jaxb\jaxb-runtime\4.0.5\jaxb-runtime-4.0.5.jar;C:\Users\ahmed ghobashy\.m2\repository\org\glassfish\jaxb\jaxb-core\4.0.5\jaxb-core-4.0.5.jar;C:\Users\ahmed ghobashy\.m2\repository\org\eclipse\angus\angus-activation\2.0.2\angus-activation-2.0.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\glassfish\jaxb\txw2\4.0.5\txw2-4.0.5.jar;C:\Users\ahmed ghobashy\.m2\repository\com\sun\istack\istack-commons-runtime\4.1.2\istack-commons-runtime-4.1.2.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\inject\jakarta.inject-api\2.0.1\jakarta.inject-api-2.0.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\antlr\antlr4-runtime\4.13.0\antlr4-runtime-4.13.0.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\data\spring-data-jpa\3.3.4\spring-data-jpa-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\data\spring-data-commons\3.3.4\spring-data-commons-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-orm\6.1.13\spring-orm-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-tx\6.1.13\spring-tx-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-aspects\6.1.13\spring-aspects-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-validation\3.3.4\spring-boot-starter-validation-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\tomcat\embed\tomcat-embed-el\10.1.30\tomcat-embed-el-10.1.30.jar;C:\Users\ahmed ghobashy\.m2\repository\org\hibernate\validator\hibernate-validator\8.0.1.Final\hibernate-validator-8.0.1.Final.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\validation\jakarta.validation-api\3.0.2\jakarta.validation-api-3.0.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-security\3.3.4\spring-boot-starter-security-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-aop\6.1.13\spring-aop-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\security\spring-security-config\6.3.3\spring-security-config-6.3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\security\spring-security-core\6.3.3\spring-security-core-6.3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\security\spring-security-crypto\6.3.3\spring-security-crypto-6.3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\security\spring-security-web\6.3.3\spring-security-web-6.3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\thymeleaf\extras\thymeleaf-extras-springsecurity6\3.1.2.RELEASE\thymeleaf-extras-springsecurity6-3.1.2.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar;C:\Users\ahmed ghobashy\.m2\repository\com\h2database\h2\2.2.224\h2-2.2.224.jar;C:\Users\ahmed ghobashy\.m2\repository\org\projectlombok\lombok\1.18.34\lombok-1.18.34.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-test\3.3.4\spring-boot-starter-test-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-test\3.3.4\spring-boot-test-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-test-autoconfigure\3.3.4\spring-boot-test-autoconfigure-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\com\jayway\jsonpath\json-path\2.9.0\json-path-2.9.0.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\xml\bind\jakarta.xml.bind-api\4.0.2\jakarta.xml.bind-api-4.0.2.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\activation\jakarta.activation-api\2.1.3\jakarta.activation-api-2.1.3.jar;C:\Users\ahmed ghobashy\.m2\repository\net\minidev\json-smart\2.5.1\json-smart-2.5.1.jar;C:\Users\ahmed ghobashy\.m2\repository\net\minidev\accessors-smart\2.5.1\accessors-smart-2.5.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\ow2\asm\asm\9.6\asm-9.6.jar;C:\Users\ahmed ghobashy\.m2\repository\org\assertj\assertj-core\3.25.3\assertj-core-3.25.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\awaitility\awaitility\4.2.2\awaitility-4.2.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\hamcrest\hamcrest\2.2\hamcrest-2.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\jupiter\junit-jupiter\5.10.3\junit-jupiter-5.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.10.3\junit-jupiter-api-5.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\platform\junit-platform-commons\1.10.3\junit-platform-commons-1.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.10.3\junit-jupiter-params-5.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.10.3\junit-jupiter-engine-5.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\platform\junit-platform-engine\1.10.3\junit-platform-engine-1.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\mockito\mockito-core\5.11.0\mockito-core-5.11.0.jar;C:\Users\ahmed ghobashy\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.19\byte-buddy-agent-1.14.19.jar;C:\Users\ahmed ghobashy\.m2\repository\org\objenesis\objenesis\3.3\objenesis-3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\mockito\mockito-junit-jupiter\5.11.0\mockito-junit-jupiter-5.11.0.jar;C:\Users\ahmed ghobashy\.m2\repository\org\skyscreamer\jsonassert\1.5.3\jsonassert-1.5.3.jar;C:\Users\ahmed ghobashy\.m2\repository\com\vaadin\external\google\android-json\0.0.20131108.vaadin1\android-json-0.0.20131108.vaadin1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-core\6.1.13\spring-core-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-jcl\6.1.13\spring-jcl-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-test\6.1.13\spring-test-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\xmlunit\xmlunit-core\2.9.1\xmlunit-core-2.9.1.jar;"/>
+    <property name="java.vm.vendor" value="Eclipse Adoptium"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="user.variant" value=""/>
+    <property name="java.vendor.url" value="https://adoptium.net/"/>
+    <property name="user.timezone" value="Africa/Cairo"/>
+    <property name="org.jboss.logging.provider" value="slf4j"/>
+    <property name="os.name" value="Windows 11"/>
+    <property name="java.vm.specification.version" value="17"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.boot.library.path" value="C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot\bin"/>
+    <property name="sun.java.command" value="C:\Users\ahmed ghobashy\AppData\Local\Temp\surefire17063956930639980677\surefirebooter-20251020190854625_3.jar C:\Users\ahmed ghobashy\AppData\Local\Temp\surefire17063956930639980677 2025-10-20T19-08-54_431-jvmRun1 surefire-20251020190854625_1tmp surefire_0-20251020190854625_2tmp"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="surefire.test.class.path" value="C:\Users\ahmed ghobashy\Desktop\gleo\target\test-classes;C:\Users\ahmed ghobashy\Desktop\gleo\target\classes;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-web\3.3.4\spring-boot-starter-web-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter\3.3.4\spring-boot-starter-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot\3.3.4\spring-boot-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-autoconfigure\3.3.4\spring-boot-autoconfigure-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-logging\3.3.4\spring-boot-starter-logging-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\ch\qos\logback\logback-classic\1.5.8\logback-classic-1.5.8.jar;C:\Users\ahmed ghobashy\.m2\repository\ch\qos\logback\logback-core\1.5.8\logback-core-1.5.8.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\logging\log4j\log4j-to-slf4j\2.23.1\log4j-to-slf4j-2.23.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\logging\log4j\log4j-api\2.23.1\log4j-api-2.23.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\slf4j\jul-to-slf4j\2.0.16\jul-to-slf4j-2.0.16.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\annotation\jakarta.annotation-api\2.1.1\jakarta.annotation-api-2.1.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\yaml\snakeyaml\2.2\snakeyaml-2.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-json\3.3.4\spring-boot-starter-json-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.17.2\jackson-databind-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.17.2\jackson-annotations-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.17.2\jackson-core-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jdk8\2.17.2\jackson-datatype-jdk8-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.17.2\jackson-datatype-jsr310-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\jackson\module\jackson-module-parameter-names\2.17.2\jackson-module-parameter-names-2.17.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-tomcat\3.3.4\spring-boot-starter-tomcat-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\tomcat\embed\tomcat-embed-core\10.1.30\tomcat-embed-core-10.1.30.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\tomcat\embed\tomcat-embed-websocket\10.1.30\tomcat-embed-websocket-10.1.30.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-web\6.1.13\spring-web-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-beans\6.1.13\spring-beans-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\io\micrometer\micrometer-observation\1.13.4\micrometer-observation-1.13.4.jar;C:\Users\ahmed ghobashy\.m2\repository\io\micrometer\micrometer-commons\1.13.4\micrometer-commons-1.13.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-webmvc\6.1.13\spring-webmvc-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-context\6.1.13\spring-context-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-expression\6.1.13\spring-expression-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-thymeleaf\3.3.4\spring-boot-starter-thymeleaf-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\thymeleaf\thymeleaf-spring6\3.1.2.RELEASE\thymeleaf-spring6-3.1.2.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\thymeleaf\thymeleaf\3.1.2.RELEASE\thymeleaf-3.1.2.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\attoparser\attoparser\2.0.7.RELEASE\attoparser-2.0.7.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\unbescape\unbescape\1.1.6.RELEASE\unbescape-1.1.6.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-data-jpa\3.3.4\spring-boot-starter-data-jpa-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-aop\3.3.4\spring-boot-starter-aop-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\aspectj\aspectjweaver\1.9.22.1\aspectjweaver-1.9.22.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-jdbc\3.3.4\spring-boot-starter-jdbc-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\com\zaxxer\HikariCP\5.1.0\HikariCP-5.1.0.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-jdbc\6.1.13\spring-jdbc-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\hibernate\orm\hibernate-core\6.5.3.Final\hibernate-core-6.5.3.Final.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\persistence\jakarta.persistence-api\3.1.0\jakarta.persistence-api-3.1.0.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\transaction\jakarta.transaction-api\2.0.1\jakarta.transaction-api-2.0.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\jboss\logging\jboss-logging\3.5.3.Final\jboss-logging-3.5.3.Final.jar;C:\Users\ahmed ghobashy\.m2\repository\org\hibernate\common\hibernate-commons-annotations\6.0.6.Final\hibernate-commons-annotations-6.0.6.Final.jar;C:\Users\ahmed ghobashy\.m2\repository\io\smallrye\jandex\3.1.2\jandex-3.1.2.jar;C:\Users\ahmed ghobashy\.m2\repository\com\fasterxml\classmate\1.7.0\classmate-1.7.0.jar;C:\Users\ahmed ghobashy\.m2\repository\net\bytebuddy\byte-buddy\1.14.19\byte-buddy-1.14.19.jar;C:\Users\ahmed ghobashy\.m2\repository\org\glassfish\jaxb\jaxb-runtime\4.0.5\jaxb-runtime-4.0.5.jar;C:\Users\ahmed ghobashy\.m2\repository\org\glassfish\jaxb\jaxb-core\4.0.5\jaxb-core-4.0.5.jar;C:\Users\ahmed ghobashy\.m2\repository\org\eclipse\angus\angus-activation\2.0.2\angus-activation-2.0.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\glassfish\jaxb\txw2\4.0.5\txw2-4.0.5.jar;C:\Users\ahmed ghobashy\.m2\repository\com\sun\istack\istack-commons-runtime\4.1.2\istack-commons-runtime-4.1.2.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\inject\jakarta.inject-api\2.0.1\jakarta.inject-api-2.0.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\antlr\antlr4-runtime\4.13.0\antlr4-runtime-4.13.0.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\data\spring-data-jpa\3.3.4\spring-data-jpa-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\data\spring-data-commons\3.3.4\spring-data-commons-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-orm\6.1.13\spring-orm-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-tx\6.1.13\spring-tx-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-aspects\6.1.13\spring-aspects-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-validation\3.3.4\spring-boot-starter-validation-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apache\tomcat\embed\tomcat-embed-el\10.1.30\tomcat-embed-el-10.1.30.jar;C:\Users\ahmed ghobashy\.m2\repository\org\hibernate\validator\hibernate-validator\8.0.1.Final\hibernate-validator-8.0.1.Final.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\validation\jakarta.validation-api\3.0.2\jakarta.validation-api-3.0.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-security\3.3.4\spring-boot-starter-security-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-aop\6.1.13\spring-aop-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\security\spring-security-config\6.3.3\spring-security-config-6.3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\security\spring-security-core\6.3.3\spring-security-core-6.3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\security\spring-security-crypto\6.3.3\spring-security-crypto-6.3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\security\spring-security-web\6.3.3\spring-security-web-6.3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\thymeleaf\extras\thymeleaf-extras-springsecurity6\3.1.2.RELEASE\thymeleaf-extras-springsecurity6-3.1.2.RELEASE.jar;C:\Users\ahmed ghobashy\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar;C:\Users\ahmed ghobashy\.m2\repository\com\h2database\h2\2.2.224\h2-2.2.224.jar;C:\Users\ahmed ghobashy\.m2\repository\org\projectlombok\lombok\1.18.34\lombok-1.18.34.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-starter-test\3.3.4\spring-boot-starter-test-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-test\3.3.4\spring-boot-test-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\boot\spring-boot-test-autoconfigure\3.3.4\spring-boot-test-autoconfigure-3.3.4.jar;C:\Users\ahmed ghobashy\.m2\repository\com\jayway\jsonpath\json-path\2.9.0\json-path-2.9.0.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\xml\bind\jakarta.xml.bind-api\4.0.2\jakarta.xml.bind-api-4.0.2.jar;C:\Users\ahmed ghobashy\.m2\repository\jakarta\activation\jakarta.activation-api\2.1.3\jakarta.activation-api-2.1.3.jar;C:\Users\ahmed ghobashy\.m2\repository\net\minidev\json-smart\2.5.1\json-smart-2.5.1.jar;C:\Users\ahmed ghobashy\.m2\repository\net\minidev\accessors-smart\2.5.1\accessors-smart-2.5.1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\ow2\asm\asm\9.6\asm-9.6.jar;C:\Users\ahmed ghobashy\.m2\repository\org\assertj\assertj-core\3.25.3\assertj-core-3.25.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\awaitility\awaitility\4.2.2\awaitility-4.2.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\hamcrest\hamcrest\2.2\hamcrest-2.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\jupiter\junit-jupiter\5.10.3\junit-jupiter-5.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\jupiter\junit-jupiter-api\5.10.3\junit-jupiter-api-5.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\opentest4j\opentest4j\1.3.0\opentest4j-1.3.0.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\platform\junit-platform-commons\1.10.3\junit-platform-commons-1.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\jupiter\junit-jupiter-params\5.10.3\junit-jupiter-params-5.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\jupiter\junit-jupiter-engine\5.10.3\junit-jupiter-engine-5.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\junit\platform\junit-platform-engine\1.10.3\junit-platform-engine-1.10.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\mockito\mockito-core\5.11.0\mockito-core-5.11.0.jar;C:\Users\ahmed ghobashy\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.19\byte-buddy-agent-1.14.19.jar;C:\Users\ahmed ghobashy\.m2\repository\org\objenesis\objenesis\3.3\objenesis-3.3.jar;C:\Users\ahmed ghobashy\.m2\repository\org\mockito\mockito-junit-jupiter\5.11.0\mockito-junit-jupiter-5.11.0.jar;C:\Users\ahmed ghobashy\.m2\repository\org\skyscreamer\jsonassert\1.5.3\jsonassert-1.5.3.jar;C:\Users\ahmed ghobashy\.m2\repository\com\vaadin\external\google\android-json\0.0.20131108.vaadin1\android-json-0.0.20131108.vaadin1.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-core\6.1.13\spring-core-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-jcl\6.1.13\spring-jcl-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\springframework\spring-test\6.1.13\spring-test-6.1.13.jar;C:\Users\ahmed ghobashy\.m2\repository\org\xmlunit\xmlunit-core\2.9.1\xmlunit-core-2.9.1.jar;"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="C:\Users\ahmed ghobashy"/>
+    <property name="user.language" value="en"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.version.date" value="2025-07-15"/>
+    <property name="java.home" value="C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot"/>
+    <property name="file.separator" value="\"/>
+    <property name="basedir" value="C:\Users\ahmed ghobashy\Desktop\gleo"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="FILE_LOG_CHARSET" value="windows-1252"/>
+    <property name="java.awt.headless" value="true"/>
+    <property name="surefire.real.class.path" value="C:\Users\ahmed ghobashy\AppData\Local\Temp\surefire17063956930639980677\surefirebooter-20251020190854625_3.jar"/>
+    <property name="user.script" value=""/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="17.0.16+8"/>
+    <property name="user.name" value="ahmed ghobashy"/>
+    <property name="path.separator" value=";"/>
+    <property name="os.version" value="10.0"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="file.encoding" value="Cp1252"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="java.vendor.version" value="Temurin-17.0.16+8"/>
+    <property name="localRepository" value="C:\Users\ahmed ghobashy\.m2\repository"/>
+    <property name="java.vendor.url.bug" value="https://github.com/adoptium/adoptium-support/issues"/>
+    <property name="java.io.tmpdir" value="C:\Users\AHMEDG~1\AppData\Local\Temp\"/>
+    <property name="com.zaxxer.hikari.pool_number" value="1"/>
+    <property name="java.version" value="17.0.16"/>
+    <property name="user.dir" value="C:\Users\ahmed ghobashy\Desktop\gleo"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="PID" value="32980"/>
+    <property name="sun.os.patch.level" value=""/>
+    <property name="CONSOLE_LOG_CHARSET" value="windows-1252"/>
+    <property name="native.encoding" value="Cp1252"/>
+    <property name="java.library.path" value="C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Users\AHMEDG~1\AppData\Local\Temp\.tmppnZvqi;C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot\bin;C:\Program Files (x86)\VMware\VMware Workstation\bin\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files\nodejs\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\nodejs;C:\Program Files\nodejs\node_modules\npm\bin;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\CMake\bin;C:\Program Files\Docker\Docker\resources\bin;C:\scrcpy-win64-v3.3.1\scrcpy-win64-v3.3.1;C:\Users\ahmed ghobashy\Downloads\scrcpy-win64-v3.3.2.zip\scrcpy-win64-v3.3.2;C:\Users\ahmed ghobashy\AppData\Local\Programs\Python\Python310\Scripts\;C:\Users\ahmed ghobashy\AppData\Local\Programs\Python\Python310\;C:\Users\ahmed ghobashy\AppData\Local\Programs\Python\Python311\Scripts\;C:\Users\ahmed ghobashy\AppData\Local\Programs\Python\Python311\;C:\Users\ahmed ghobashy\AppData\Local\Microsoft\WindowsApps;C:\Users\ahmed ghobashy\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\ahmed ghobashy\AppData\Roaming\npm;C:\Users\ahmed ghobashy\AppData\Local\Programs\Windsurf\bin;C:\Users\ahmed ghobashy\Desktop\MongoDB Compass.lnk;C:\Tools\apache-maven-3.9.11\apache-maven-3.9.11\bin;;c:\Users\ahmed ghobashy\.vscode\extensions\openai.chatgpt-0.4.19-win32-x64\bin\windows-x86_64;."/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="java.vendor" value="Eclipse Adoptium"/>
+    <property name="java.vm.version" value="17.0.16+8"/>
+    <property name="java.specification.maintenance.version" value="1"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="61.0"/>
+  </properties>
+  <testcase name="resolvesWalkInTicketWhenQrMissing" classname="com.fbcorp.gleo.service.TicketServiceTest" time="0.474">
+    <system-out><![CDATA[19:08:55.465 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.fbcorp.gleo.service.TicketServiceTest]: TicketServiceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+19:08:55.580 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.fbcorp.gleo.GleoApplication for test class com.fbcorp.gleo.service.TicketServiceTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2025-10-20T19:08:56.002+03:00  INFO 32980 --- [           main] c.fbcorp.gleo.service.TicketServiceTest  : Starting TicketServiceTest using Java 17.0.16 with PID 32980 (started by ahmed ghobashy in C:\Users\ahmed ghobashy\Desktop\gleo)
+2025-10-20T19:08:56.004+03:00  INFO 32980 --- [           main] c.fbcorp.gleo.service.TicketServiceTest  : No active profile set, falling back to 1 default profile: "default"
+2025-10-20T19:08:56.831+03:00  INFO 32980 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-10-20T19:08:56.912+03:00  INFO 32980 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 70 ms. Found 9 JPA repository interfaces.
+2025-10-20T19:08:57.545+03:00  INFO 32980 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-10-20T19:08:57.654+03:00  INFO 32980 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2025-10-20T19:08:57.728+03:00  INFO 32980 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-10-20T19:08:58.126+03:00  INFO 32980 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-10-20T19:08:58.160+03:00  INFO 32980 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-10-20T19:08:58.318+03:00  INFO 32980 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:gleodb user=SA
+2025-10-20T19:08:58.319+03:00  INFO 32980 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-10-20T19:08:59.316+03:00  INFO 32980 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-10-20T19:08:59.371+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table events (
+        id bigint generated by default as identity,
+        block_add_when_open_order boolean not null,
+        code varchar(255) not null,
+        enable_guest_pickup_confirm boolean not null,
+        enable_multi_vendor_cart boolean not null,
+        end_at timestamp(6),
+        name varchar(255),
+        regular_one_item_per_vendor boolean not null,
+        require_vendor_pin_for_pickup boolean not null,
+        start_at timestamp(6),
+        primary key (id)
+    )
+Hibernate: 
+    create table events (
+        id bigint generated by default as identity,
+        block_add_when_open_order boolean not null,
+        code varchar(255) not null,
+        enable_guest_pickup_confirm boolean not null,
+        enable_multi_vendor_cart boolean not null,
+        end_at timestamp(6),
+        name varchar(255),
+        regular_one_item_per_vendor boolean not null,
+        require_vendor_pin_for_pickup boolean not null,
+        start_at timestamp(6),
+        primary key (id)
+    )
+2025-10-20T19:08:59.379+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table menu_items (
+        id bigint generated by default as identity,
+        available boolean not null,
+        max_per_order integer,
+        name varchar(255) not null,
+        price numeric(38,2),
+        vendor_id bigint not null,
+        primary key (id)
+    )
+Hibernate: 
+    create table menu_items (
+        id bigint generated by default as identity,
+        available boolean not null,
+        max_per_order integer,
+        name varchar(255) not null,
+        price numeric(38,2),
+        vendor_id bigint not null,
+        primary key (id)
+    )
+2025-10-20T19:08:59.380+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table order_items (
+        id bigint generated by default as identity,
+        qty integer not null,
+        menu_item_id bigint not null,
+        order_id bigint not null,
+        primary key (id)
+    )
+Hibernate: 
+    create table order_items (
+        id bigint generated by default as identity,
+        qty integer not null,
+        menu_item_id bigint not null,
+        order_id bigint not null,
+        primary key (id)
+    )
+2025-10-20T19:08:59.381+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table orders (
+        id bigint generated by default as identity,
+        confirmed_by_guest boolean not null,
+        confirmed_staff_pin_last4 varchar(255),
+        created_at timestamp(6),
+        status enum ('CANCELLED','COMPLETED','NEW','PREPARING','READY'),
+        event_id bigint not null,
+        ticket_id bigint not null,
+        vendor_id bigint not null,
+        primary key (id)
+    )
+Hibernate: 
+    create table orders (
+        id bigint generated by default as identity,
+        confirmed_by_guest boolean not null,
+        confirmed_staff_pin_last4 varchar(255),
+        created_at timestamp(6),
+        status enum ('CANCELLED','COMPLETED','NEW','PREPARING','READY'),
+        event_id bigint not null,
+        ticket_id bigint not null,
+        vendor_id bigint not null,
+        primary key (id)
+    )
+2025-10-20T19:08:59.383+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table roles (
+        id bigint generated by default as identity,
+        name varchar(255) not null,
+        primary key (id)
+    )
+Hibernate: 
+    create table roles (
+        id bigint generated by default as identity,
+        name varchar(255) not null,
+        primary key (id)
+    )
+2025-10-20T19:08:59.384+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table tickets (
+        id bigint generated by default as identity,
+        active boolean not null,
+        bound_device_hash varchar(255),
+        holder_name varchar(255),
+        holder_phone varchar(255),
+        qr_code varchar(255) not null,
+        serial varchar(255),
+        tier_code enum ('REG','VIP'),
+        event_id bigint not null,
+        primary key (id)
+    )
+Hibernate: 
+    create table tickets (
+        id bigint generated by default as identity,
+        active boolean not null,
+        bound_device_hash varchar(255),
+        holder_name varchar(255),
+        holder_phone varchar(255),
+        qr_code varchar(255) not null,
+        serial varchar(255),
+        tier_code enum ('REG','VIP'),
+        event_id bigint not null,
+        primary key (id)
+    )
+2025-10-20T19:08:59.385+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table tier_consumption (
+        id bigint generated by default as identity,
+        total_items_consumed integer not null,
+        event_id bigint not null,
+        ticket_id bigint not null,
+        vendor_id bigint not null,
+        primary key (id)
+    )
+Hibernate: 
+    create table tier_consumption (
+        id bigint generated by default as identity,
+        total_items_consumed integer not null,
+        event_id bigint not null,
+        ticket_id bigint not null,
+        vendor_id bigint not null,
+        primary key (id)
+    )
+2025-10-20T19:08:59.386+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table tier_policies (
+        id bigint generated by default as identity,
+        max_items_per_vendor integer,
+        tier_code enum ('REG','VIP') not null,
+        unlimited boolean not null,
+        event_id bigint not null,
+        primary key (id)
+    )
+Hibernate: 
+    create table tier_policies (
+        id bigint generated by default as identity,
+        max_items_per_vendor integer,
+        tier_code enum ('REG','VIP') not null,
+        unlimited boolean not null,
+        event_id bigint not null,
+        primary key (id)
+    )
+2025-10-20T19:08:59.387+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table user_roles (
+        user_id bigint not null,
+        role_id bigint not null,
+        primary key (user_id, role_id)
+    )
+Hibernate: 
+    create table user_roles (
+        user_id bigint not null,
+        role_id bigint not null,
+        primary key (user_id, role_id)
+    )
+2025-10-20T19:08:59.388+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table users (
+        id bigint generated by default as identity,
+        password varchar(255) not null,
+        username varchar(255) not null,
+        event_id bigint,
+        vendor_id bigint,
+        primary key (id)
+    )
+Hibernate: 
+    create table users (
+        id bigint generated by default as identity,
+        password varchar(255) not null,
+        username varchar(255) not null,
+        event_id bigint,
+        vendor_id bigint,
+        primary key (id)
+    )
+2025-10-20T19:08:59.389+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    create table vendors (
+        id bigint generated by default as identity,
+        active boolean not null,
+        image_path varchar(255),
+        name varchar(255) not null,
+        pin_plain varchar(255),
+        event_id bigint not null,
+        primary key (id)
+    )
+Hibernate: 
+    create table vendors (
+        id bigint generated by default as identity,
+        active boolean not null,
+        image_path varchar(255),
+        name varchar(255) not null,
+        pin_plain varchar(255),
+        event_id bigint not null,
+        primary key (id)
+    )
+2025-10-20T19:08:59.390+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists events 
+       drop constraint if exists UKtg20yx4f9jmk6g7wjsil67oo4
+Hibernate: 
+    alter table if exists events 
+       drop constraint if exists UKtg20yx4f9jmk6g7wjsil67oo4
+2025-10-20T19:08:59.391+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists events 
+       add constraint UKtg20yx4f9jmk6g7wjsil67oo4 unique (code)
+Hibernate: 
+    alter table if exists events 
+       add constraint UKtg20yx4f9jmk6g7wjsil67oo4 unique (code)
+2025-10-20T19:08:59.392+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists roles 
+       drop constraint if exists UKofx66keruapi6vyqpv6f2or37
+Hibernate: 
+    alter table if exists roles 
+       drop constraint if exists UKofx66keruapi6vyqpv6f2or37
+2025-10-20T19:08:59.393+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists roles 
+       add constraint UKofx66keruapi6vyqpv6f2or37 unique (name)
+Hibernate: 
+    alter table if exists roles 
+       add constraint UKofx66keruapi6vyqpv6f2or37 unique (name)
+2025-10-20T19:08:59.394+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tickets 
+       drop constraint if exists UK136k8tqvcn833mi3tjgqktnx2
+Hibernate: 
+    alter table if exists tickets 
+       drop constraint if exists UK136k8tqvcn833mi3tjgqktnx2
+2025-10-20T19:08:59.395+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tickets 
+       add constraint UK136k8tqvcn833mi3tjgqktnx2 unique (qr_code)
+Hibernate: 
+    alter table if exists tickets 
+       add constraint UK136k8tqvcn833mi3tjgqktnx2 unique (qr_code)
+2025-10-20T19:08:59.395+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tier_consumption 
+       drop constraint if exists UK133teo6oqjip5jwdxmv5i4108
+Hibernate: 
+    alter table if exists tier_consumption 
+       drop constraint if exists UK133teo6oqjip5jwdxmv5i4108
+2025-10-20T19:08:59.396+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tier_consumption 
+       add constraint UK133teo6oqjip5jwdxmv5i4108 unique (event_id, ticket_id, vendor_id)
+Hibernate: 
+    alter table if exists tier_consumption 
+       add constraint UK133teo6oqjip5jwdxmv5i4108 unique (event_id, ticket_id, vendor_id)
+2025-10-20T19:08:59.396+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tier_policies 
+       drop constraint if exists UKm54q5lvygt071q98lipcyd64k
+Hibernate: 
+    alter table if exists tier_policies 
+       drop constraint if exists UKm54q5lvygt071q98lipcyd64k
+2025-10-20T19:08:59.396+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tier_policies 
+       add constraint UKm54q5lvygt071q98lipcyd64k unique (event_id, tier_code)
+Hibernate: 
+    alter table if exists tier_policies 
+       add constraint UKm54q5lvygt071q98lipcyd64k unique (event_id, tier_code)
+2025-10-20T19:08:59.397+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists users 
+       drop constraint if exists UKr43af9ap4edm43mmtq01oddj6
+Hibernate: 
+    alter table if exists users 
+       drop constraint if exists UKr43af9ap4edm43mmtq01oddj6
+2025-10-20T19:08:59.397+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists users 
+       add constraint UKr43af9ap4edm43mmtq01oddj6 unique (username)
+Hibernate: 
+    alter table if exists users 
+       add constraint UKr43af9ap4edm43mmtq01oddj6 unique (username)
+2025-10-20T19:08:59.398+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists menu_items 
+       add constraint FKmv8b8f2lesk5fmqouqhwuhsiy 
+       foreign key (vendor_id) 
+       references vendors
+Hibernate: 
+    alter table if exists menu_items 
+       add constraint FKmv8b8f2lesk5fmqouqhwuhsiy 
+       foreign key (vendor_id) 
+       references vendors
+2025-10-20T19:08:59.402+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists order_items 
+       add constraint FKdtfg1f49yr5yye2fpl2xid2xo 
+       foreign key (menu_item_id) 
+       references menu_items
+Hibernate: 
+    alter table if exists order_items 
+       add constraint FKdtfg1f49yr5yye2fpl2xid2xo 
+       foreign key (menu_item_id) 
+       references menu_items
+2025-10-20T19:08:59.403+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists order_items 
+       add constraint FKbioxgbv59vetrxe0ejfubep1w 
+       foreign key (order_id) 
+       references orders
+Hibernate: 
+    alter table if exists order_items 
+       add constraint FKbioxgbv59vetrxe0ejfubep1w 
+       foreign key (order_id) 
+       references orders
+2025-10-20T19:08:59.404+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists orders 
+       add constraint FK43g2yroy6l7lfomw37wajkqrn 
+       foreign key (event_id) 
+       references events
+Hibernate: 
+    alter table if exists orders 
+       add constraint FK43g2yroy6l7lfomw37wajkqrn 
+       foreign key (event_id) 
+       references events
+2025-10-20T19:08:59.406+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists orders 
+       add constraint FK56s83c9boy7i8d9v4kf9a9979 
+       foreign key (ticket_id) 
+       references tickets
+Hibernate: 
+    alter table if exists orders 
+       add constraint FK56s83c9boy7i8d9v4kf9a9979 
+       foreign key (ticket_id) 
+       references tickets
+2025-10-20T19:08:59.407+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists orders 
+       add constraint FKb1443sk0bxprtkqree3o2qk90 
+       foreign key (vendor_id) 
+       references vendors
+Hibernate: 
+    alter table if exists orders 
+       add constraint FKb1443sk0bxprtkqree3o2qk90 
+       foreign key (vendor_id) 
+       references vendors
+2025-10-20T19:08:59.408+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tickets 
+       add constraint FK3utafe14rupaypjocldjaj4ol 
+       foreign key (event_id) 
+       references events
+Hibernate: 
+    alter table if exists tickets 
+       add constraint FK3utafe14rupaypjocldjaj4ol 
+       foreign key (event_id) 
+       references events
+2025-10-20T19:08:59.409+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tier_consumption 
+       add constraint FKq1ka9kg44kah1v4270p7crq3r 
+       foreign key (event_id) 
+       references events
+Hibernate: 
+    alter table if exists tier_consumption 
+       add constraint FKq1ka9kg44kah1v4270p7crq3r 
+       foreign key (event_id) 
+       references events
+2025-10-20T19:08:59.410+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tier_consumption 
+       add constraint FKluesfca2e6kpwg3orfs2mfvkk 
+       foreign key (ticket_id) 
+       references tickets
+Hibernate: 
+    alter table if exists tier_consumption 
+       add constraint FKluesfca2e6kpwg3orfs2mfvkk 
+       foreign key (ticket_id) 
+       references tickets
+2025-10-20T19:08:59.411+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tier_consumption 
+       add constraint FK9uere9dugestaagi8be8bld0r 
+       foreign key (vendor_id) 
+       references vendors
+Hibernate: 
+    alter table if exists tier_consumption 
+       add constraint FK9uere9dugestaagi8be8bld0r 
+       foreign key (vendor_id) 
+       references vendors
+2025-10-20T19:08:59.412+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists tier_policies 
+       add constraint FK2kyvi97eek77xpflcv6i470pk 
+       foreign key (event_id) 
+       references events
+Hibernate: 
+    alter table if exists tier_policies 
+       add constraint FK2kyvi97eek77xpflcv6i470pk 
+       foreign key (event_id) 
+       references events
+2025-10-20T19:08:59.414+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists user_roles 
+       add constraint FKh8ciramu9cc9q3qcqiv4ue8a6 
+       foreign key (role_id) 
+       references roles
+Hibernate: 
+    alter table if exists user_roles 
+       add constraint FKh8ciramu9cc9q3qcqiv4ue8a6 
+       foreign key (role_id) 
+       references roles
+2025-10-20T19:08:59.415+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists user_roles 
+       add constraint FKhfh9dx7w3ubf1co1vdev94g3f 
+       foreign key (user_id) 
+       references users
+Hibernate: 
+    alter table if exists user_roles 
+       add constraint FKhfh9dx7w3ubf1co1vdev94g3f 
+       foreign key (user_id) 
+       references users
+2025-10-20T19:08:59.416+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists users 
+       add constraint FK1psuuwpuxnf8wb4jp6pah4gie 
+       foreign key (event_id) 
+       references events
+Hibernate: 
+    alter table if exists users 
+       add constraint FK1psuuwpuxnf8wb4jp6pah4gie 
+       foreign key (event_id) 
+       references events
+2025-10-20T19:08:59.417+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists users 
+       add constraint FKp3aufrqlptl7jn77avemkbpxr 
+       foreign key (vendor_id) 
+       references vendors
+Hibernate: 
+    alter table if exists users 
+       add constraint FKp3aufrqlptl7jn77avemkbpxr 
+       foreign key (vendor_id) 
+       references vendors
+2025-10-20T19:08:59.418+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    alter table if exists vendors 
+       add constraint FKl3a67lo83j80ftj9e2iiab68n 
+       foreign key (event_id) 
+       references events
+Hibernate: 
+    alter table if exists vendors 
+       add constraint FKl3a67lo83j80ftj9e2iiab68n 
+       foreign key (event_id) 
+       references events
+2025-10-20T19:08:59.421+03:00  INFO 32980 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-10-20T19:09:00.121+03:00  INFO 32980 --- [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-10-20T19:09:00.910+03:00  WARN 32980 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-10-20T19:09:01.016+03:00  INFO 32980 --- [           main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-10-20T19:09:01.019+03:00  WARN 32980 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+2025-10-20T19:09:01.237+03:00  INFO 32980 --- [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page template: index
+2025-10-20T19:09:02.264+03:00  INFO 32980 --- [           main] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:h2:mem:gleodb'
+2025-10-20T19:09:02.344+03:00  INFO 32980 --- [           main] c.fbcorp.gleo.service.TicketServiceTest  : Started TicketServiceTest in 6.623 seconds (process running for 7.529)
+2025-10-20T19:09:02.467+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        count(*) 
+    from
+        events e1_0
+Hibernate: 
+    select
+        count(*) 
+    from
+        events e1_0
+2025-10-20T19:09:02.502+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        events
+        (block_add_when_open_order, code, enable_guest_pickup_confirm, enable_multi_vendor_cart, end_at, name, regular_one_item_per_vendor, require_vendor_pin_for_pickup, start_at, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        events
+        (block_add_when_open_order, code, enable_guest_pickup_confirm, enable_multi_vendor_cart, end_at, name, regular_one_item_per_vendor, require_vendor_pin_for_pickup, start_at, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.506+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.506+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:VARCHAR) <- [G2025]
+2025-10-20T19:09:02.506+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:BOOLEAN) <- [true]
+2025-10-20T19:09:02.506+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:BOOLEAN) <- [true]
+2025-10-20T19:09:02.506+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:TIMESTAMP) <- [2025-10-21T01:09:02.477876500]
+2025-10-20T19:09:02.507+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (6:VARCHAR) <- [GLEO Demo Event]
+2025-10-20T19:09:02.507+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (7:BOOLEAN) <- [true]
+2025-10-20T19:09:02.507+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (8:BOOLEAN) <- [false]
+2025-10-20T19:09:02.507+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (9:TIMESTAMP) <- [2025-10-20T18:09:02.477876500]
+2025-10-20T19:09:02.541+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        vendors
+        (active, event_id, image_path, name, pin_plain, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        vendors
+        (active, event_id, image_path, name, pin_plain, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.541+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.541+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:BIGINT) <- [1]
+2025-10-20T19:09:02.541+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [/images/brgr.png]
+2025-10-20T19:09:02.541+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [BRGR]
+2025-10-20T19:09:02.542+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:VARCHAR) <- [1234]
+2025-10-20T19:09:02.543+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        vendors
+        (active, event_id, image_path, name, pin_plain, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        vendors
+        (active, event_id, image_path, name, pin_plain, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.544+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.544+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:BIGINT) <- [1]
+2025-10-20T19:09:02.544+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [/images/desoky-soda.png]
+2025-10-20T19:09:02.544+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [DESOUKY&SODA]
+2025-10-20T19:09:02.544+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:VARCHAR) <- [4321]
+2025-10-20T19:09:02.546+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        vendors
+        (active, event_id, image_path, name, pin_plain, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        vendors
+        (active, event_id, image_path, name, pin_plain, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.547+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.547+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:BIGINT) <- [1]
+2025-10-20T19:09:02.547+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [/images/koffee-kulture.jpg]
+2025-10-20T19:09:02.547+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [Koffee Kulture]
+2025-10-20T19:09:02.547+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:VARCHAR) <- [9876]
+2025-10-20T19:09:02.548+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        tier_policies
+        (event_id, max_items_per_vendor, tier_code, unlimited, id) 
+    values
+        (?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        tier_policies
+        (event_id, max_items_per_vendor, tier_code, unlimited, id) 
+    values
+        (?, ?, ?, ?, default)
+2025-10-20T19:09:02.549+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [1]
+2025-10-20T19:09:02.549+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.549+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:ENUM) <- [VIP]
+2025-10-20T19:09:02.549+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:BOOLEAN) <- [true]
+2025-10-20T19:09:02.552+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        tier_policies
+        (event_id, max_items_per_vendor, tier_code, unlimited, id) 
+    values
+        (?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        tier_policies
+        (event_id, max_items_per_vendor, tier_code, unlimited, id) 
+    values
+        (?, ?, ?, ?, default)
+2025-10-20T19:09:02.553+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [1]
+2025-10-20T19:09:02.553+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [1]
+2025-10-20T19:09:02.553+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:ENUM) <- [REG]
+2025-10-20T19:09:02.553+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:BOOLEAN) <- [false]
+2025-10-20T19:09:02.555+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.556+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.556+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.556+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [Smash BRGR]
+2025-10-20T19:09:02.556+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:NUMERIC) <- [0]
+2025-10-20T19:09:02.556+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:BIGINT) <- [1]
+2025-10-20T19:09:02.557+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.557+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.558+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.558+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [Truffle Fries]
+2025-10-20T19:09:02.558+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:NUMERIC) <- [0]
+2025-10-20T19:09:02.558+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:BIGINT) <- [1]
+2025-10-20T19:09:02.559+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.559+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.560+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.560+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [Loaded Chicken Strips]
+2025-10-20T19:09:02.560+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:NUMERIC) <- [0]
+2025-10-20T19:09:02.560+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:BIGINT) <- [1]
+2025-10-20T19:09:02.561+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.561+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.561+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.561+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [Desouky Street Pizza]
+2025-10-20T19:09:02.561+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:NUMERIC) <- [0]
+2025-10-20T19:09:02.561+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:BIGINT) <- [2]
+2025-10-20T19:09:02.562+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.562+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.563+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.563+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [Creamy Macarona Bechamel]
+2025-10-20T19:09:02.563+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:NUMERIC) <- [0]
+2025-10-20T19:09:02.563+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:BIGINT) <- [2]
+2025-10-20T19:09:02.567+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.567+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.567+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.567+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [Desouky Liver Sandwich]
+2025-10-20T19:09:02.568+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:NUMERIC) <- [0]
+2025-10-20T19:09:02.568+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:BIGINT) <- [2]
+2025-10-20T19:09:02.571+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.571+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.571+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.571+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [Signature Cappuccino]
+2025-10-20T19:09:02.571+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:NUMERIC) <- [0]
+2025-10-20T19:09:02.571+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:BIGINT) <- [3]
+2025-10-20T19:09:02.573+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.574+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.574+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.574+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [Cold Brew Tonic]
+2025-10-20T19:09:02.574+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:NUMERIC) <- [0]
+2025-10-20T19:09:02.574+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:BIGINT) <- [3]
+2025-10-20T19:09:02.576+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        menu_items
+        (available, max_per_order, name, price, vendor_id, id) 
+    values
+        (?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.576+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.576+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:INTEGER) <- [null]
+2025-10-20T19:09:02.576+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [Hazelnut Latte]
+2025-10-20T19:09:02.576+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:NUMERIC) <- [0]
+2025-10-20T19:09:02.576+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:BIGINT) <- [3]
+2025-10-20T19:09:02.578+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        tickets
+        (active, bound_device_hash, event_id, holder_name, holder_phone, qr_code, serial, tier_code, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        tickets
+        (active, bound_device_hash, event_id, holder_name, holder_phone, qr_code, serial, tier_code, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.579+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.579+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:VARCHAR) <- [null]
+2025-10-20T19:09:02.579+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:BIGINT) <- [1]
+2025-10-20T19:09:02.579+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [VIP Guest]
+2025-10-20T19:09:02.579+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:VARCHAR) <- [01000000001]
+2025-10-20T19:09:02.579+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (6:VARCHAR) <- [VIP-001]
+2025-10-20T19:09:02.579+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (7:VARCHAR) <- [S-VIP-1]
+2025-10-20T19:09:02.580+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (8:ENUM) <- [VIP]
+2025-10-20T19:09:02.581+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        tickets
+        (active, bound_device_hash, event_id, holder_name, holder_phone, qr_code, serial, tier_code, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        tickets
+        (active, bound_device_hash, event_id, holder_name, holder_phone, qr_code, serial, tier_code, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, default)
+2025-10-20T19:09:02.582+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:02.582+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:VARCHAR) <- [null]
+2025-10-20T19:09:02.582+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:BIGINT) <- [1]
+2025-10-20T19:09:02.582+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [REG Guest]
+2025-10-20T19:09:02.582+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:VARCHAR) <- [01000000002]
+2025-10-20T19:09:02.582+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (6:VARCHAR) <- [REG-001]
+2025-10-20T19:09:02.582+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (7:VARCHAR) <- [S-REG-1]
+2025-10-20T19:09:02.582+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (8:ENUM) <- [REG]
+2025-10-20T19:09:02.629+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+2025-10-20T19:09:02.631+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [ROLE_ADMIN]
+2025-10-20T19:09:02.634+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        roles
+        (name, id) 
+    values
+        (?, default)
+Hibernate: 
+    insert 
+    into
+        roles
+        (name, id) 
+    values
+        (?, default)
+2025-10-20T19:09:02.635+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [ROLE_ADMIN]
+2025-10-20T19:09:02.638+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+2025-10-20T19:09:02.639+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [ROLE_ORGANIZER]
+2025-10-20T19:09:02.640+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        roles
+        (name, id) 
+    values
+        (?, default)
+Hibernate: 
+    insert 
+    into
+        roles
+        (name, id) 
+    values
+        (?, default)
+2025-10-20T19:09:02.640+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [ROLE_ORGANIZER]
+2025-10-20T19:09:02.642+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+2025-10-20T19:09:02.643+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [ROLE_VENDOR]
+2025-10-20T19:09:02.645+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        roles
+        (name, id) 
+    values
+        (?, default)
+Hibernate: 
+    insert 
+    into
+        roles
+        (name, id) 
+    values
+        (?, default)
+2025-10-20T19:09:02.645+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [ROLE_VENDOR]
+2025-10-20T19:09:02.647+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+2025-10-20T19:09:02.647+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [ROLE_STAFF]
+2025-10-20T19:09:02.648+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        roles
+        (name, id) 
+    values
+        (?, default)
+Hibernate: 
+    insert 
+    into
+        roles
+        (name, id) 
+    values
+        (?, default)
+2025-10-20T19:09:02.649+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [ROLE_STAFF]
+2025-10-20T19:09:02.655+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        ua1_0.id,
+        ua1_0.event_id,
+        ua1_0.password,
+        ua1_0.username,
+        ua1_0.vendor_id 
+    from
+        users ua1_0 
+    where
+        ua1_0.username=?
+Hibernate: 
+    select
+        ua1_0.id,
+        ua1_0.event_id,
+        ua1_0.password,
+        ua1_0.username,
+        ua1_0.vendor_id 
+    from
+        users ua1_0 
+    where
+        ua1_0.username=?
+2025-10-20T19:09:02.656+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [admin]
+2025-10-20T19:09:02.727+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        users
+        (event_id, password, username, vendor_id, id) 
+    values
+        (?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        users
+        (event_id, password, username, vendor_id, id) 
+    values
+        (?, ?, ?, ?, default)
+2025-10-20T19:09:02.728+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [null]
+2025-10-20T19:09:02.728+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:VARCHAR) <- [$2a$10$5.oWpQTmz/HOSzkAwRS/iuQyVCCgNpXa5XGB8zRtUKeoB6TXmlRD6]
+2025-10-20T19:09:02.728+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [admin]
+2025-10-20T19:09:02.728+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:BIGINT) <- [null]
+2025-10-20T19:09:02.735+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+2025-10-20T19:09:02.735+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [1]
+2025-10-20T19:09:02.735+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:BIGINT) <- [1]
+2025-10-20T19:09:02.736+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+2025-10-20T19:09:02.736+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [1]
+2025-10-20T19:09:02.736+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:BIGINT) <- [2]
+2025-10-20T19:09:02.738+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        ua1_0.id,
+        ua1_0.event_id,
+        ua1_0.password,
+        ua1_0.username,
+        ua1_0.vendor_id 
+    from
+        users ua1_0 
+    where
+        ua1_0.username=?
+Hibernate: 
+    select
+        ua1_0.id,
+        ua1_0.event_id,
+        ua1_0.password,
+        ua1_0.username,
+        ua1_0.vendor_id 
+    from
+        users ua1_0 
+    where
+        ua1_0.username=?
+2025-10-20T19:09:02.739+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [organizer]
+2025-10-20T19:09:02.803+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        users
+        (event_id, password, username, vendor_id, id) 
+    values
+        (?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        users
+        (event_id, password, username, vendor_id, id) 
+    values
+        (?, ?, ?, ?, default)
+2025-10-20T19:09:02.803+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [1]
+2025-10-20T19:09:02.803+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:VARCHAR) <- [$2a$10$vjnTZZc4zPdvd0f3eQCAQuzilDSc7945z3MfdWFLmaHD7IL4.X.O.]
+2025-10-20T19:09:02.803+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [organizer]
+2025-10-20T19:09:02.803+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:BIGINT) <- [null]
+2025-10-20T19:09:02.805+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+2025-10-20T19:09:02.805+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [2]
+2025-10-20T19:09:02.805+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:BIGINT) <- [2]
+2025-10-20T19:09:02.807+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        ua1_0.id,
+        ua1_0.event_id,
+        ua1_0.password,
+        ua1_0.username,
+        ua1_0.vendor_id 
+    from
+        users ua1_0 
+    where
+        ua1_0.username=?
+Hibernate: 
+    select
+        ua1_0.id,
+        ua1_0.event_id,
+        ua1_0.password,
+        ua1_0.username,
+        ua1_0.vendor_id 
+    from
+        users ua1_0 
+    where
+        ua1_0.username=?
+2025-10-20T19:09:02.807+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [vendor1]
+2025-10-20T19:09:02.867+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        users
+        (event_id, password, username, vendor_id, id) 
+    values
+        (?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        users
+        (event_id, password, username, vendor_id, id) 
+    values
+        (?, ?, ?, ?, default)
+2025-10-20T19:09:02.867+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [null]
+2025-10-20T19:09:02.867+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:VARCHAR) <- [$2a$10$5WJPE9roEggC98e9Vh9TY.Rf3Yz4TNdb9M52RwVk3AJ1grAIM7GGG]
+2025-10-20T19:09:02.867+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [vendor1]
+2025-10-20T19:09:02.867+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:BIGINT) <- [1]
+2025-10-20T19:09:02.868+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+2025-10-20T19:09:02.869+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [3]
+2025-10-20T19:09:02.869+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:BIGINT) <- [3]
+2025-10-20T19:09:02.871+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        ua1_0.id,
+        ua1_0.event_id,
+        ua1_0.password,
+        ua1_0.username,
+        ua1_0.vendor_id 
+    from
+        users ua1_0 
+    where
+        ua1_0.username=?
+Hibernate: 
+    select
+        ua1_0.id,
+        ua1_0.event_id,
+        ua1_0.password,
+        ua1_0.username,
+        ua1_0.vendor_id 
+    from
+        users ua1_0 
+    where
+        ua1_0.username=?
+2025-10-20T19:09:02.871+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [staff1]
+2025-10-20T19:09:02.930+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        users
+        (event_id, password, username, vendor_id, id) 
+    values
+        (?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        users
+        (event_id, password, username, vendor_id, id) 
+    values
+        (?, ?, ?, ?, default)
+2025-10-20T19:09:02.930+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [null]
+2025-10-20T19:09:02.930+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:VARCHAR) <- [$2a$10$NLmkUwBK/jVG2/1DQeGgPOjbmulqMf9Kx8lcZIeM4/SlPDRmp6pqq]
+2025-10-20T19:09:02.930+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:VARCHAR) <- [staff1]
+2025-10-20T19:09:02.930+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:BIGINT) <- [1]
+2025-10-20T19:09:02.931+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        user_roles
+        (user_id, role_id) 
+    values
+        (?, ?)
+2025-10-20T19:09:02.931+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BIGINT) <- [4]
+2025-10-20T19:09:02.931+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:BIGINT) <- [4]
+2025-10-20T19:09:03.349+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        e1_0.id,
+        e1_0.block_add_when_open_order,
+        e1_0.code,
+        e1_0.enable_guest_pickup_confirm,
+        e1_0.enable_multi_vendor_cart,
+        e1_0.end_at,
+        e1_0.name,
+        e1_0.regular_one_item_per_vendor,
+        e1_0.require_vendor_pin_for_pickup,
+        e1_0.start_at 
+    from
+        events e1_0 
+    where
+        e1_0.code=?
+Hibernate: 
+    select
+        e1_0.id,
+        e1_0.block_add_when_open_order,
+        e1_0.code,
+        e1_0.enable_guest_pickup_confirm,
+        e1_0.enable_multi_vendor_cart,
+        e1_0.end_at,
+        e1_0.name,
+        e1_0.regular_one_item_per_vendor,
+        e1_0.require_vendor_pin_for_pickup,
+        e1_0.start_at 
+    from
+        events e1_0 
+    where
+        e1_0.code=?
+2025-10-20T19:09:03.349+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [G2025]
+2025-10-20T19:09:03.354+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        t1_0.id,
+        t1_0.active,
+        t1_0.bound_device_hash,
+        t1_0.event_id,
+        t1_0.holder_name,
+        t1_0.holder_phone,
+        t1_0.qr_code,
+        t1_0.serial,
+        t1_0.tier_code 
+    from
+        tickets t1_0 
+    where
+        t1_0.qr_code=?
+Hibernate: 
+    select
+        t1_0.id,
+        t1_0.active,
+        t1_0.bound_device_hash,
+        t1_0.event_id,
+        t1_0.holder_name,
+        t1_0.holder_phone,
+        t1_0.qr_code,
+        t1_0.serial,
+        t1_0.tier_code 
+    from
+        tickets t1_0 
+    where
+        t1_0.qr_code=?
+2025-10-20T19:09:03.354+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [WALKIN-G2025-DEVICE123]
+2025-10-20T19:09:03.355+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    insert 
+    into
+        tickets
+        (active, bound_device_hash, event_id, holder_name, holder_phone, qr_code, serial, tier_code, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, default)
+Hibernate: 
+    insert 
+    into
+        tickets
+        (active, bound_device_hash, event_id, holder_name, holder_phone, qr_code, serial, tier_code, id) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, default)
+2025-10-20T19:09:03.355+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:BOOLEAN) <- [true]
+2025-10-20T19:09:03.355+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (2:VARCHAR) <- [device123]
+2025-10-20T19:09:03.356+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (3:BIGINT) <- [1]
+2025-10-20T19:09:03.356+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (4:VARCHAR) <- [Walk-in Guest]
+2025-10-20T19:09:03.356+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (5:VARCHAR) <- [null]
+2025-10-20T19:09:03.356+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (6:VARCHAR) <- [WALKIN-G2025-DEVICE123]
+2025-10-20T19:09:03.356+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (7:VARCHAR) <- [WALKIN-DEVICE123]
+2025-10-20T19:09:03.356+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (8:ENUM) <- [VIP]
+2025-10-20T19:09:03.402+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        e1_0.id,
+        e1_0.block_add_when_open_order,
+        e1_0.code,
+        e1_0.enable_guest_pickup_confirm,
+        e1_0.enable_multi_vendor_cart,
+        e1_0.end_at,
+        e1_0.name,
+        e1_0.regular_one_item_per_vendor,
+        e1_0.require_vendor_pin_for_pickup,
+        e1_0.start_at 
+    from
+        events e1_0 
+    where
+        e1_0.code=?
+Hibernate: 
+    select
+        e1_0.id,
+        e1_0.block_add_when_open_order,
+        e1_0.code,
+        e1_0.enable_guest_pickup_confirm,
+        e1_0.enable_multi_vendor_cart,
+        e1_0.end_at,
+        e1_0.name,
+        e1_0.regular_one_item_per_vendor,
+        e1_0.require_vendor_pin_for_pickup,
+        e1_0.start_at 
+    from
+        events e1_0 
+    where
+        e1_0.code=?
+2025-10-20T19:09:03.402+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [G2025]
+2025-10-20T19:09:03.404+03:00 DEBUG 32980 --- [           main] org.hibernate.SQL                        : 
+    select
+        t1_0.id,
+        t1_0.active,
+        t1_0.bound_device_hash,
+        t1_0.event_id,
+        t1_0.holder_name,
+        t1_0.holder_phone,
+        t1_0.qr_code,
+        t1_0.serial,
+        t1_0.tier_code 
+    from
+        tickets t1_0 
+    where
+        t1_0.qr_code=?
+Hibernate: 
+    select
+        t1_0.id,
+        t1_0.active,
+        t1_0.bound_device_hash,
+        t1_0.event_id,
+        t1_0.holder_name,
+        t1_0.holder_phone,
+        t1_0.qr_code,
+        t1_0.serial,
+        t1_0.tier_code 
+    from
+        tickets t1_0 
+    where
+        t1_0.qr_code=?
+2025-10-20T19:09:03.404+03:00 TRACE 32980 --- [           main] org.hibernate.orm.jdbc.bind              : binding parameter (1:VARCHAR) <- [WALKIN-G2025-DEVICE123]
+]]></system-out>
+  </testcase>
+</testsuite>

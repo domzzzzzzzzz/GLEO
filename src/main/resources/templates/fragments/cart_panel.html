@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+<section th:fragment="panel" id="cart-panel">
+  <div class="cart-shell" id="cart-shell">
+    <div class="cart-header">
+      <div>
+        <h3>Cart Summary</h3>
+        <div class="muted" th:text="'Event - ' + ${event.name}">Event title</div>
+      </div>
+      <div th:if="${!#lists.isEmpty(cartSummary.groups)}">
+        <form th:action="@{|/e/${event.code}/cart/clear|}" method="post"
+              th:attr="hx-post=@{|/e/${event.code}/cart/clear|}"
+              hx-target="#cart-panel" hx-swap="outerHTML">
+          <button class="btn btn-muted" type="submit">Clear Cart</button>
+        </form>
+      </div>
+    </div>
+
+    <div th:if="${errorMessage}" class="toast toast-error" th:text="${errorMessage}">Error</div>
+    <div th:if="${successMessage}" class="toast toast-success" th:text="${successMessage}">Saved</div>
+
+    <div th:if="${#lists.isEmpty(cartSummary.groups)}" class="empty-state">
+      <h4 style="margin:0 0 8px;">Your cart is empty</h4>
+      <p class="muted" style="margin:0;">Browse a vendor and add dishes to get started.</p>
+      <div style="margin-top:16px;">
+        <a th:href="@{|/e/${event.code}|}" class="btn btn-outline">Explore Vendors</a>
+      </div>
+    </div>
+
+    <div class="cart-groups" th:if="${!#lists.isEmpty(cartSummary.groups)}">
+      <div th:each="group : ${cartSummary.groups}" class="cart-vendor">
+        <div class="cart-vendor-header">
+          <div>
+            <div style="font-weight:600;font-size:1.05rem;" th:text="${group.vendorName}">Vendor</div>
+            <div class="muted" th:text="${group.lines.size()} + ' item(s)'">items</div>
+          </div>
+          <form th:action="@{|/e/${event.code}/cart/remove-group|}" method="post"
+                th:attr="hx-post=@{|/e/${event.code}/cart/remove-group|}"
+                hx-target="#cart-panel" hx-swap="outerHTML">
+            <input type="hidden" name="vendorId" th:value="${group.vendorId}"/>
+            <button class="btn btn-muted" type="submit">Remove Vendor</button>
+          </form>
+        </div>
+        <div class="cart-lines">
+          <div th:each="line : ${group.lines}" class="cart-line">
+            <div>
+              <strong th:text="${line.itemName}">Item name</strong>
+              <span class="muted" th:text="'x ' + ${line.qty}">x1</span>
+            </div>
+            <div th:text="${#numbers.formatDecimal(line.subtotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</div>
+          </div>
+        </div>
+        <div class="cart-total">
+          <span>Vendor total</span>
+          <span th:text="${#numbers.formatDecimal(group.total, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(cartSummary.groups)}">
+      <div class="cart-total" style="margin-top:24px;">
+        <span>Order total</span>
+        <span th:text="${#numbers.formatDecimal(cartSummary.grandTotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
+      </div>
+
+      <form th:action="@{|/e/${event.code}/checkout|}" method="post" class="qr-tools" id="checkout-form">
+        <div class="card-actions" style="margin:0;">
+          <button class="btn btn-primary" type="submit">Place Order</button>
+        </div>
+        <div class="muted" style="margin-top:12px;">
+          Orders are submitted as walk-ins. Ticket QR codes are no longer required.
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+</body>
+</html>

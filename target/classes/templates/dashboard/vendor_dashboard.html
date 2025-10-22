@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vendor Control · GLEO</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 th:text="'Vendor Portal · ' + (${user != null && user.vendor != null ? user.vendor.name : 'Vendor'})">Vendor Portal</h2>
+      <p class="muted">Monitor orders and guide guests through pickup.</p>
+    </div>
+    <div class="card" style="padding:12px 18px;">
+      <div class="muted">Quick actions</div>
+      <div class="card-actions" style="margin-top:10px;">
+        <a href="/logout" class="btn btn-muted">Sign out</a>
+      </div>
+    </div>
+  </div>
+
+  <section class="panel">
+    <h3>Live orders</h3>
+    <p class="muted" th:if="${orders == null || orders.isEmpty()}">No orders queued for this vendor yet.</p>
+    <div class="cart-groups" th:if="${orders != null}">
+      <div class="cart-vendor" th:each="order : ${orders}">
+        <div class="cart-vendor-header">
+          <div>
+            <div style="font-weight:600;">Order <span th:text="'#' + ${order.id}">#1</span></div>
+            <span class="muted" th:text="'Status: ' + ${order.status}">Status</span>
+          </div>
+          <a th:href="@{|/e/${order.event.code}/orders/${order.id}|}" class="btn btn-outline">View</a>
+        </div>
+        <div class="cart-lines">
+          <div class="cart-line" th:each="item : ${order.items}">
+            <div>
+              <strong th:text="${item.menuItem.name}">Item</strong>
+              <span class="muted" th:text="'x ' + ${item.qty}">x1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

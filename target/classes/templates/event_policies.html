@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="'Policies · ' + ${event.name}">Policies</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>Policies</h2>
+      <p class="muted" th:text="'Configure ordering rules for ' + ${event.name}">Event description</p>
+    </div>
+    <a th:href="@{|/e/${event.code}|}" class="btn btn-muted">&larr; Back to event</a>
+  </div>
+
+  <div th:if="${toastMessage}" class="toast toast-success" th:text="${toastMessage}">Saved</div>
+  <div th:if="${toastError}" class="toast toast-error" th:text="${toastError}">Error</div>
+
+  <div class="split-layout">
+    <section class="panel">
+      <h3>Checkout behaviour</h3>
+      <p class="muted">Control how guests interact with vendors, pickup flows, and open orders.</p>
+      <form th:action="@{|/admin/events/${event.code}/policy|}" method="post" class="policy-form">
+        <label class="policy-toggle">
+          <input type="checkbox" name="enableGuestPickupConfirm" th:checked="${event.enableGuestPickupConfirm}"/>
+          <span>
+            <strong>Guest pickup confirmation</strong>
+            <small>Allow guests to mark orders as collected from their device.</small>
+          </span>
+        </label>
+        <label class="policy-toggle">
+          <input type="checkbox" name="requireVendorPinForPickup" th:checked="${event.requireVendorPinForPickup}"/>
+          <span>
+            <strong>Require vendor PIN for pickup</strong>
+            <small>Staff must enter their PIN to confirm pickup.</small>
+          </span>
+        </label>
+        <label class="policy-toggle">
+          <input type="checkbox" name="enableMultiVendorCart" th:checked="${event.enableMultiVendorCart}"/>
+          <span>
+            <strong>Multi-vendor cart</strong>
+            <small>Guests can mix items from different vendors in a single checkout.</small>
+          </span>
+        </label>
+        <label class="policy-toggle">
+          <input type="checkbox" name="blockAddWhenOpenOrder" th:checked="${event.blockAddWhenOpenOrder}"/>
+          <span>
+            <strong>Block new orders with open ticket</strong>
+            <small>Prevents adding more items while there is an order still in progress with a vendor.</small>
+          </span>
+        </label>
+        <label class="policy-toggle">
+          <input type="checkbox" name="regularOneItemPerVendor" th:checked="${event.regularOneItemPerVendor}"/>
+          <span>
+            <strong>Legacy regular limit</strong>
+            <small>Retains the original “one item per vendor” rule for regular guests.</small>
+          </span>
+        </label>
+        <div class="panel-footer">
+          <button class="btn btn-primary" type="submit">Save policies</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h3>Ticket tier allowances</h3>
+      <p class="muted">Define how many items each ticket tier can request per vendor.</p>
+      <div class="tier-grid">
+        <div class="tier-card" th:each="tier : ${tiers}" th:with="policy=${tierPolicies[tier]}">
+          <form th:action="@{|/admin/events/${event.code}/tier-policy|}" method="post" class="tier-form" th:object="${policy}">
+            <h4 th:text="${tier.name()} + ' tier'">Tier</h4>
+            <input type="hidden" name="tierCode" th:value="${tier}"/>
+
+            <label class="policy-toggle subtle">
+              <input type="radio" name="accessMode" value="full"
+                     th:checked="${policy == null or policy.unlimited}"/>
+              <span>
+                <strong>Full access</strong>
+                <small>No per-vendor limit applies to this tier.</small>
+              </span>
+            </label>
+
+            <label class="policy-toggle subtle">
+              <input type="radio" name="accessMode" value="limit"
+                     th:checked="${policy != null and !policy.unlimited}"/>
+              <span>
+                <strong>Limited items per vendor</strong>
+                <small>Specify how many items can be redeemed per vendor.</small>
+              </span>
+            </label>
+
+            <div class="limit-input" th:classappend="${policy == null or policy.unlimited} ? 'disabled' : ''">
+              <label for="limit-[[${tier.name()}]]" class="muted">Maximum items per vendor</label>
+              <input type="number"
+                     th:id="'limit-' + ${tier.name()}"
+                     name="maxItemsPerVendor"
+                     min="1"
+                     th:disabled="${policy == null or policy.unlimited}"
+                     th:value="${policy != null && policy.maxItemsPerVendor != null ? policy.maxItemsPerVendor : 1}"/>
+            </div>
+
+            <div class="panel-footer">
+              <button class="btn btn-primary" type="submit">Update</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.tier-card').forEach(function (card) {
+      const fullRadio = card.querySelector('input[type="radio"][value="full"]');
+      const limitRadio = card.querySelector('input[type="radio"][value="limit"]');
+      const limitContainer = card.querySelector('.limit-input');
+      const limitInput = limitContainer.querySelector('input[type="number"]');
+
+      function updateState() {
+        const limited = limitRadio.checked;
+        limitContainer.classList.toggle('disabled', !limited);
+        limitInput.disabled = !limited;
+      }
+
+      [fullRadio, limitRadio].forEach(function (radio) {
+        radio.addEventListener('change', updateState);
+      });
+
+      updateState();
+    });
+  });
+</script>
+</body>
+</html>

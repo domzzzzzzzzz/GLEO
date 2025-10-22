@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${event.name} + ' - GLEO'">GLEO Event</title>
+  <link th:href="@{/css/tailwind.css?v=20241020}" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 th:text="${event.name}">Event</h1>
+      <p class="muted" th:text="'Code: ' + ${event.code}">Event code</p>
+    </div>
+    <div class="page-header-actions">
+      <a th:href="@{|/e/${event.code}/checkout|}" class="btn btn-outline">View my orders</a>
+      <div class="cart-pill">
+        <div>
+          <span class="cart-pill-label">Your cart</span>
+          <span class="cart-pill-sub" th:text="${cartSummary.formattedItemCount()}">Cart is empty</span>
+        </div>
+        <a th:href="@{|/e/${event.code}/cart|}" class="btn btn-primary btn-cart">Open cart</a>
+      </div>
+    </div>
+  </div>
+
+  <section class="section section-vendors">
+    <div class="card section-card">
+      <div class="vendor-meta">
+        <h3 style="margin:0;">Food &amp; beverage partners</h3>
+        <span class="badge" th:text="${#lists.size(vendors)} + ' active vendor(s)'">0 vendors</span>
+      </div>
+      <p class="muted" style="margin:0;">
+        Each vendor receives orders routed in real-time with tier-aware limits.
+      </p>
+    </div>
+    <div class="grid-vendors">
+      <div class="card vendor-card" th:each="vendor : ${vendors}">
+        <div class="vendor-photo vendor-photo--card"
+             th:classappend="${vendor.imagePath} == null ? ' vendor-photo--empty' : ''">
+          <img th:if="${vendor.imagePath != null}"
+               th:src="${vendor.imagePath}"
+               th:alt="${vendor.name} + ' photo'">
+          <span th:if="${vendor.imagePath == null}"
+                th:text="${#strings.isEmpty(vendor.name) ? 'V' : #strings.toUpperCase(#strings.substring(vendor.name,0,1))}">V</span>
+        </div>
+        <div class="vendor-card-body vendor-card-main"
+             th:with="chipString=${vendor.name == 'BRGR' ? 'BURGERS,SANDWICHES,DRINKS' :
+                             (vendor.name == 'DESOUKY&amp;SODA' ? 'BURGERS,GRILL,DRINKS' :
+                             'COFFEE,PASTRIES,SNACKS')}">
+          <div class="vendor-card-title">
+            <h3 th:text="${vendor.name}">Vendor</h3>
+          </div>
+          <div class="vendor-card-meta">
+            <span class="vendor-chip"
+                  th:each="chip,iter : ${chipString.split(',')}"
+                  th:classappend="${iter.index == 0} ? ' vendor-chip--primary' : ' vendor-chip--muted'"
+                  th:text="${chip}">CATEGORY</span>
+          </div>
+          <p class="vendor-card-subtext">Tap below to manage this vendor's live menu.</p>
+        </div>
+        <div class="card-actions vendor-card-actions">
+          <a th:href="@{|/e/${event.code}/v/${vendor.id}|}" class="btn btn-primary vendor-card-button">Browse menu</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

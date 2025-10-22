@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${event.name} + ' - Usher board'">Usher board</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 th:text="${event.name} + ' - Usher board'">GLEO Usher board</h2>
+      <p class="muted">Track guest pickups across vendors and keep the queue moving.</p>
+    </div>
+    <a th:href="@{|/e/${event.code}|}" class="btn btn-muted">&larr; Back to guest view</a>
+  </div>
+
+  <div class="panel" style="margin-bottom:24px;">
+    <form method="get" class="usher-filter">
+      <label for="ticket-filter">Filter by ticket, serial, or guest name</label>
+      <div class="usher-filter-inputs">
+        <input id="ticket-filter" name="ticket" type="text" class="qty-input"
+               placeholder="e.g. VIP-001 or Sara"
+               th:value="${ticketFilter}">
+        <button class="btn btn-outline" type="submit">Apply filter</button>
+        <a th:href="@{|/e/${event.code}/usher|}" class="btn btn-muted">Clear</a>
+      </div>
+    </form>
+
+    <div th:if="${message != null}" class="toast toast-success" th:text="${message}">Action saved.</div>
+    <div th:if="${error != null}" class="toast toast-error" th:text="${error}">There was a problem.</div>
+
+    <div class="muted" th:if="${requirePin}" style="margin-top:12px;">
+      Completing an order requires the vendor PIN for verification.
+    </div>
+    <div class="muted" th:if="${!guestConfirmEnabled}" style="margin-top:6px;">
+      Guest self-confirmation is disabled; ushers must advance orders manually.
+    </div>
+  </div>
+
+  <div id="usher-board-live"
+       th:fragment="board">
+    <div th:if="${!hasAnyOrders}" class="card">
+      <h3 style="margin-top:0;">No orders yet</h3>
+      <p class="muted" style="margin:0;">Orders will appear here as soon as guests check out.</p>
+    </div>
+
+    <div class="usher-grid" th:if="${hasAnyOrders}">
+      <div class="card usher-column" th:each="bucket : ${statusBuckets}">
+        <div class="usher-column-header">
+          <div>
+            <h3 th:text="${bucket.label}">Status label</h3>
+            <span class="muted" th:text="${bucket.orders.size()} + ' order(s)'">0 orders</span>
+          </div>
+        </div>
+
+        <p class="muted" th:if="${!bucket.hasOrders()}">Nothing queued in this column.</p>
+
+        <div class="usher-order" th:each="order : ${bucket.orders}">
+          <div class="usher-order-header">
+            <div>
+              <strong th:text="'Order #' + ${order.id}">#1</strong>
+              <span class="muted" th:text="${#temporals.format(order.createdAt, 'HH:mm')}">12:30</span>
+            </div>
+            <span class="order-status-badge" th:text="${order.status}">NEW</span>
+          </div>
+
+          <div class="usher-order-meta">
+            <div>
+              <span class="muted">Vendor</span>
+              <div class="usher-order-meta-value" th:text="${order.vendor.name}">Vendor</div>
+            </div>
+            <div>
+              <span class="muted">Guest</span>
+              <div class="usher-order-meta-value" th:text="${order.ticket != null ? order.ticket.holderName : 'Unknown guest'}">Guest</div>
+            </div>
+            <div>
+              <span class="muted">Ticket</span>
+              <div class="usher-order-meta-value" th:text="${order.ticket != null ? order.ticket.qrCode : 'N/A'}">QR</div>
+            </div>
+          </div>
+
+          <ul class="usher-line-items">
+            <li th:each="item : ${order.items}">
+              <span th:text="${item.menuItem.name}">Item</span>
+              <span class="muted" th:text="'x' + ${item.qty}">x1</span>
+            </li>
+          </ul>
+
+          <div class="usher-actions" th:if="${statusActionLabels.containsKey(bucket.status)}">
+            <form th:action="@{|/e/${event.code}/usher/orders/${order.id}/advance|}" method="post" class="usher-action-primary">
+              <div th:if="${bucket.status == T(com.fbcorp.gleo.domain.OrderStatus).READY and requirePin}">
+                <label class="muted" th:for="'pin-' + ${order.id}">Vendor PIN</label>
+                <input th:id="'pin-' + ${order.id}" name="pin" type="password" class="qty-input" placeholder="Last 4 digits" required>
+              </div>
+              <button class="btn btn-primary" type="submit"
+                      th:text="${statusActionLabels[bucket.status]}">Advance</button>
+            </form>
+
+            <form th:if="${bucket.status == T(com.fbcorp.gleo.domain.OrderStatus).NEW or bucket.status == T(com.fbcorp.gleo.domain.OrderStatus).PREPARING}"
+                  th:action="@{|/e/${event.code}/usher/orders/${order.id}/cancel|}"
+                  method="post">
+              <button class="btn btn-muted" type="submit">Cancel order</button>
+            </form>
+          </div>
+
+          <div class="usher-actions" th:if="${bucket.status == T(com.fbcorp.gleo.domain.OrderStatus).COMPLETED}">
+            <span class="muted">Completed by guest pickup.</span>
+          </div>
+
+          <div class="usher-actions" th:if="${bucket.status == T(com.fbcorp.gleo.domain.OrderStatus).CANCELLED}">
+            <span class="muted">Order cancelled.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

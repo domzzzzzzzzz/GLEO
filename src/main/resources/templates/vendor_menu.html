@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="${vendor.name} + ' - ' + ${event.name}">Vendor Menu</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+  <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
+  <script src="/js/cart.js"></script>
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <a th:href="@{|/e/${event.code}|}" class="btn btn-muted">&larr; Back to vendors</a>
+      <h2 style="margin-top:16px;" th:text="${vendor.name}">Vendor</h2>
+      <div class="muted" th:text="'Serving ' + ${event.name}">Event name</div>
+    </div>
+    <div class="page-header-actions">
+      <a th:href="@{|/e/${event.code}/checkout|}" class="btn btn-outline">View my orders</a>
+      <div class="policies-chip">
+        <span>Cart mode:</span>
+        <strong th:text="${multiVendorEnabled} ? 'Multi-vendor' : 'Single vendor only'">Multi</strong>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-region"></div>
+
+  <div class="vendor-photo vendor-photo--hero"
+       th:classappend="${vendor.imagePath} == null ? ' vendor-photo--empty' : ''">
+    <img th:if="${vendor.imagePath != null}"
+         th:src="${vendor.imagePath}"
+         th:alt="${vendor.name} + ' preview'">
+    <span th:if="${vendor.imagePath == null}"
+          th:text="${#strings.isEmpty(vendor.name) ? 'V' : #strings.toUpperCase(#strings.substring(vendor.name,0,1))}">V</span>
+  </div>
+
+  <div class="layout-columns">
+    <section>
+      <h3 class="section-title">Menu</h3>
+      <div class="menu-grid">
+        <div class="menu-card" th:each="item : ${items}">
+          <div>
+            <h4 th:text="${item.name}">Item name</h4>
+            <div class="menu-meta">
+              <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
+              <span th:text="${item.available} ? 'Available' : 'Sold out'">status</span>
+            </div>
+          </div>
+          <form th:action="@{|/e/${event.code}/cart/add|}" method="post"
+                th:attr="hx-post=@{|/e/${event.code}/cart/add|}"
+                hx-target="#cart-panel"
+                hx-swap="outerHTML"
+                class="menu-actions">
+            <input type="hidden" name="itemId" th:value="${item.id}"/>
+            <input class="qty-input" type="number" name="qty" min="1" value="1"/>
+            <button class="btn btn-primary" type="submit" th:disabled="${!item.available}">
+              <span th:text="${item.available} ? 'Add to cart' : 'Unavailable'">Add to cart</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <aside id="cart-panel"
+           hx-trigger="load"
+           hx-swap="outerHTML"
+           th:attr="hx-get=@{|/e/${event.code}/cart|}">
+      <div class="card">
+        Loading cart...
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.setupCartPanel) {
+      window.setupCartPanel();
+    }
+  });
+
+  document.addEventListener('htmx:afterSwap', function (event) {
+    if (event.detail && event.detail.target && event.detail.target.id === 'cart-panel') {
+      if (window.setupCartPanel) {
+        window.setupCartPanel();
+      }
+    }
+  });
+</script>
+</body>
+</html>
