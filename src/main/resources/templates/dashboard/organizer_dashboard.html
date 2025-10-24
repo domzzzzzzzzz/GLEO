@@ -2,93 +2,538 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Organizer Control · GLEO</title>
+  <title>Organizer Control - GLEO</title>
   <link href="/css/tailwind.css" rel="stylesheet">
+  <link href="/css/organizer.css" rel="stylesheet">
 </head>
 <body>
 <div class="page">
   <div class="page-header">
     <div>
       <h2 th:text="'Welcome, ' + (${user != null ? user.username : 'Organizer'})">Welcome, organizer</h2>
-      <p class="muted">Manage your event, onboard vendors, and keep ticket data up to date.</p>
+      <p class="muted">Manage your event, onboard vendors, and keep trucks ready for rush hours.</p>
     </div>
-    <div class="card" style="padding:12px 18px;">
-      <div class="muted">Quick actions</div>
-      <div class="card-actions" style="margin-top:10px;">
-        <a th:if="${event != null}" th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-outline">Event policies</a>
-        <a href="/logout" class="btn btn-muted">Sign out</a>
-      </div>
+    <div class="quick-actions-card">
+      <div class="muted" style="font-weight:600;">Quick actions</div>
+      <a th:if="${event != null}" th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-outline">Event policies</a>
+      <a href="/logout" class="btn btn-muted">Sign out</a>
     </div>
   </div>
 
   <div th:if="${toastMessage}" class="toast toast-success" th:text="${toastMessage}">Saved</div>
   <div th:if="${toastError}" class="toast toast-error" th:text="${toastError}">Error</div>
+  <div th:if="${toastDetail}" class="card muted" style="margin-bottom:16px;padding:14px 18px;background:rgba(248,250,252,0.85);" th:text="${toastDetail}">Details</div>
 
-  <section class="split-layout" th:if="${event != null}">
-    <div class="panel">
-      <h3 th:text="'Event · ' + ${event.name}">Your event</h3>
-      <p class="muted" th:text="'Code: ' + ${event.code}">Event code</p>
+  <div th:if="${event == null}" class="card">
+    <h3>No event assigned yet</h3>
+    <p class="muted">Ask an administrator to link your account to an event so you can start onboarding vendors and importing tickets.</p>
+  </div>
 
-      <div class="policy-grid" th:if="${tierPolicies != null}">
-        <div class="tier-card" th:each="policy : ${tierPolicies}">
-          <h4 th:text="${policy.tierCode} + ' tier'">Tier</h4>
-          <p class="muted"
-             th:text="${policy.unlimited} ? 'Full vendor access' : 'Limited to ' + ${policy.maxItemsPerVendor} + ' item(s) per vendor'">
-            Tier info
-          </p>
-        </div>
-      </div>
-
-      <div class="panel-footer">
-        <a th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-primary">Adjust policies</a>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h3>Onboard vendors</h3>
-      <form th:action="@{|/organizer/events/${event.code}/vendors|}" method="post"
-            style="display:flex;flex-direction:column;gap:12px;">
-        <input class="qty-input" type="text" name="name" placeholder="Vendor name" required>
-        <input class="qty-input" type="text" name="pin" placeholder="Optional pickup PIN">
-        <button class="btn btn-primary" type="submit">Add vendor</button>
-      </form>
-
-      <h3 style="margin-top:28px;">Import tickets</h3>
-      <form th:action="@{|/organizer/events/${event.code}/tickets/upload|}" method="post"
-            enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:12px;">
-        <input type="file" name="file" accept=".csv" required>
-        <button class="btn btn-outline" type="submit">Upload CSV</button>
-      </form>
-      <p class="muted" style="margin-top:8px; font-size:0.85rem;">Format: QR,TIER(VIP|REG),Holder name,Phone[,Serial]</p>
-    </div>
-  </section>
-
-  <section class="panel" style="margin-top:24px;" th:if="${vendors != null}">
-    <h3>Active vendors</h3>
-    <p class="muted" th:if="${vendors.isEmpty()}">No vendors registered yet.</p>
-    <div class="cart-groups" th:if="${!vendors.isEmpty()}">
-      <div class="cart-vendor" th:each="vendor : ${vendors}">
-        <div class="cart-vendor-header">
+  <div th:if="${event != null}" class="organizer-layout">
+    <div class="organizer-main">
+      <section class="card organizer-hero">
+        <div class="overview-header">
           <div>
-            <div style="font-weight:600;" th:text="${vendor.name}">Vendor</div>
-            <span class="muted" th:text="${vendor.active} ? 'Active' : 'Inactive'">Active</span>
+            <div class="overview-eyebrow">Current event</div>
+            <h3 style="margin:0;" th:text="${event.name}">Event name</h3>
+            <p class="muted" th:text="'Manage access and experience for ' + ${event.code}">Event description</p>
+          </div>
+          <div class="event-code-chip" th:text="${event.code}">CODE</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Completed orders</span>
+            <span class="stat-value" th:text="${eventCompletedOrders != null ? eventCompletedOrders : 0}">0</span>
+            <span class="stat-meta">Orders confirmed by staff or guests</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Items served</span>
+            <span class="stat-value" th:text="${eventItemsSold != null ? eventItemsSold : 0}">0</span>
+            <span class="stat-meta">Total items handed over</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Active vendors</span>
+            <span class="stat-value" th:text="${totalActiveVendors != null ? totalActiveVendors : 0}">0</span>
+            <span class="stat-meta">Trucks currently visible</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Revenue (EGP)</span>
+            <span class="stat-value" th:text="${eventRevenue != null ? #numbers.formatDecimal(eventRevenue, 1, 'DEFAULT', 2, 'DEFAULT') : '0.00'}">0.00</span>
+            <span class="stat-meta">Based on completed orders</span>
           </div>
         </div>
-        <p class="muted" th:text="${vendor.pinPlain} != null ? 'PIN: ' + ${vendor.pinPlain} : 'No PIN set'">PIN</p>
-      </div>
-    </div>
-  </section>
 
-  <section class="panel" style="margin-top:24px;" th:if="${orders != null}">
-    <h3>Order flow</h3>
-    <p class="muted" th:if="${orders.isEmpty()}">No orders received yet.</p>
-    <div class="policy-grid" th:if="${statusSummary != null}">
-      <div class="tier-card" th:each="entry : ${statusSummary}">
-        <h4 th:text="${entry.key}">Status</h4>
-        <p class="muted" th:text="${entry.value} + ' order(s)'">Count</p>
+        <div class="tier-badges" th:if="${tierPolicies != null}">
+          <div class="tier-badge" th:each="policy : ${tierPolicies}">
+            <span th:text="${policy.tierCode} + ' tier'">Tier</span>
+            <small th:text="${policy.unlimited} ? 'Full vendor access' : 'Limit: ' + ${policy.maxItemsPerVendor} + ' per vendor'">Details</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel vendor-section">
+        <header>
+          <div>
+            <h3>Vendor roster</h3>
+            <p class="muted">Monitor performance, adjust menus, and keep trucks ready for rush hours.</p>
+          </div>
+        </header>
+
+        <div class="vendor-controls" th:if="${(totalActiveVendors + totalArchivedVendors) > 0}">
+          <form class="vendor-controls-group" method="get" th:action="@{/dashboard}">
+            <input class="search-input" type="search" name="vendorQuery" placeholder="Search vendors" th:value="${vendorQuery}">
+            <select class="select-input" name="vendorStatus">
+              <option value="all" th:selected="${vendorStatus == 'all'}">All</option>
+              <option value="active" th:selected="${vendorStatus == 'active'}">Active</option>
+              <option value="archived" th:selected="${vendorStatus == 'archived'}">Archived</option>
+            </select>
+            <select class="select-input" name="vendorSort">
+              <option value="name" th:selected="${vendorSort == 'name'}">Name A-Z</option>
+              <option value="revenue" th:selected="${vendorSort == 'revenue'}">Revenue (High-Low)</option>
+            </select>
+            <button class="btn btn-outline" type="submit">Apply</button>
+            <a class="btn btn-muted" th:href="@{/dashboard}">Reset</a>
+            <span class="vendor-counts" th:text="'Active: ' + ${totalActiveVendors} + ' - Archived: ' + ${totalArchivedVendors}"></span>
+          </form>
+          <div class="bulk-actions">
+            <select class="select-input" id="vendor-bulk-action-select">
+              <option value="">Bulk actions</option>
+              <option value="activate">Activate selected</option>
+              <option value="archive">Archive selected</option>
+            </select>
+            <button class="btn btn-outline" type="button" id="vendor-bulk-apply">Apply</button>
+          </div>
+        </div>
+
+        <form th:if="${(totalActiveVendors + totalArchivedVendors) > 0}" th:action="@{|/organizer/events/${event.code}/vendors/bulk|}" method="post" id="vendor-bulk-form">
+          <input type="hidden" name="action" id="vendor-bulk-action-input">
+          <input type="hidden" name="vendorQuery" th:value="${vendorQuery}">
+          <input type="hidden" name="vendorStatus" th:value="${vendorStatus}">
+          <input type="hidden" name="vendorSort" th:value="${vendorSort}">
+        </form>
+
+        <div th:if="${vendorStatus != 'archived'}"
+             th:with="activeList=${vendorsActive != null ? vendorsActive : vendors}">
+          <div class="empty-state" th:if="${activeFilteredCount == null || activeFilteredCount == 0}">
+            <span th:if="${totalActiveVendors == 0}">No active vendors registered yet. Use the form to the right to add your first truck.</span>
+            <span th:unless="${totalActiveVendors == 0}">No active vendors match the current filters.</span>
+          </div>
+
+          <div class="vendor-roster" th:if="${activeFilteredCount != null && activeFilteredCount > 0}">
+            <article class="roster-card"
+                   th:classappend="${!vendor.active} ? ' roster-card--archived' : ''"
+                   th:each="vendor : ${activeList}"
+                   th:if="${vendor.active}"
+                    th:with="menu=${vendorMenus != null ? vendorMenus[vendor.id] : null},
+                             sales=${vendorSales != null ? vendorSales[vendor.id] : null}">
+            <div class="roster-header">
+              <div class="roster-title">
+                <h4 class="roster-name" th:text="${vendor.name}">Vendor</h4>
+                <div class="roster-subtext">
+                  <span th:text="${vendor.pinPlain} != null ? 'PIN ' + ${vendor.pinPlain} : 'No pickup PIN'">PIN</span>
+                  <span th:if="${vendor.imagePath}"> - Image stored</span>
+                </div>
+              </div>
+              <div class="roster-actions">
+                <label class="vendor-select-toggle">
+                  <input type="checkbox" name="vendorIds" th:value="${vendor.id}" form="vendor-bulk-form">
+                  <span>Select</span>
+                </label>
+                <span class="status-chip" th:classappend="${!vendor.active} ? ' inactive'" th:text="${vendor.active} ? 'Active' : 'Archived'">Active</span>
+                <form th:if="${vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete|}" method="post"
+                      onsubmit="return confirm('Remove this vendor from the event?');">
+                  <button class="btn btn-danger btn-sm" type="submit">Remove</button>
+                </form>
+                <form th:if="${!vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/restore|}" method="post">
+                  <button class="btn btn-outline btn-sm" type="submit">Restore</button>
+                </form>
+                <form th:if="${!vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete-permanent|}" method="post"
+                      onsubmit="return confirm('Permanently delete this vendor and its menu? This cannot be undone.');">
+                  <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                </form>
+              </div>
+            </div>
+            <div class="roster-media" th:if="${vendor.imagePath}">
+              <img th:src="${vendor.imagePath}" th:alt="${vendor.name} + ' logo'" class="vendor-logo">
+            </div>
+
+            <div class="roster-stats">
+              <div class="roster-stat">
+                <span class="roster-stat-label">All orders</span>
+                <span class="roster-stat-value" th:text="${sales != null ? sales.totalOrders : 0}">0</span>
+              </div>
+              <div class="roster-stat">
+                <span class="roster-stat-label">Completed</span>
+                <span class="roster-stat-value" th:text="${sales != null ? sales.completedOrders : 0}">0</span>
+              </div>
+              <div class="roster-stat">
+                <span class="roster-stat-label">Items served</span>
+                <span class="roster-stat-value" th:text="${sales != null ? sales.itemsSold : 0}">0</span>
+              </div>
+              <div class="roster-stat">
+                <span class="roster-stat-label">Revenue (EGP)</span>
+                <span class="roster-stat-value" th:text="${sales != null ? #numbers.formatDecimal(sales.revenue, 1, 'DEFAULT', 2, 'DEFAULT') : '0.00'}">0.00</span>
+              </div>
+            </div>
+
+            <div class="roster-menu">
+              <h5>Menu</h5>
+              <p class="muted" th:if="${menu == null || #lists.isEmpty(menu)}">No menu items yet.</p>
+              <ul class="menu-list" th:if="${menu != null && !#lists.isEmpty(menu)}">
+                <li th:each="item : ${menu}">
+                  <strong th:text="${item.name}">Item name</strong>
+                  <span>
+                    <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
+                    <span th:if="${item.maxPerOrder != null}" th:text="' - Max ' + ${item.maxPerOrder}">Limit</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu|}" method="post" class="menu-add-form">
+              <div class="input-group">
+                <label th:for="'item-name-' + ${vendor.id}">Add menu item</label>
+                <input class="field-input" th:id="'item-name-' + ${vendor.id}" type="text" name="name" placeholder="Item name" required>
+              </div>
+              <div class="menu-add-row">
+                <div class="input-group">
+                  <label th:for="'item-price-' + ${vendor.id}">Price (EGP)</label>
+                  <input class="field-input" th:id="'item-price-' + ${vendor.id}" type="number" name="price" min="0" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="input-group">
+                  <label th:for="'item-max-' + ${vendor.id}">Max per order</label>
+                  <input class="field-input" th:id="'item-max-' + ${vendor.id}" type="number" name="maxPerOrder" min="1" placeholder="Optional">
+                </div>
+              </div>
+              <div class="menu-add-actions">
+                <button class="btn btn-outline" type="submit">Add menu item</button>
+              </div>
+            </form>
+
+            <details class="roster-edit">
+              <summary>Edit vendor</summary>
+              <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/edit|}" method="post" enctype="multipart/form-data" class="menu-add-form">
+                <div class="input-group">
+                  <label th:for="'edit-name-' + ${vendor.id}">Display name</label>
+                  <input class="field-input" th:id="'edit-name-' + ${vendor.id}" type="text" name="name" th:value="${vendor.name}" required>
+                </div>
+                <div class="input-group">
+                  <label th:for="'edit-pin-' + ${vendor.id}">Pickup PIN</label>
+                  <input class="field-input" th:id="'edit-pin-' + ${vendor.id}" type="text" name="pin" placeholder="Optional" th:value="${vendor.pinPlain}">
+                </div>
+                <div class="input-group">
+                  <label th:for="'edit-image-' + ${vendor.id}">New image</label>
+                  <div class="dropzone"
+                       th:attr="id=${'dropzone-edit-' + vendor.id}"
+                       data-dropzone data-max-size="5242880"
+                       th:classappend="${vendor.imagePath} != null ? ' dropzone--has-image' : ''">
+                    <span class="dropzone__prompt" data-dropzone-prompt>Drag & drop, or click to replace</span>
+                    <img data-dropzone-preview
+                         alt="Vendor preview"
+                         th:src="${vendor.imagePath != null ? vendor.imagePath : ''}"
+                         th:style="${vendor.imagePath == null} ? 'display:none;' : ''"
+                         th:attr="data-initial-src=${vendor.imagePath != null ? vendor.imagePath : ''}">
+                    <div class="dropzone__error" data-dropzone-error></div>
+                    <input class="field-input" th:id="'edit-image-' + ${vendor.id}" type="file" name="image" accept="image/*">
+                  </div>
+                  <small class="muted">Upload to replace the current logo.</small>
+                </div>
+                <div class="input-group" th:if="${vendor.imagePath}">
+                  <label class="checkbox-inline">
+                    <input type="checkbox" name="removeImage" value="true"
+                           th:attr="data-dropzone-target=${'dropzone-edit-' + vendor.id}">
+                    <span>Remove current image</span>
+                  </label>
+                </div>
+                <div class="menu-add-actions">
+                  <button class="btn btn-primary" type="submit">Save changes</button>
+                </div>
+              </form>
+            </details>
+          </article>
+        </div>
       </div>
+
+      <div class="archived-section" th:if="${vendorStatus != 'active'}"
+           th:with="archivedList=${vendorsArchived != null ? vendorsArchived : vendors}">
+        <div class="archived-section__header">
+          <h4>Archived vendors</h4>
+          <span class="muted" th:text="${'Archived: ' + (archivedFilteredCount != null ? archivedFilteredCount : 0)}"></span>
+        </div>
+        <div class="archived-empty" th:if="${archivedFilteredCount == null || archivedFilteredCount == 0}">
+          <span th:if="${totalArchivedVendors == 0}">No vendors archived yet.</span>
+          <span th:unless="${totalArchivedVendors == 0}">No archived vendors match the current filters.</span>
+        </div>
+        <div class="archived-list" th:if="${archivedFilteredCount != null && archivedFilteredCount > 0}">
+          <article class="roster-card"
+                   th:classappend="${!vendor.active} ? ' roster-card--archived' : ''"
+                   th:each="vendor : ${archivedList}"
+                   th:if="${!vendor.active}"
+                   th:with="menu=${vendorMenus != null ? vendorMenus[vendor.id] : null},
+                            sales=${vendorSales != null ? vendorSales[vendor.id] : null}">
+            <div class="roster-header">
+              <div class="roster-title">
+                <h4 class="roster-name" th:text="${vendor.name}">Vendor</h4>
+                <div class="roster-subtext">
+                  <span th:text="${vendor.pinPlain} != null ? 'PIN ' + ${vendor.pinPlain} : 'No pickup PIN'">PIN</span>
+                  <span th:if="${vendor.imagePath}"> - Image stored</span>
+                </div>
+              </div>
+              <div class="roster-actions">
+                <label class="vendor-select-toggle">
+                  <input type="checkbox" name="vendorIds" th:value="${vendor.id}" form="vendor-bulk-form">
+                  <span>Select</span>
+                </label>
+                <span class="status-chip" th:classappend="${!vendor.active} ? ' inactive'" th:text="${vendor.active} ? 'Active' : 'Archived'">Archived</span>
+                <form th:if="${vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete|}" method="post"
+                      onsubmit="return confirm('Remove this vendor from the event?');">
+                  <button class="btn btn-danger btn-sm" type="submit">Remove</button>
+                </form>
+                <form th:if="${!vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/restore|}" method="post">
+                  <button class="btn btn-outline btn-sm" type="submit">Restore</button>
+                </form>
+                <form th:if="${!vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete-permanent|}" method="post"
+                      onsubmit="return confirm('Permanently delete this vendor and its menu? This cannot be undone.');">
+                  <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                </form>
+              </div>
+            </div>
+            <div class="roster-media" th:if="${vendor.imagePath}">
+              <img th:src="${vendor.imagePath}" th:alt="${vendor.name} + ' logo'" class="vendor-logo">
+            </div>
+
+            <div class="roster-stats">
+              <div class="roster-stat">
+                <span class="roster-stat-label">All orders</span>
+                <span class="roster-stat-value" th:text="${sales != null ? sales.totalOrders : 0}">0</span>
+              </div>
+              <div class="roster-stat">
+                <span class="roster-stat-label">Completed</span>
+                <span class="roster-stat-value" th:text="${sales != null ? sales.completedOrders : 0}">0</span>
+              </div>
+              <div class="roster-stat">
+                <span class="roster-stat-label">Items served</span>
+                <span class="roster-stat-value" th:text="${sales != null ? sales.itemsSold : 0}">0</span>
+              </div>
+              <div class="roster-stat">
+                <span class="roster-stat-label">Revenue (EGP)</span>
+                <span class="roster-stat-value" th:text="${sales != null ? #numbers.formatDecimal(sales.revenue, 1, 'DEFAULT', 2, 'DEFAULT') : '0.00'}">0.00</span>
+              </div>
+            </div>
+
+            <div class="roster-menu">
+              <h5>Menu</h5>
+              <p class="muted" th:if="${menu == null || #lists.isEmpty(menu)}">No menu items yet.</p>
+              <ul class="menu-list" th:if="${menu != null && !#lists.isEmpty(menu)}">
+                <li th:each="item : ${menu}">
+                  <strong th:text="${item.name}">Item name</strong>
+                  <span>
+                    <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
+                    <span th:if="${item.maxPerOrder != null}" th:text="' - Max ' + ${item.maxPerOrder}">Limit</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu|}" method="post" class="menu-add-form">
+              <div class="input-group">
+                <label th:for="'item-name-' + ${vendor.id}">Add menu item</label>
+                <input class="field-input" th:id="'item-name-' + ${vendor.id}" type="text" name="name" placeholder="Item name" required>
+              </div>
+              <div class="menu-add-row">
+                <div class="input-group">
+                  <label th:for="'item-price-' + ${vendor.id}">Price (EGP)</label>
+                  <input class="field-input" th:id="'item-price-' + ${vendor.id}" type="number" name="price" min="0" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="input-group">
+                  <label th:for="'item-max-' + ${vendor.id}">Max per order</label>
+                  <input class="field-input" th:id="'item-max-' + ${vendor.id}" type="number" name="maxPerOrder" min="1" placeholder="Optional">
+                </div>
+              </div>
+              <div class="menu-add-actions">
+                <button class="btn btn-outline" type="submit">Add menu item</button>
+              </div>
+            </form>
+
+            <details class="roster-edit">
+              <summary>Edit vendor</summary>
+              <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/edit|}" method="post" enctype="multipart/form-data" class="menu-add-form">
+                <div class="input-group">
+                  <label th:for="'edit-name-' + ${vendor.id}">Display name</label>
+                  <input class="field-input" th:id="'edit-name-' + ${vendor.id}" type="text" name="name" th:value="${vendor.name}" required>
+                </div>
+                <div class="input-group">
+                  <label th:for="'edit-pin-' + ${vendor.id}">Pickup PIN</label>
+                  <input class="field-input" th:id="'edit-pin-' + ${vendor.id}" type="text" name="pin" placeholder="Optional" th:value="${vendor.pinPlain}">
+                </div>
+                <div class="input-group">
+                  <label th:for="'edit-image-' + ${vendor.id}">New image</label>
+                  <div class="dropzone"
+                       th:attr="id=${'dropzone-edit-' + vendor.id}"
+                       data-dropzone data-max-size="5242880"
+                       th:classappend="${vendor.imagePath} != null ? ' dropzone--has-image' : ''">
+                    <span class="dropzone__prompt" data-dropzone-prompt>Drag & drop, or click to replace</span>
+                    <img data-dropzone-preview
+                         alt="Vendor preview"
+                         th:src="${vendor.imagePath != null ? vendor.imagePath : ''}"
+                         th:style="${vendor.imagePath == null} ? 'display:none;' : ''"
+                         th:attr="data-initial-src=${vendor.imagePath != null ? vendor.imagePath : ''}">
+                    <div class="dropzone__error" data-dropzone-error></div>
+                    <input class="field-input" th:id="'edit-image-' + ${vendor.id}" type="file" name="image" accept="image/*">
+                  </div>
+                  <small class="muted">Upload to replace the current logo.</small>
+                </div>
+                <div class="input-group" th:if="${vendor.imagePath}">
+                  <label class="checkbox-inline">
+                    <input type="checkbox" name="removeImage" value="true"
+                           th:attr="data-dropzone-target=${'dropzone-edit-' + vendor.id}">
+                    <span>Remove current image</span>
+                  </label>
+                </div>
+                <div class="menu-add-actions">
+                  <button class="btn btn-primary" type="submit">Save changes</button>
+                </div>
+              </form>
+            </details>
+          </article>
+        </div>
+      </div>
+      </section>
     </div>
-  </section>
+
+    <aside class="organizer-sidebar">
+      <div class="card form-card">
+        <h3>Onboard vendors</h3>
+        <p class="muted">Add new trucks with optional pickup PINs and hero imagery to help ushers recognise them.</p>
+        <form th:action="@{|/organizer/events/${event.code}/vendors|}" method="post" enctype="multipart/form-data" class="form-grid">
+          <div class="input-group">
+            <label for="vendor-name">Display name</label>
+            <input id="vendor-name" class="field-input" type="text" name="name" placeholder="e.g. BRGR" required>
+          </div>
+          <div class="input-group">
+            <label for="vendor-pin">Pickup PIN</label>
+            <input id="vendor-pin" class="field-input" type="text" name="pin" placeholder="Optional 4-digit pin">
+          </div>
+          <div class="input-group">
+            <label for="vendor-image">Vendor image</label>
+            <div class="dropzone" id="dropzone-new-vendor" data-dropzone data-max-size="5242880">
+              <span class="dropzone__prompt" data-dropzone-prompt>Drag & drop an image, or click to browse</span>
+              <img data-dropzone-preview data-initial-src="" src="" alt="Vendor preview" style="display:none;">
+              <div class="dropzone__error" data-dropzone-error></div>
+              <input id="vendor-image" class="field-input" type="file" name="image" accept="image/*">
+            </div>
+            <small class="muted">PNG or JPG up to 5 MB.</small>
+          </div>
+          <button class="btn btn-primary" type="submit">Add vendor</button>
+        </form>
+      </div>
+
+      <div class="card form-card">
+        <h3>Import tickets</h3>
+        <p class="muted">Bulk-register guests by uploading a CSV or Excel sheet.</p>
+        <form th:action="@{|/organizer/events/${event.code}/tickets/upload|}" method="post" enctype="multipart/form-data" class="form-grid">
+          <div class="input-group">
+            <label for="ticket-file">Ticket file</label>
+            <input id="ticket-file" class="field-input" type="file" name="file" accept=".csv,.xls,.xlsx" required>
+          </div>
+          <a class="muted-link" th:href="@{|/organizer/events/${event.code}/tickets/template|}">Download template (CSV)</a>
+          <button class="btn btn-outline" type="submit">Upload sheet</button>
+          <div class="upload-note">Format: QR,TIER(VIP|REG),Holder name,Phone[,Serial] - first sheet used for Excel.</div>
+        </form>
+        <div class="import-summary" th:if="${importResult != null}">
+          <h4>Last import summary</h4>
+          <div class="import-summary-grid">
+            <div>
+              <span>Total rows</span>
+              <strong th:text="${importResult.total}">0</strong>
+            </div>
+            <div>
+              <span>Imported</span>
+              <strong th:text="${importResult.created}">0</strong>
+            </div>
+            <div>
+              <span>Duplicates</span>
+              <strong th:text="${importResult.duplicates}">0</strong>
+            </div>
+            <div>
+              <span>Invalid</span>
+              <strong th:text="${importResult.invalid}">0</strong>
+            </div>
+          </div>
+          <p class="muted" th:text="${importResult.summaryMessage()}">Summary</p>
+          <div class="import-summary-errors" th:if="${importResult.errors != null and !importResult.errors.isEmpty()}">
+            <div class="muted">Issues detected:</div>
+            <ul>
+              <li th:each="error : ${importResult.errors}" th:text="${error}">Row error</li>
+            </ul>
+          </div>
+        </div>
+        <div class="import-summary import-summary--history" th:if="${importHistory != null && !importHistory.isEmpty()}">
+          <div class="import-summary__header">Recent imports</div>
+          <ul class="import-summary__list">
+            <li th:each="log : ${importHistory}">
+              <div class="import-summary__row">
+                <strong th:text="${#temporals.format(log.createdAt, 'dd MMM HH:mm')}">Time</strong>
+                <span class="muted" th:text="' by ' + (log.username != null ? log.username : 'system')"></span>
+              </div>
+              <div class="import-summary__details">
+                <span th:text="'Total ' + log.totalRows + ', Imported ' + log.importedRows + ', Duplicates ' + log.duplicateRows + ', Invalid ' + log.invalidRows"></span>
+              </div>
+              <div class="import-summary__issues" th:if="${log.errorCount > 0}">
+                <span th:text="'Issues (' + log.errorCount + '): ' + (log.errorSample != null ? log.errorSample : 'See upload details')"></span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card activity-card">
+        <div class="activity-card__header">
+          <h3>Recent activity</h3>
+          <p class="muted">Audit trail for organizer actions.</p>
+        </div>
+        <ul class="activity-list" th:if="${auditLogEntries != null && !#lists.isEmpty(auditLogEntries)}">
+          <li th:each="entry : ${auditLogEntries}">
+            <div class="activity-list__header">
+              <span class="activity-chip" th:text="${entry.category}">VENDOR</span>
+              <span class="activity-time" th:text="${#temporals.format(entry.createdAt, 'dd MMM HH:mm')}">12 Jan 10:24</span>
+            </div>
+            <div class="activity-message" th:text="${entry.message}">Description</div>
+            <div class="activity-meta" th:text="'by ' + (entry.username != null ? entry.username : 'system')">by organizer</div>
+          </li>
+        </ul>
+        <div class="activity-empty muted" th:if="${auditLogEntries == null || #lists.isEmpty(auditLogEntries)}">
+          Actions will show up here once you start managing vendors, menus, or tickets.
+        </div>
+      </div>
+    </aside>
+  </div>
 </div>
+
+<script src="/js/organizer.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const bulkForm = document.getElementById('vendor-bulk-form');
+    const bulkSelect = document.getElementById('vendor-bulk-action-select');
+    const bulkApply = document.getElementById('vendor-bulk-apply');
+    const actionInput = document.getElementById('vendor-bulk-action-input');
+    if (bulkForm && bulkSelect && bulkApply && actionInput) {
+      bulkApply.addEventListener('click', function () {
+        if (!bulkSelect.value) {
+          alert('Please choose a bulk action first.');
+          return;
+        }
+        const checked = document.querySelectorAll('input[name="vendorIds"][form="vendor-bulk-form"]:checked');
+        if (checked.length === 0) {
+          alert('Please select at least one vendor.');
+          return;
+        }
+        actionInput.value = bulkSelect.value;
+        bulkForm.submit();
+      });
+    }
+  });
+</script>
 </body>
 </html>

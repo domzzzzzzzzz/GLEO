@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -69,7 +70,7 @@ class UsherControllerTest {
 
     @Test
     void usherBoardLoads() throws Exception {
-        mockMvc.perform(get("/e/G2025/usher"))
+        mockMvc.perform(get("/e/G2025/usher").with(httpBasic("usher_brgr", "Usher@123")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("usher_board"))
                 .andExpect(model().attributeExists("statusBuckets"))

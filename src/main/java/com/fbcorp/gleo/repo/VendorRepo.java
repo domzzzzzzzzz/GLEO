@@ -8,4 +8,8 @@ import java.util.List;
 
 public interface VendorRepo extends JpaRepository<Vendor, Long> {
     List<Vendor> findByEventAndActiveTrue(Event event);
+
+    List<Vendor> findByEvent(Event event);
+
+    java.util.Optional<Vendor> findByEventAndNameIgnoreCase(Event event, String name);
 }

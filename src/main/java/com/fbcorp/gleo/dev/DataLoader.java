@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 @Component
 public class DataLoader implements CommandLineRunner {
@@ -36,123 +37,37 @@ public class DataLoader implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws Exception {
-        if (eventRepo.count() > 0) return;
+    public void run(String... args) {
+        Event event = eventRepo.findByCode("G2025").orElseGet(() -> {
+            Event created = new Event();
+            created.setCode("G2025");
+            created.setName("GLEO Demo Event");
+            created.setStartAt(LocalDateTime.now().minusHours(1));
+            created.setEndAt(LocalDateTime.now().plusHours(6));
+            return eventRepo.save(created);
+        });
 
-        Event e = new Event();
-        e.setCode("G2025");
-        e.setName("GLEO Demo Event");
-        e.setStartAt(LocalDateTime.now().minusHours(1));
-        e.setEndAt(LocalDateTime.now().plusHours(6));
-        // default flags already set
-        eventRepo.save(e);
+        Vendor v1 = ensureVendor(event, "BRGR", "1234", "/images/brgr.png");
+        Vendor v2 = ensureVendor(event, "DESOUKY&SODA", "4321", "/images/desoky-soda.png");
+        Vendor v3 = ensureVendor(event, "Koffee Kulture", "9876", "/images/koffee-kulture.jpg");
 
-        Vendor v1 = new Vendor();
-        v1.setEvent(e);
-        v1.setName("BRGR");
-        v1.setPinPlain("1234");
-        v1.setImagePath("/images/brgr.png");
-        vendorRepo.save(v1);
+        ensureTierPolicy(event, TierCode.VIP, true, null);
+        ensureTierPolicy(event, TierCode.REG, false, 1);
 
-        Vendor v2 = new Vendor();
-        v2.setEvent(e);
-        v2.setName("DESOUKY&SODA");
-        v2.setPinPlain("4321");
-        v2.setImagePath("/images/desoky-soda.png");
-        vendorRepo.save(v2);
+        ensureMenuItem(v1, "Smash BRGR");
+        ensureMenuItem(v1, "Truffle Fries");
+        ensureMenuItem(v1, "Loaded Chicken Strips");
 
-        Vendor v3 = new Vendor();
-        v3.setEvent(e);
-        v3.setName("Koffee Kulture");
-        v3.setPinPlain("9876");
-        v3.setImagePath("/images/koffee-kulture.jpg");
-        vendorRepo.save(v3);
+        ensureMenuItem(v2, "Desouky Street Pizza");
+        ensureMenuItem(v2, "Creamy Macarona Bechamel");
+        ensureMenuItem(v2, "Desouky Liver Sandwich");
 
-        TierPolicy vipPolicy = new TierPolicy();
-        vipPolicy.setEvent(e);
-        vipPolicy.setTierCode(TierCode.VIP);
-        vipPolicy.setUnlimited(true);
-        tierPolicyRepo.save(vipPolicy);
+        ensureMenuItem(v3, "Signature Cappuccino");
+        ensureMenuItem(v3, "Cold Brew Tonic");
+        ensureMenuItem(v3, "Hazelnut Latte");
 
-        TierPolicy regPolicy = new TierPolicy();
-        regPolicy.setEvent(e);
-        regPolicy.setTierCode(TierCode.REG);
-        regPolicy.setUnlimited(false);
-        regPolicy.setMaxItemsPerVendor(1);
-        tierPolicyRepo.save(regPolicy);
-
-        MenuItem m11 = new MenuItem();
-        m11.setVendor(v1);
-        m11.setName("Smash BRGR");
-        m11.setPrice(new BigDecimal("0"));
-        menuItemRepo.save(m11);
-
-        MenuItem m12 = new MenuItem();
-        m12.setVendor(v1);
-        m12.setName("Truffle Fries");
-        m12.setPrice(new BigDecimal("0"));
-        menuItemRepo.save(m12);
-
-        MenuItem m13 = new MenuItem();
-        m13.setVendor(v1);
-        m13.setName("Loaded Chicken Strips");
-        m13.setPrice(new BigDecimal("0"));
-        menuItemRepo.save(m13);
-
-        MenuItem m21 = new MenuItem();
-        m21.setVendor(v2);
-        m21.setName("Desouky Street Pizza");
-        m21.setPrice(new BigDecimal("0"));
-        menuItemRepo.save(m21);
-
-        MenuItem m22 = new MenuItem();
-        m22.setVendor(v2);
-        m22.setName("Creamy Macarona Bechamel");
-        m22.setPrice(new BigDecimal("0"));
-        menuItemRepo.save(m22);
-
-        MenuItem m23 = new MenuItem();
-        m23.setVendor(v2);
-        m23.setName("Desouky Liver Sandwich");
-        m23.setPrice(new BigDecimal("0"));
-        menuItemRepo.save(m23);
-
-        MenuItem m31 = new MenuItem();
-        m31.setVendor(v3);
-        m31.setName("Signature Cappuccino");
-        m31.setPrice(new BigDecimal("0"));
-        menuItemRepo.save(m31);
-
-        MenuItem m32 = new MenuItem();
-        m32.setVendor(v3);
-        m32.setName("Cold Brew Tonic");
-        m32.setPrice(new BigDecimal("0"));
-        menuItemRepo.save(m32);
-
-        MenuItem m33 = new MenuItem();
-        m33.setVendor(v3);
-        m33.setName("Hazelnut Latte");
-        m33.setPrice(new BigDecimal("0"));
-        menuItemRepo.save(m33);
-
-        // Tickets
-        Ticket tVip = new Ticket();
-        tVip.setEvent(e);
-        tVip.setQrCode("VIP-001");
-        tVip.setTierCode(TierCode.VIP);
-        tVip.setHolderName("VIP Guest");
-        tVip.setHolderPhone("01000000001");
-        tVip.setSerial("S-VIP-1");
-        ticketRepo.save(tVip);
-
-        Ticket tReg = new Ticket();
-        tReg.setEvent(e);
-        tReg.setQrCode("REG-001");
-        tReg.setTierCode(TierCode.REG);
-        tReg.setHolderName("REG Guest");
-        tReg.setHolderPhone("01000000002");
-        tReg.setSerial("S-REG-1");
-        ticketRepo.save(tReg);
+        ensureTicket(event, "VIP-001", TierCode.VIP, "VIP Guest", "01000000001", "S-VIP-1");
+        ensureTicket(event, "REG-001", TierCode.REG, "REG Guest", "01000000002", "S-REG-1");
 
         Role adminRole = ensureRole("ROLE_ADMIN");
         Role organizerRole = ensureRole("ROLE_ORGANIZER");
@@ -160,45 +75,34 @@ public class DataLoader implements CommandLineRunner {
         Role staffRole = ensureRole("ROLE_STAFF");
         Role usherRole = ensureRole("ROLE_USHER");
 
-        if (userAccountRepo.findByUsername("admin").isEmpty()){
-            UserAccount admin = new UserAccount();
-            admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("Admin@123"));
-            admin.getRoles().add(adminRole);
-            admin.getRoles().add(organizerRole);
-            userAccountRepo.save(admin);
-        }
+        UserAccount admin = ensureUser("admin", "Admin@123");
+        addRole(admin, adminRole);
+        addRole(admin, organizerRole);
+        admin.setEvent(null);
+        admin.setVendor(null);
+        userAccountRepo.save(admin);
 
-        if (userAccountRepo.findByUsername("organizer").isEmpty()){
-            UserAccount organizer = new UserAccount();
-            organizer.setUsername("organizer");
-            organizer.setPassword(passwordEncoder.encode("Organizer@123"));
-            organizer.getRoles().add(organizerRole);
-            organizer.setEvent(e);
-            userAccountRepo.save(organizer);
-        }
+        UserAccount organizer = ensureUser("organizer", "Organizer@123");
+        addRole(organizer, organizerRole);
+        organizer.setEvent(event);
+        organizer.setVendor(null);
+        userAccountRepo.save(organizer);
 
-        if (userAccountRepo.findByUsername("vendor1").isEmpty()){
-            UserAccount vendorUser = new UserAccount();
-            vendorUser.setUsername("vendor1");
-            vendorUser.setPassword(passwordEncoder.encode("Vendor@123"));
-            vendorUser.getRoles().add(vendorRole);
-            vendorUser.setVendor(v1);
-            userAccountRepo.save(vendorUser);
-        }
+        UserAccount vendorUser = ensureUser("vendor1", "Vendor@123");
+        addRole(vendorUser, vendorRole);
+        vendorUser.setVendor(v1);
+        vendorUser.setEvent(event);
+        userAccountRepo.save(vendorUser);
 
-        if (userAccountRepo.findByUsername("staff1").isEmpty()){
-            UserAccount staff = new UserAccount();
-            staff.setUsername("staff1");
-            staff.setPassword(passwordEncoder.encode("Staff@123"));
-            staff.getRoles().add(staffRole);
-            staff.setVendor(v1);
-            userAccountRepo.save(staff);
-        }
+        UserAccount staff = ensureUser("staff1", "Staff@123");
+        addRole(staff, staffRole);
+        staff.setVendor(v1);
+        staff.setEvent(event);
+        userAccountRepo.save(staff);
 
-        createUsherAccountIfMissing("usher_brgr", v1, usherRole);
-        createUsherAccountIfMissing("usher_desouky", v2, usherRole);
-        createUsherAccountIfMissing("usher_koffee", v3, usherRole);
+        ensureUsherAccount("usher_brgr", v1, usherRole);
+        ensureUsherAccount("usher_desouky", v2, usherRole);
+        ensureUsherAccount("usher_koffee", v3, usherRole);
     }
 
     private Role ensureRole(String name){
@@ -209,16 +113,101 @@ public class DataLoader implements CommandLineRunner {
         });
     }
 
-    private void createUsherAccountIfMissing(String username, Vendor vendor, Role usherRole) {
-        if (userAccountRepo.findByUsername(username).isPresent()) {
-            return;
-        }
-        UserAccount usher = new UserAccount();
-        usher.setUsername(username);
-        usher.setPassword(passwordEncoder.encode("Usher@123"));
-        usher.getRoles().add(usherRole);
+    private void ensureUsherAccount(String username, Vendor vendor, Role usherRole) {
+        UserAccount usher = ensureUser(username, "Usher@123");
+        addRole(usher, usherRole);
         usher.setVendor(vendor);
         usher.setEvent(vendor.getEvent());
         userAccountRepo.save(usher);
+    }
+
+    private Vendor ensureVendor(Event event, String name, String pin, String imagePath) {
+        return vendorRepo.findByEventAndNameIgnoreCase(event, name)
+                .map(existing -> updateVendor(existing, event, name, pin, imagePath))
+                .orElseGet(() -> {
+                    Vendor vendor = new Vendor();
+                    vendor.setEvent(event);
+                    vendor.setName(name);
+                    vendor.setPinPlain(pin);
+                    vendor.setImagePath(imagePath);
+                    vendor.setActive(true);
+                    return vendorRepo.save(vendor);
+                });
+    }
+
+    private Vendor updateVendor(Vendor vendor, Event event, String name, String pin, String imagePath) {
+        vendor.setEvent(event);
+        vendor.setName(name);
+        vendor.setPinPlain(pin);
+        vendor.setImagePath(imagePath);
+        vendor.setActive(true);
+        return vendorRepo.save(vendor);
+    }
+
+    private void ensureMenuItem(Vendor vendor, String name) {
+        menuItemRepo.findByVendorAndNameIgnoreCase(vendor, name)
+                .map(existing -> updateMenuItem(existing, vendor, name))
+                .orElseGet(() -> {
+                    MenuItem item = new MenuItem();
+                    item.setVendor(vendor);
+                    item.setName(name);
+                    item.setPrice(BigDecimal.ZERO);
+                    item.setAvailable(true);
+                    return menuItemRepo.save(item);
+                });
+    }
+
+    private MenuItem updateMenuItem(MenuItem item, Vendor vendor, String name) {
+        item.setVendor(vendor);
+        item.setName(name);
+        if (item.getPrice() == null) {
+            item.setPrice(BigDecimal.ZERO);
+        }
+        item.setAvailable(true);
+        return menuItemRepo.save(item);
+    }
+
+    private void ensureTierPolicy(Event event, TierCode tierCode, boolean unlimited, Integer maxItemsPerVendor) {
+        TierPolicy policy = tierPolicyRepo.findByEventAndTierCode(event, tierCode).orElseGet(() -> {
+            TierPolicy tp = new TierPolicy();
+            tp.setEvent(event);
+            tp.setTierCode(tierCode);
+            return tp;
+        });
+        policy.setUnlimited(unlimited);
+        policy.setMaxItemsPerVendor(unlimited ? null : maxItemsPerVendor);
+        tierPolicyRepo.save(policy);
+    }
+
+    private void ensureTicket(Event event, String qrCode, TierCode tierCode, String holderName, String holderPhone, String serial) {
+        Ticket ticket = ticketRepo.findByQrCode(qrCode).orElseGet(() -> {
+            Ticket t = new Ticket();
+            t.setQrCode(qrCode);
+            t.setActive(true);
+            return t;
+        });
+        ticket.setEvent(event);
+        ticket.setTierCode(tierCode);
+        ticket.setHolderName(holderName);
+        ticket.setHolderPhone(holderPhone);
+        ticket.setSerial(serial);
+        ticket.setActive(true);
+        ticketRepo.save(ticket);
+    }
+
+    private UserAccount ensureUser(String username, String rawPassword) {
+        UserAccount user = userAccountRepo.findByUsername(username).orElseGet(() -> {
+            UserAccount u = new UserAccount();
+            u.setUsername(username);
+            return u;
+        });
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        return user;
+    }
+
+    private void addRole(UserAccount user, Role role) {
+        if (user.getRoles().stream().noneMatch(existing -> existing.getName().equalsIgnoreCase(role.getName()))) {
+            user.getRoles().add(role);
+        }
     }
 }

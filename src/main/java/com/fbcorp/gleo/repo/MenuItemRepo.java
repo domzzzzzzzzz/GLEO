@@ -8,4 +8,10 @@ import java.util.List;
 
 public interface MenuItemRepo extends JpaRepository<MenuItem, Long> {
     List<MenuItem> findByVendorAndAvailableTrue(Vendor vendor);
+
+    List<MenuItem> findByVendorOrderByNameAsc(Vendor vendor);
+
+    java.util.Optional<MenuItem> findByVendorAndNameIgnoreCase(Vendor vendor, String name);
+
+    void deleteByVendor(Vendor vendor);
 }

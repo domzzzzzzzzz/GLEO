@@ -9,7 +9,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 @Configuration
 @EnableWebSecurity
@@ -26,7 +29,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
+        return NoOpPasswordEncoder.getInstance();
     }
 
     @Bean
@@ -38,18 +41,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector) throws Exception {
+        MvcRequestMatcher.Builder mvc = new MvcRequestMatcher.Builder(introspector);
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers("/e/*/usher/**").hasAnyRole("USHER", "ADMIN", "ORGANIZER")
-                        .requestMatchers("/e/**").permitAll()
-                        .requestMatchers("/login", "/").permitAll()
-                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "ORGANIZER")
-                        .requestMatchers("/organizer/**").hasRole("ORGANIZER")
-                        .requestMatchers("/vendor/**").hasAnyRole("VENDOR", "STAFF")
+                        .requestMatchers(mvc.pattern("/css/**"), mvc.pattern("/js/**"), mvc.pattern("/images/**")).permitAll()
+                        .requestMatchers(mvc.pattern("/uploads/**")).permitAll()
+                        .requestMatchers(mvc.pattern("/h2-console/**")).permitAll()
+                        .requestMatchers(mvc.pattern("/error")).permitAll()
+                        .requestMatchers(mvc.pattern("/e/{eventCode}/usher/**")).hasAnyRole("USHER", "ADMIN", "ORGANIZER")
+                        .requestMatchers(mvc.pattern("/e/**")).permitAll()
+                        .requestMatchers(mvc.pattern("/login"), mvc.pattern("/")).permitAll()
+                        .requestMatchers(mvc.pattern("/admin/**")).hasAnyRole("ADMIN", "ORGANIZER")
+                        .requestMatchers(mvc.pattern("/organizer/**")).hasRole("ORGANIZER")
+                        .requestMatchers(mvc.pattern("/vendor/**")).hasAnyRole("VENDOR", "STAFF")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

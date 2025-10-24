@@ -3,7 +3,6 @@ package com.fbcorp.gleo.web;
 import com.fbcorp.gleo.domain.MenuItem;
 import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.repo.MenuItemRepo;
-import com.fbcorp.gleo.repo.VendorRepo;
 import com.fbcorp.gleo.service.CartViewService;
 import com.fbcorp.gleo.service.EventPolicyService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,16 +22,13 @@ public class CartController {
     private static final String CART_FRAGMENT = "fragments/cart_panel :: panel";
 
     private final MenuItemRepo menuItemRepo;
-    private final VendorRepo vendorRepo;
     private final EventPolicyService policyService;
     private final CartViewService cartViewService;
 
     public CartController(MenuItemRepo menuItemRepo,
-                          VendorRepo vendorRepo,
                           EventPolicyService policyService,
                           CartViewService cartViewService){
         this.menuItemRepo = menuItemRepo;
-        this.vendorRepo = vendorRepo;
         this.policyService = policyService;
         this.cartViewService = cartViewService;
     }

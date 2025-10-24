@@ -1,6 +1,5 @@
 package com.fbcorp.gleo.web;
 
-import com.fbcorp.gleo.repo.EventRepo;
 import com.fbcorp.gleo.repo.VendorRepo;
 import com.fbcorp.gleo.service.CartViewService;
 import com.fbcorp.gleo.service.EventPolicyService;
@@ -16,16 +15,13 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/e/{eventCode}")
 public class HomeController {
 
-    private final EventRepo eventRepo;
     private final VendorRepo vendorRepo;
     private final EventPolicyService policyService;
     private final CartViewService cartViewService;
 
-    public HomeController(EventRepo eventRepo,
-                          VendorRepo vendorRepo,
+    public HomeController(VendorRepo vendorRepo,
                           EventPolicyService policyService,
                           CartViewService cartViewService) {
-        this.eventRepo = eventRepo;
         this.vendorRepo = vendorRepo;
         this.policyService = policyService;
         this.cartViewService = cartViewService;
