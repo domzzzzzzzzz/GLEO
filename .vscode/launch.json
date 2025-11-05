@@ -15,7 +15,8 @@
             "name": "GleoApplication",
             "request": "launch",
             "mainClass": "com.fbcorp.gleo.GleoApplication",
-            "projectName": "gleo"
+            "projectName": "gleo",
+            "preLaunchTask": "Kill Port 8080"
         }
     ]
 }

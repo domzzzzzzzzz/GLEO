@@ -53,4 +53,16 @@ public class EventPolicyService {
         policy.setMaxItemsPerVendor(unlimited ? null : maxPerVendor);
         return tierPolicyRepo.save(policy);
     }
+
+    /**
+     * Delete all tier policies related to the event and allow callers to remove the event itself.
+     * This is a convenience helper used by admin flows to perform safe cleanup before deleting an event.
+     */
+    public void deleteEventPolicies(String eventCode) {
+        Event event = get(eventCode);
+        var policies = tierPolicyRepo.findByEvent(event);
+        if (policies != null && !policies.isEmpty()) {
+            tierPolicyRepo.deleteAll(policies);
+        }
+    }
 }

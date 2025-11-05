@@ -2,11 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title th:text="${vendor.name} + ' - ' + ${event.name}">Vendor Menu</title>
   <link href="/css/tailwind.css" rel="stylesheet">
   <script src="https://unpkg.com/htmx.org@2.0.2"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
   <script src="/js/cart.js"></script>
+  <script src="/webjars/sockjs-client/sockjs.min.js"></script>
+  <script src="/webjars/stomp-websocket/stomp.min.js"></script>
 </head>
 <body>
 <div class="page">
@@ -14,13 +17,20 @@
     <div>
       <a th:href="@{|/e/${event.code}|}" class="btn btn-muted">&larr; Back to vendors</a>
       <h2 style="margin-top:16px;" th:text="${vendor.name}">Vendor</h2>
-      <div class="muted" th:text="'Serving ' + ${event.name}">Event name</div>
+      <div class="muted">
+        <span th:text="'Serving ' + ${event.name}">Event name</span>
+        &middot;
+        <span id="vendor-status" th:attr="data-vendor-id=${vendor.id}" th:text="${vendor.status != null ? vendor.status : 'AVAILABLE'}">AVAILABLE</span>
+      </div>
     </div>
     <div class="page-header-actions">
-      <a th:href="@{|/e/${event.code}/checkout|}" class="btn btn-outline">View my orders</a>
-      <div class="policies-chip">
-        <span>Cart mode:</span>
-        <strong th:text="${multiVendorEnabled} ? 'Multi-vendor' : 'Single vendor only'">Multi</strong>
+      <div class="flex-center gap-4">
+        <!-- Vendor status controls removed from guest/vendor menu per request; controls moved to usher board -->
+        <a th:href="@{|/e/${event.code}/checkout|}" class="btn btn-outline">View my orders</a>
+        <div class="policies-chip">
+          <span>Cart mode:</span>
+          <strong th:text="${multiVendorEnabled} ? 'Multi-vendor' : 'Single vendor only'">Multi</strong>
+        </div>
       </div>
     </div>
   </div>
@@ -79,8 +89,67 @@
     if (window.setupCartPanel) {
       window.setupCartPanel();
     }
+    
+    // Set up vendor status polling
+    const statusEl = document.getElementById('vendor-status');
+    if (statusEl) {
+      const vendorId = statusEl.getAttribute('data-vendor-id');
+      if (vendorId) {
+        // Initial status check and then every 10 seconds
+        checkVendorStatus(vendorId);
+        setInterval(() => checkVendorStatus(vendorId), 10000);
+      }
+    }
   });
 
+    function updateVendorStatusUI(status) {
+        const statusEl = document.getElementById('vendor-status');
+        if (statusEl) {
+          statusEl.textContent = status;
+          
+          // Update menu items based on vendor status
+          const menuItems = document.querySelectorAll('.menu-card button');
+          menuItems.forEach(btn => {
+            if (status === 'BREAK' || status === 'BUSY') {
+              btn.disabled = true;
+              btn.querySelector('span').textContent = status === 'BREAK' ? 'On Break' : 'Busy';
+            } else {
+              // Only enable if the item itself is available
+              const form = btn.closest('form');
+              const menuCard = btn.closest('.menu-card');
+              const available = menuCard && !menuCard.querySelector('.menu-meta').textContent.includes('Sold out');
+              btn.disabled = !available;
+              btn.querySelector('span').textContent = available ? 'Add to cart' : 'Unavailable';
+            }
+          });
+        }
+    }
+
+    // Initial status check
+    function checkVendorStatus(vendorId) {
+      fetch('/api/vendors/' + vendorId + '/status')
+        .then(resp => resp.json())
+        .then(status => updateVendorStatusUI(status))
+        .catch(console.error);
+    }
+    
+    // WebSocket connection for real-time updates
+    const statusEl = document.getElementById('vendor-status');
+    if (statusEl) {
+      const vendorId = statusEl.getAttribute('data-vendor-id');
+      const eventCode = window.location.pathname.split('/')[2]; // Extract from /e/{eventCode}/...
+      
+      const socket = new SockJS('/ws');
+      const stompClient = Stomp.over(socket);
+      stompClient.connect({}, function() {
+        stompClient.subscribe('/topic/vendor-status/' + eventCode, function(message) {
+          const update = JSON.parse(message.body);
+          if (update.vendorId === vendorId) {
+            updateVendorStatusUI(update.status);
+          }
+        });
+      });
+  }
   document.addEventListener('htmx:afterSwap', function (event) {
     if (event.detail && event.detail.target && event.detail.target.id === 'cart-panel') {
       if (window.setupCartPanel) {
@@ -91,3 +160,4 @@
 </script>
 </body>
 </html>
+    

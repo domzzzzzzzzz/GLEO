@@ -34,17 +34,20 @@ public class CheckoutService {
     private final MenuItemRepo menuItemRepo;
     private final OrderRepo orderRepo;
     private final CartService cartService;
+    private final OrderService orderService;
 
     public CheckoutService(TicketService ticketService,
                            VendorRepo vendorRepo,
                            MenuItemRepo menuItemRepo,
                            OrderRepo orderRepo,
-                           CartService cartService) {
+                           CartService cartService,
+                           OrderService orderService) {
         this.ticketService = ticketService;
         this.vendorRepo = vendorRepo;
         this.menuItemRepo = menuItemRepo;
         this.orderRepo = orderRepo;
         this.cartService = cartService;
+        this.orderService = orderService;
     }
 
     public List<Order> recentOrdersForDevice(String eventCode, String deviceHash) {
@@ -107,6 +110,9 @@ public class CheckoutService {
 
             orderRepo.save(order);
             result.orders.add(order);
+            
+            // Use OrderService to broadcast the new order
+            orderService.markStatus(order.getId(), OrderStatus.NEW);
         }
 
         return result;

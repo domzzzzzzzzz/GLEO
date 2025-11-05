@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Events · Admin</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+  <link href="/css/modern.css" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>All Events</h2>
+      <p class="muted">List of events in the system</p>
+    </div>
+    <a href="/dashboard" class="btn btn-outline">&larr; Back to dashboard</a>
+  </div>
+
+  <div class="events-list" style="margin-top:1rem;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="event : ${events}">
+          <td th:text="${event.code}">E1</td>
+          <td th:text="${event.name}">Example Event</td>
+          <td th:text="${event.startAt}">2025-10-01T18:00</td>
+          <td th:text="${event.endAt}">2025-10-01T22:00</td>
+          <td>
+            <a th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-outline">Policies</a>
+            <a th:href="@{|/admin/events/${event.code}/vendors|}" class="btn">Vendors</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

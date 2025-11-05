@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.fbcorp.gleo.service.TicketServiceTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 9.467 s -- in com.fbcorp.gleo.service.TicketServiceTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.594 s -- in com.fbcorp.gleo.service.TicketServiceTest

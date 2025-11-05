@@ -1,8 +1,6 @@
 package com.fbcorp.gleo.web;
 
-import com.fbcorp.gleo.domain.Event;
 import com.fbcorp.gleo.domain.MenuItem;
-import com.fbcorp.gleo.domain.Order;
 import com.fbcorp.gleo.domain.TierPolicy;
 import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.repo.EventRepo;
@@ -14,6 +12,9 @@ import com.fbcorp.gleo.service.AuditLogService;
 import com.fbcorp.gleo.service.EventPolicyService;
 import com.fbcorp.gleo.service.OrganizerAnalyticsService;
 import com.fbcorp.gleo.service.TicketImportLogService;
+import com.fbcorp.gleo.service.AdminPreferenceService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,6 +44,7 @@ public class DashboardController {
     private final MenuItemRepo menuItemRepo;
     private final OrganizerAnalyticsService analyticsService;
     private final TicketImportLogService importLogService;
+    private final AdminPreferenceService adminPreferenceService;
     private final AuditLogService auditLogService;
 
     public DashboardController(UserAccountRepo userAccountRepo,
@@ -53,7 +55,8 @@ public class DashboardController {
                                MenuItemRepo menuItemRepo,
                                OrganizerAnalyticsService analyticsService,
                                TicketImportLogService importLogService,
-                               AuditLogService auditLogService) {
+                               AuditLogService auditLogService,
+                               AdminPreferenceService adminPreferenceService) {
         this.userAccountRepo = userAccountRepo;
         this.policyService = policyService;
         this.orderRepo = orderRepo;
@@ -63,6 +66,7 @@ public class DashboardController {
         this.analyticsService = analyticsService;
         this.importLogService = importLogService;
         this.auditLogService = auditLogService;
+        this.adminPreferenceService = adminPreferenceService;
     }
 
     @GetMapping("/dashboard")
@@ -77,12 +81,25 @@ public class DashboardController {
         var account = userAccountRepo.findByUsername(authentication.getName()).orElse(null);
         model.addAttribute("user", account);
         model.addAttribute("authorities", authentication.getAuthorities());
-        boolean isAdmin = hasRole(authentication, "ROLE_ADMIN");
-        boolean isOrganizer = hasRole(authentication, "ROLE_ORGANIZER");
-        boolean isVendor = hasRole(authentication, "ROLE_VENDOR") || hasRole(authentication, "ROLE_STAFF");
+        boolean isAdmin = hasRole(authentication, "ADMIN");
+        boolean isOrganizer = hasRole(authentication, "ORGANIZER");
+        boolean isVendor = hasRole(authentication, "VENDOR") || hasRole(authentication, "STAFF");
 
         if (isAdmin) {
             model.addAttribute("events", eventRepo.findAll());
+            // inject saved admin theme preference if present so the client can respect server preference
+            adminPreferenceService.findByUsername(authentication.getName()).ifPresent(pref -> {
+                if (pref.getTheme() != null) model.addAttribute("adminTheme", pref.getTheme());
+                if (pref.getMenuOrderJson() != null) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        var list = mapper.readValue(pref.getMenuOrderJson(), new TypeReference<java.util.List<MenuOrderItem>>(){});
+                        model.addAttribute("adminMenuItems", list);
+                    } catch (Exception ex) {
+                        // ignore parse errors; client-side fallback will apply
+                    }
+                }
+            });
             return "dashboard/admin_dashboard";
         }
 
@@ -204,7 +221,7 @@ public class DashboardController {
 
     private boolean hasRole(Authentication auth, String role){
         for (GrantedAuthority authority : auth.getAuthorities()){
-            if (authority.getAuthority().equals(role)){
+            if (authority.getAuthority().equals("ROLE_" + role)){
                 return true;
             }
         }

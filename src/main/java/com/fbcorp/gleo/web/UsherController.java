@@ -8,6 +8,7 @@ import com.fbcorp.gleo.repo.UserAccountRepo;
 import com.fbcorp.gleo.service.EventPolicyService;
 import com.fbcorp.gleo.service.OrderService;
 import com.fbcorp.gleo.service.VendorAuthService;
+import com.fbcorp.gleo.repo.VendorRepo;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,17 +59,20 @@ public class UsherController {
     private final OrderRepo orderRepo;
     private final OrderService orderService;
     private final VendorAuthService vendorAuthService;
+    private final VendorRepo vendorRepo;
     private final UserAccountRepo userAccountRepo;
 
     public UsherController(EventPolicyService policyService,
                            OrderRepo orderRepo,
                            OrderService orderService,
                            VendorAuthService vendorAuthService,
+                           VendorRepo vendorRepo,
                            UserAccountRepo userAccountRepo) {
         this.policyService = policyService;
         this.orderRepo = orderRepo;
         this.orderService = orderService;
         this.vendorAuthService = vendorAuthService;
+        this.vendorRepo = vendorRepo;
         this.userAccountRepo = userAccountRepo;
     }
 
@@ -100,8 +104,8 @@ public class UsherController {
 
     @GetMapping("/live")
     public String boardLive(@PathVariable String eventCode,
-                            @RequestParam(name = "ticket", required = false) String ticketFilter,
-                            Model model) {
+                          @RequestParam(name = "ticket", required = false) String ticketFilter,
+                          Model model) {
         buildBoardModel(eventCode, ticketFilter, model);
         return "usher_board :: board";
     }
@@ -149,6 +153,14 @@ public class UsherController {
         model.addAttribute("guestConfirmEnabled", policyService.guestPickupEnabled(eventCode));
         model.addAttribute("ticketFilter", normalizedFilter);
         model.addAttribute("hasAnyOrders", buckets.stream().anyMatch(StatusBucket::hasOrders));
+        // Provide vendor list for the vendor status controls. If the current account is an usher,
+        // only expose the usher's vendor (so they can't control others). Otherwise show active vendors for the event.
+        if (account != null && account.hasRole("ROLE_USHER")) {
+            var vendor = account.getVendor();
+            model.addAttribute("vendors", vendor != null ? java.util.List.of(vendor) : java.util.List.of());
+        } else {
+            model.addAttribute("vendors", vendorRepo.findByEventAndActiveTrue(event));
+        }
     }
 
     @PostMapping("/orders/{orderId}/advance")

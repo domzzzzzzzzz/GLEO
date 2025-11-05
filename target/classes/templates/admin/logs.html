@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity Logs · Admin</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+  <link href="/css/modern.css" rel="stylesheet">
+</head>
+<body>
+  <div class="page">
+    <div class="page-header">
+      <h2>Activity logs</h2>
+      <p class="muted">Recent administrative actions and system events.</p>
+    </div>
+
+    <section class="card" style="padding:18px;margin-top:12px">
+      <div th:if="${logs == null || logs.empty}">No logs found.</div>
+
+      <div th:if="${logs != null && !logs.isEmpty()}">
+        <table class="table" style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:8px">Time</th>
+              <th style="text-align:left;padding:8px">User</th>
+              <th style="text-align:left;padding:8px">Category</th>
+              <th style="text-align:left;padding:8px">Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="log : ${logs}">
+              <td style="padding:8px" th:text="${#dates.format(log.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2025-01-01 00:00</td>
+              <td style="padding:8px" th:text="${log.username}">system</td>
+              <td style="padding:8px" th:text="${log.category}">EVENT</td>
+              <td style="padding:8px" th:text="${log.message}">Details</td>
+            </tr>
+          </tbody>
+        </table>
+      
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -26,7 +26,7 @@ public class RoleBasedAuthenticationSuccessHandler implements AuthenticationSucc
         var accountOpt = userAccountRepo.findByUsername(authentication.getName());
         if (accountOpt.isPresent()) {
             var account = accountOpt.get();
-            if (account.hasRole("ROLE_USHER")
+            if (account.hasRole("USHER")
                     && account.getVendor() != null
                     && account.getVendor().getEvent() != null) {
                 String eventCode = account.getVendor().getEvent().getCode();

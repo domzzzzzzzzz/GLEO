@@ -5,6 +5,12 @@ import com.fbcorp.gleo.domain.TierCode;
 import com.fbcorp.gleo.domain.TierPolicy;
 import com.fbcorp.gleo.repo.EventRepo;
 import com.fbcorp.gleo.service.EventPolicyService;
+import com.fbcorp.gleo.service.AuditLogService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -21,12 +27,66 @@ import java.util.stream.Collectors;
 public class AdminEventController {
     private final EventRepo eventRepo;
     private final EventPolicyService policyService;
+    private final AuditLogService auditLogService;
+    private final com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService;
 
-    public AdminEventController(EventRepo eventRepo, EventPolicyService policyService){
-        this.eventRepo = eventRepo;
-        this.policyService = policyService;
+    @GetMapping("/policies")
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
+    public String globalPolicies(Model model) {
+        var events = eventRepo.findAll();
+        for (Event event : events) {
+            // Load tier policies for each event
+            var tierPolicies = policyService.tierPolicies(event.getCode());
+            event.setTierPolicies(tierPolicies);
+        }
+        model.addAttribute("events", events);
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            adminPreferenceService.findByUsername(auth.getName()).ifPresent(pref -> {
+                if (pref.getTheme() != null) model.addAttribute("adminTheme", pref.getTheme());
+                if (pref.getMenuOrderJson() != null) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        var list = mapper.readValue(pref.getMenuOrderJson(), new TypeReference<java.util.List<MenuOrderItem>>(){});
+                        model.addAttribute("adminMenuItems", list);
+                    } catch (Exception ex) {
+                        // ignore parse problems
+                    }
+                }
+            });
+        }
+        return "admin/global_policies";
     }
 
+    public AdminEventController(EventRepo eventRepo, EventPolicyService policyService, AuditLogService auditLogService, com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService){
+        this.eventRepo = eventRepo;
+        this.policyService = policyService;
+        this.auditLogService = auditLogService;
+        this.adminPreferenceService = adminPreferenceService;
+    }
+
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
+    @GetMapping
+    public String listEvents(Model model){
+        var events = eventRepo.findAll();
+        model.addAttribute("events", events);
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            adminPreferenceService.findByUsername(auth.getName()).ifPresent(pref -> {
+                if (pref.getTheme() != null) model.addAttribute("adminTheme", pref.getTheme());
+                if (pref.getMenuOrderJson() != null) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        var list = mapper.readValue(pref.getMenuOrderJson(), new TypeReference<java.util.List<MenuOrderItem>>(){});
+                        model.addAttribute("adminMenuItems", list);
+                    } catch (Exception ex) { }
+                }
+            });
+        }
+        return "admin/events";
+    }
+
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
     @PostMapping
     public String createEvent(@RequestParam String code,
                               @RequestParam String name,
@@ -52,6 +112,11 @@ public class AdminEventController {
         policyService.updateTierPolicy(event.getCode(), TierCode.VIP, true, null);
         policyService.updateTierPolicy(event.getCode(), TierCode.REG, false, 1);
 
+    // Audit log
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String username = auth != null ? auth.getName() : "anonymous";
+    auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT, "Created event: code=" + code + ", name=" + name, username);
+
         redirectAttributes.addFlashAttribute("toastMessage", "Event '" + name + "' created successfully.");
         return "redirect:/dashboard";
     }
@@ -64,9 +129,23 @@ public class AdminEventController {
                 .collect(Collectors.toMap(TierPolicy::getTierCode, tp -> tp, (a, b) -> a, () -> new EnumMap<>(TierCode.class)));
         model.addAttribute("tierPolicies", tierPolicies);
         model.addAttribute("tiers", TierCode.values());
-        return "event_policies";
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            adminPreferenceService.findByUsername(auth.getName()).ifPresent(pref -> {
+                if (pref.getTheme() != null) model.addAttribute("adminTheme", pref.getTheme());
+                if (pref.getMenuOrderJson() != null) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        var list = mapper.readValue(pref.getMenuOrderJson(), new TypeReference<java.util.List<MenuOrderItem>>(){});
+                        model.addAttribute("adminMenuItems", list);
+                    } catch (Exception ex) { }
+                }
+            });
+        }
+        return "admin/event_policies";
     }
 
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
     @PostMapping("/{eventCode}/policy")
     public String update(@PathVariable String eventCode,
                          @RequestParam Map<String,String> form,
@@ -78,10 +157,16 @@ public class AdminEventController {
         e.setBlockAddWhenOpenOrder(form.containsKey("blockAddWhenOpenOrder"));
         e.setRegularOneItemPerVendor(form.containsKey("regularOneItemPerVendor"));
         eventRepo.save(e);
+
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String username = auth != null ? auth.getName() : "anonymous";
+    auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT, "Updated policies for event=" + eventCode, username);
+
         redirectAttributes.addFlashAttribute("toastMessage", "Policies updated successfully.");
         return "redirect:/admin/events/" + eventCode + "/policies";
     }
 
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
     @PostMapping("/{eventCode}/tier-policy")
     public String updateTierPolicy(@PathVariable String eventCode,
                                    @RequestParam TierCode tierCode,
@@ -96,7 +181,37 @@ public class AdminEventController {
             }
         }
         policyService.updateTierPolicy(eventCode, tierCode, unlimited, unlimited ? null : maxItemsPerVendor);
+
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String username = auth != null ? auth.getName() : "anonymous";
+    auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT, "Updated tier policy for event=" + eventCode + ", tier=" + tierCode, username);
+
         redirectAttributes.addFlashAttribute("toastMessage", "Tier policy updated for " + tierCode + ".");
         return "redirect:/admin/events/" + eventCode + "/policies";
+    }
+
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
+    @PostMapping("/{eventCode}/delete")
+    public String deleteEvent(@PathVariable String eventCode, RedirectAttributes redirectAttributes){
+        var opt = eventRepo.findByCode(eventCode);
+        if (opt.isEmpty()){
+            redirectAttributes.addFlashAttribute("toastError", "Event not found.");
+            return "redirect:/dashboard";
+        }
+        Event event = opt.get();
+        try {
+            // Remove related tier policies first to avoid FK issues
+            policyService.deleteEventPolicies(eventCode);
+            eventRepo.delete(event);
+            // Audit delete
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT, "Deleted event: code=" + eventCode + ", name=" + event.getName(), username);
+
+            redirectAttributes.addFlashAttribute("toastMessage", "Event '" + event.getName() + "' deleted successfully.");
+        } catch (Exception ex){
+            redirectAttributes.addFlashAttribute("toastError", "Failed to delete event: " + ex.getMessage());
+        }
+        return "redirect:/dashboard";
     }
 }

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Locale;
 
 @Component
 public class DataLoader implements CommandLineRunner {
@@ -69,11 +68,11 @@ public class DataLoader implements CommandLineRunner {
         ensureTicket(event, "VIP-001", TierCode.VIP, "VIP Guest", "01000000001", "S-VIP-1");
         ensureTicket(event, "REG-001", TierCode.REG, "REG Guest", "01000000002", "S-REG-1");
 
-        Role adminRole = ensureRole("ROLE_ADMIN");
-        Role organizerRole = ensureRole("ROLE_ORGANIZER");
-        Role vendorRole = ensureRole("ROLE_VENDOR");
-        Role staffRole = ensureRole("ROLE_STAFF");
-        Role usherRole = ensureRole("ROLE_USHER");
+        Role adminRole = ensureRole("ADMIN");
+        Role organizerRole = ensureRole("ORGANIZER");
+        Role vendorRole = ensureRole("VENDOR");
+        Role staffRole = ensureRole("STAFF");
+        Role usherRole = ensureRole("USHER");
 
         UserAccount admin = ensureUser("admin", "Admin@123");
         addRole(admin, adminRole);

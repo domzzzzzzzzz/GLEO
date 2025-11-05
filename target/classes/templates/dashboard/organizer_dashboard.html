@@ -2,20 +2,133 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Organizer Control - GLEO</title>
   <link href="/css/tailwind.css" rel="stylesheet">
   <link href="/css/organizer.css" rel="stylesheet">
+  <link href="/css/modern.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <style>
+    :root {
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Advanced Loading Animations */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      100% { transform: scale(1.2); opacity: 0; }
+    }
+
+    @keyframes shine {
+      to {
+        background-position: 200% center;
+      }
+    }
+
+    .shine-effect {
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.2) 20%,
+        rgba(255, 255, 255, 0.5) 60%,
+        transparent 100%
+      );
+      background-size: 200% 100%;
+      animation: shine 1.5s infinite linear;
+    }
+
+    /* Advanced Card Styles */
+    .card {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    }
+
+    /* Advanced Button Styles */
+    .btn-gradient {
+      background-image: var(--gradient-primary);
+      color: white;
+      transition: all 0.3s ease;
+      background-size: 200% auto;
+    }
+
+    .btn-gradient:hover {
+      background-position: right center;
+      transform: translateY(-2px);
+    }
+
+    /* Advanced Form Styles */
+    .field-input:focus {
+      box-shadow: 0 0 0 3px var(--primary-100),
+                  0 0 0 6px var(--primary-50);
+    }
+
+    /* Advanced Animation Classes */
+    .fade-in-up {
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .scale-in {
+      animation: scaleIn 0.3s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="page">
   <div class="page-header">
     <div>
-      <h2 th:text="'Welcome, ' + (${user != null ? user.username : 'Organizer'})">Welcome, organizer</h2>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <h2 th:text="'Welcome, ' + (${user != null ? user.username : 'Organizer'})">Welcome, organizer</h2>
+        <span class="role-badge glass-effect" style="padding:6px 12px;border-radius:999px;font-weight:600;color:var(--background);font-size:0.9rem;display:inline-flex;align-items:center;gap:8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 auto;">
+            <circle cx="12" cy="12" r="10" fill="url(#g)" />
+            <defs>
+              <linearGradient id="g" x1="0" x2="1">
+                <stop offset="0" stop-color="#4f46e5" />
+                <stop offset="1" stop-color="#4338ca" />
+              </linearGradient>
+            </defs>
+          </svg>
+          Organizer
+        </span>
+      </div>
       <p class="muted">Manage your event, onboard vendors, and keep trucks ready for rush hours.</p>
     </div>
     <div class="quick-actions-card">
       <div class="muted" style="font-weight:600;">Quick actions</div>
-      <a th:if="${event != null}" th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-outline">Event policies</a>
       <a href="/logout" class="btn btn-muted">Sign out</a>
     </div>
   </div>
@@ -96,13 +209,18 @@
             <a class="btn btn-muted" th:href="@{/dashboard}">Reset</a>
             <span class="vendor-counts" th:text="'Active: ' + ${totalActiveVendors} + ' - Archived: ' + ${totalArchivedVendors}"></span>
           </form>
-          <div class="bulk-actions">
+          <div class="bulk-actions" style="display:flex;align-items:center;gap:10px;">
+            <label class="checkbox-inline" style="display:flex;align-items:center;gap:8px;margin-right:6px;">
+              <input type="checkbox" id="vendor-bulk-select-all">
+              <span>Select all</span>
+            </label>
+
             <select class="select-input" id="vendor-bulk-action-select">
               <option value="">Bulk actions</option>
               <option value="activate">Activate selected</option>
               <option value="archive">Archive selected</option>
             </select>
-            <button class="btn btn-outline" type="button" id="vendor-bulk-apply">Apply</button>
+            <button class="btn btn-outline" type="button" id="vendor-bulk-apply" disabled>Apply</button>
           </div>
         </div>
 
@@ -511,29 +629,252 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
 <script src="/js/organizer.js"></script>
+<script src="/js/modern-interactions.js"></script>
+<script src="/js/advanced-ui.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const bulkForm = document.getElementById('vendor-bulk-form');
-    const bulkSelect = document.getElementById('vendor-bulk-action-select');
-    const bulkApply = document.getElementById('vendor-bulk-apply');
-    const actionInput = document.getElementById('vendor-bulk-action-input');
-    if (bulkForm && bulkSelect && bulkApply && actionInput) {
-      bulkApply.addEventListener('click', function () {
-        if (!bulkSelect.value) {
-          alert('Please choose a bulk action first.');
-          return;
+  // Initialize advanced features
+  document.addEventListener('DOMContentLoaded', function() {
+    // Advanced card animations
+    gsap.from('.card', {
+      duration: 0.8,
+      y: 30,
+      opacity: 0,
+      stagger: 0.2,
+      ease: 'power3.out'
+    });
+
+    // Stat counter animations
+    const stats = document.querySelectorAll('.stat-value');
+    stats.forEach(stat => {
+      const value = parseInt(stat.textContent);
+      gsap.to(stat, {
+        duration: 2,
+        textContent: value,
+        snap: { textContent: 1 },
+        ease: 'power1.out',
+        scrollTrigger: {
+          trigger: stat,
+          start: 'top 80%'
         }
-        const checked = document.querySelectorAll('input[name="vendorIds"][form="vendor-bulk-form"]:checked');
-        if (checked.length === 0) {
-          alert('Please select at least one vendor.');
-          return;
+      });
+    });
+
+    // Initialize performance metrics chart if element exists
+    const chartEl = document.getElementById('performanceChart');
+    if (chartEl) {
+      new Chart(chartEl, {
+        type: 'line',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+            label: 'Orders',
+            data: [12, 19, 3, 5, 2, 3, 7],
+            borderColor: 'rgb(79, 70, 229)',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              position: 'bottom'
+            },
+            tooltip: {
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              titleColor: '#1e293b',
+              bodyColor: '#475569',
+              borderColor: 'rgba(148, 163, 184, 0.2)',
+              borderWidth: 1,
+              cornerRadius: 8,
+              padding: 12,
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            }
+          }
         }
-        actionInput.value = bulkSelect.value;
-        bulkForm.submit();
       });
     }
   });
+</script>
+<script>
+// Organizer: Bulk vendor actions (clean, maintainable, uses AdvancedUI utilities)
+document.addEventListener('DOMContentLoaded', function () {
+  class VendorBulkActions {
+    constructor() {
+      this.form = document.getElementById('vendor-bulk-form');
+      this.select = document.getElementById('vendor-bulk-action-select');
+      this.applyButton = document.getElementById('vendor-bulk-apply');
+      this.actionInput = document.getElementById('vendor-bulk-action-input');
+      this.selectAll = document.getElementById('vendor-bulk-select-all');
+
+      if (!this.form || !this.select || !this.applyButton || !this.actionInput) return;
+
+      // bind main handlers
+      this.applyButton.addEventListener('click', (e) => this.handleApply(e));
+      if (this.select) this.select.addEventListener('change', () => this.updateApplyState());
+      if (this.selectAll) this.selectAll.addEventListener('change', (e) => this.toggleAll(e.target.checked));
+
+      // bind existing vendor checkboxes
+      this.bindCheckboxes();
+    }
+    vendorCheckboxes() {
+      return document.querySelectorAll('input[name="vendorIds"][form="vendor-bulk-form"]');
+    }
+
+    bindCheckboxes() {
+      const boxes = this.vendorCheckboxes();
+      boxes.forEach(box => {
+        box.addEventListener('change', () => {
+          this.updateSelectAllState();
+          this.updateApplyState();
+        });
+      });
+      // initial state
+      this.updateSelectAllState();
+      this.updateApplyState();
+    }
+
+    updateSelectAllState() {
+      if (!this.selectAll) return;
+      const boxes = this.vendorCheckboxes();
+      const checked = Array.from(boxes).filter(b => b.checked).length;
+      if (checked === 0) {
+        this.selectAll.checked = false;
+        this.selectAll.indeterminate = false;
+      } else if (checked === boxes.length) {
+        this.selectAll.checked = true;
+        this.selectAll.indeterminate = false;
+      } else {
+        this.selectAll.checked = false;
+        this.selectAll.indeterminate = true;
+      }
+    }
+
+    updateApplyState() {
+      const selectedAction = this.select && this.select.value;
+      const checked = document.querySelectorAll('input[name="vendorIds"][form="vendor-bulk-form"]:checked').length;
+      // enable only when an action is chosen and at least one vendor selected
+      this.applyButton.disabled = !(selectedAction && checked > 0);
+    }
+
+    toggleAll(checked) {
+      const boxes = this.vendorCheckboxes();
+      boxes.forEach(b => { b.checked = checked; });
+      this.updateApplyState();
+      this.updateSelectAllState();
+    }
+
+    async handleApply(e) {
+      e.preventDefault();
+
+      const action = this.select.value;
+      if (!action) {
+        if (window.AdvancedUI && typeof window.AdvancedUI.showToast === 'function') {
+          window.AdvancedUI.showToast('Please choose a bulk action first.', 'warning');
+        } else {
+          alert('Please choose a bulk action first.');
+        }
+        return;
+      }
+
+      const checked = document.querySelectorAll('input[name="vendorIds"][form="vendor-bulk-form"]:checked');
+      if (!checked || checked.length === 0) {
+        if (window.AdvancedUI && typeof window.AdvancedUI.showToast === 'function') {
+          window.AdvancedUI.showToast('Please select at least one vendor.', 'warning');
+        } else {
+          alert('Please select at least one vendor.');
+        }
+        return;
+      }
+
+      // For potentially destructive actions, show confirmation modal
+      if (action === 'archive') {
+        const confirmed = await __showBulkConfirm('Archive the selected vendor(s)? They will be hidden from the active roster.');
+        if (!confirmed) return;
+      }
+
+      // Set loading state
+      try {
+        if (window.AdvancedUI && typeof window.AdvancedUI.showLoading === 'function') {
+          window.AdvancedUI.showLoading(this.applyButton, 'spinner');
+        } else {
+          this.applyButton.disabled = true;
+          this.applyButton.classList.add('loading');
+        }
+
+        this.actionInput.value = action;
+        setTimeout(() => this.form.submit(), 50);
+
+      } catch (err) {
+        console.error('Bulk action error', err);
+        if (window.AdvancedUI && typeof window.AdvancedUI.showToast === 'function') {
+          window.AdvancedUI.showToast('An error occurred while applying the bulk action.', 'error');
+        } else {
+          alert('An error occurred while applying the bulk action.');
+        }
+        if (window.AdvancedUI && typeof window.AdvancedUI.hideLoading === 'function') {
+          window.AdvancedUI.hideLoading(this.applyButton);
+        } else {
+          this.applyButton.disabled = false;
+          this.applyButton.classList.remove('loading');
+        }
+      }
+    }
+  }
+
+  // initialize
+  new VendorBulkActions();
+});
+</script>
+<script>
+// Small confirmation modal helper used by the vendor bulk actions.
+// This injects a lightweight modal into the DOM the first time it's needed.
+function __ensureBulkConfirmModal() {
+  if (document.getElementById('bulk-confirm-modal')) return;
+  const modal = document.createElement('div');
+  modal.id = 'bulk-confirm-modal';
+  modal.className = 'modal muted';
+  modal.style.cssText = 'position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:1200;';
+  modal.innerHTML = `
+    <div class="modal-backdrop" style="position:absolute;inset:0;background:rgba(15,23,42,0.6);"></div>
+    <div class="modal-card card" style="position:relative;z-index:2;max-width:520px;padding:20px;border-radius:10px;">
+      <h3 id="bulk-confirm-title">Confirm action</h3>
+      <p id="bulk-confirm-message" class="muted">Are you sure you want to continue?</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button id="bulk-confirm-cancel" class="btn btn-outline">Cancel</button>
+        <button id="bulk-confirm-ok" class="btn btn-primary">Confirm</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function __showBulkConfirm(message) {
+  __ensureBulkConfirmModal();
+  const modal = document.getElementById('bulk-confirm-modal');
+  const msgEl = modal.querySelector('#bulk-confirm-message');
+  const ok = modal.querySelector('#bulk-confirm-ok');
+  const cancel = modal.querySelector('#bulk-confirm-cancel');
+  msgEl.textContent = message;
+  return new Promise((resolve) => {
+    modal.style.display = 'flex';
+    function cleanup() {
+      ok.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      modal.style.display = 'none';
+    }
+    function onOk() { cleanup(); resolve(true); }
+    function onCancel() { cleanup(); resolve(false); }
+    ok.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+  });
+}
 </script>
 </body>
 </html>

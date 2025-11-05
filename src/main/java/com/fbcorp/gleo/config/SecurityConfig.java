@@ -7,15 +7,16 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
-import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
@@ -29,7 +30,8 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder(){
-        return NoOpPasswordEncoder.getInstance();
+        // Use BCrypt for password encoding. NoOp is insecure and deprecated.
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -41,20 +43,19 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector) throws Exception {
-        MvcRequestMatcher.Builder mvc = new MvcRequestMatcher.Builder(introspector);
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(mvc.pattern("/css/**"), mvc.pattern("/js/**"), mvc.pattern("/images/**")).permitAll()
-                        .requestMatchers(mvc.pattern("/uploads/**")).permitAll()
-                        .requestMatchers(mvc.pattern("/h2-console/**")).permitAll()
-                        .requestMatchers(mvc.pattern("/error")).permitAll()
-                        .requestMatchers(mvc.pattern("/e/{eventCode}/usher/**")).hasAnyRole("USHER", "ADMIN", "ORGANIZER")
-                        .requestMatchers(mvc.pattern("/e/**")).permitAll()
-                        .requestMatchers(mvc.pattern("/login"), mvc.pattern("/")).permitAll()
-                        .requestMatchers(mvc.pattern("/admin/**")).hasAnyRole("ADMIN", "ORGANIZER")
-                        .requestMatchers(mvc.pattern("/organizer/**")).hasRole("ORGANIZER")
-                        .requestMatchers(mvc.pattern("/vendor/**")).hasAnyRole("VENDOR", "STAFF")
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/e/*/usher/**")).hasAnyRole("USHER", "ADMIN", "ORGANIZER")
+                        .requestMatchers("/e/**").permitAll()
+                        .requestMatchers("/login", "/").permitAll()
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "ORGANIZER")
+                        .requestMatchers("/organizer/**").hasRole("ORGANIZER")
+                        .requestMatchers("/vendor/**").hasAnyRole("VENDOR", "STAFF")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -62,11 +63,12 @@ public class SecurityConfig {
                         .successHandler(successHandler)
                         .permitAll()
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
-                        .permitAll()
-                )
+        .logout(logout -> logout
+            .logoutUrl("/logout")
+            // redirect users to the login page after sign-out instead of the public guest page
+            .logoutSuccessUrl("/login")
+            .permitAll()
+        )
                 .authenticationProvider(authenticationProvider())
                 .httpBasic(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable());

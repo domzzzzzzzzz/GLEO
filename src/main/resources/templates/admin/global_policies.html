@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Global Policies · GLEO</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+  <link href="/css/modern.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>Global Policies</h2>
+      <p class="muted">View and manage policies across all events</p>
+    </div>
+    <a href="/dashboard" class="btn btn-outline">&larr; Back to dashboard</a>
+  </div>
+
+  <div th:if="${toastMessage}" class="toast toast-success" th:text="${toastMessage}">Saved</div>
+  <div th:if="${toastError}" class="toast toast-error" th:text="${toastError}">Error</div>
+
+  <div class="grid-layout">
+    <div th:each="event : ${events}" class="policy-card">
+      <div class="card-header">
+        <h3 th:text="${event.name}">Event Name</h3>
+        <span class="event-code" th:text="${event.code}">Code</span>
+      </div>
+
+      <div class="policy-list">
+        <div class="policy-item">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+            <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+          </svg>
+          <div>
+            <div class="title">General Settings</div>
+            <a th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-sm">Manage policies</a>
+          </div>
+        </div>
+
+        <div class="policy-item">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zM11 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5zm.5 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1h-4zm2 3a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1h-2zm0 3a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1h-2z"/>
+          </svg>
+          <div>
+            <div class="title">Tier Policies</div>
+            <div class="info">
+              <span class="setting-item">
+                <span class="setting-label">VIP Access:</span>
+                <span class="setting-value enabled">Unlimited</span>
+              </span>
+              <span class="setting-item">
+                <span class="setting-label">Regular Access:</span>
+                <span class="setting-value" th:classappend="${event.regularOneItemPerVendor ? 'disabled' : 'enabled'}" 
+                      th:text="${event.regularOneItemPerVendor ? '1 item' : 'Unlimited'}">Regular Setting</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="policy-item">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm15 2h-4v3h4V4zm0 4h-4v3h4V8zm0 4h-4v3h3a1 1 0 0 0 1-1v-2zm-5 3v-3H6v3h4zm-5 0v-3H1v2a1 1 0 0 0 1 1h3zm-4-4h4V8H1v3zm0-4h4V4H1v3zm5-3v3h4V4H6zm4 4H6v3h4V8z"/>
+          </svg>
+          <div>
+            <div class="title">Vendor Settings</div>
+            <div class="info">
+              <span class="setting-item">
+                <span class="setting-label">Multi-vendor cart:</span>
+                <span class="setting-value" th:classappend="${event.enableMultiVendorCart ? 'enabled' : 'disabled'}" 
+                      th:text="${event.enableMultiVendorCart ? 'Yes' : 'No'}">Multi-vendor</span>
+              </span>
+              <span class="setting-item">
+                <span class="setting-label">PIN required:</span>
+                <span class="setting-value" th:classappend="${event.requireVendorPinForPickup ? 'enabled' : 'disabled'}"
+                      th:text="${event.requireVendorPinForPickup ? 'Yes' : 'No'}">PIN</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.policy-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 1.5rem;
+  transition: transform 0.2s ease;
+}
+.policy-card:hover {
+  transform: translateY(-2px);
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+.event-code {
+  font-family: monospace;
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+.policy-list {
+  display: grid;
+  gap: 1rem;
+}
+.policy-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: var(--background);
+  transition: background-color 0.2s ease;
+}
+.policy-item:hover {
+  background: rgba(var(--primary-rgb), 0.02);
+}
+.policy-item svg {
+  color: var(--primary);
+  opacity: 0.8;
+}
+.title {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+.info {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.btn-sm {
+  font-size: 0.875rem;
+  padding: 4px 12px;
+}
+.setting-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.setting-label {
+  color: var(--text-muted);
+}
+.setting-value {
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.setting-value.enabled {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: rgb(16, 185, 129);
+}
+.setting-value.disabled {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: rgb(239, 68, 68);
+}
+@media (max-width: 480px) {
+  .grid-layout {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</body>
+</html>

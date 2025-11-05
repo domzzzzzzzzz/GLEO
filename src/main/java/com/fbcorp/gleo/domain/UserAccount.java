@@ -38,6 +38,8 @@ public class UserAccount {
     private Event event;
 
     public boolean hasRole(String roleName){
-        return roles.stream().anyMatch(r -> r.getName().equalsIgnoreCase(roleName));
+        // Remove ROLE_ prefix if present for comparison
+        String roleToCheck = roleName.startsWith("ROLE_") ? roleName.substring(5) : roleName;
+        return roles.stream().anyMatch(r -> r.getName().equalsIgnoreCase(roleToCheck));
     }
 }

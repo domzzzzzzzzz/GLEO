@@ -1,22 +1,594 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-theme=${adminTheme}">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- CSRF tokens for AJAX calls (rendered when Spring Security provides _csrf) -->
+  <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}" />
+  <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}" />
   <title>Admin Dashboard · GLEO</title>
   <link href="/css/tailwind.css" rel="stylesheet">
-  <link rel="stylesheet" th:href="@{/css/tailwind.css}">
+  <link href="/css/modern.css" rel="stylesheet">
+  <link href="/css/organizer.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .admin-hero { display:flex;justify-content:space-between;align-items:center;gap:16px }
+    .stats-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px }
+    .stat-card{
+      padding:20px;
+      border-radius:16px;
+      background:linear-gradient(145deg,rgba(255,255,255,0.95),rgba(250,250,250,0.9));
+      box-shadow:0 6px 18px rgba(15,23,42,0.04);
+      transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position:relative;
+      overflow:hidden;
+      border:1px solid rgba(var(--primary-rgb),0.08);
+    }
+    .stat-card:hover {
+      transform:translateY(-3px);
+      box-shadow:0 12px 28px rgba(15,23,42,0.08);
+      border-color:rgba(var(--primary-rgb),0.2);
+    }
+    .stat-icon {
+      position:absolute;
+      right:16px;
+      top:16px;
+      opacity:0.15;
+      width:40px;
+      height:40px;
+      color:var(--primary);
+      transition:all 0.3s ease;
+    }
+    .stat-card:hover .stat-icon {
+      opacity:0.25;
+      transform:scale(1.1);
+    }
+    .stat-trend {
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      font-size:0.85rem;
+      margin-top:4px;
+    }
+    .stat-trend.up { color:#16a34a }
+    .stat-trend.down { color:#dc2626 }
+    
+    /* Enhanced stat card styles */
+    .stat-value-group {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .stat-value {
+      font-weight: 700;
+      font-size: 1.75rem;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--primary), #2563eb);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-fill-color: transparent;
+    }
+    .sparkline {
+      overflow: visible;
+    }
+    .sparkline-path {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      opacity: 0.5;
+    }
+    .sparkline-point {
+      fill: var(--primary);
+      stroke: var(--background);
+      stroke-width: 1.5;
+    }
+    .stat-card:hover .sparkline-path {
+      opacity: 0.8;
+    }
+    
+    /* Mobile responsiveness */
+    .form-grid-sm {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .form-grid-sm {
+        grid-template-columns: 1fr;
+      }
+      .admin-hero {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .stat-card {
+        padding: 16px;
+      }
+    }
+
+    /* Admin Controls Menu Styles */
+    .admin-controls {
+      position: relative;
+    }
+
+    .admin-badge {
+      cursor: pointer;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .menu-arrow {
+      transition: transform 0.2s ease;
+    }
+
+    .admin-badge[aria-expanded="true"] .menu-arrow {
+      transform: rotate(180deg);
+    }
+
+    .admin-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      min-width: 240px;
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .admin-menu:not([hidden]) {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .admin-menu-header {
+      padding: 12px 16px;
+    }
+
+    .menu-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text);
+      display: block;
+    }
+
+    .menu-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .menu-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.15s ease;
+      font-size: 0.9rem;
+    }
+
+    .menu-item:hover {
+      background: rgba(var(--primary-rgb), 0.08);
+    }
+
+    .menu-item svg {
+      opacity: 0.7;
+    }
+
+    .menu-item:hover svg {
+      opacity: 1;
+    }
+
+    .text-danger {
+      color: #dc2626;
+    }
+
+    .text-danger:hover {
+      background: rgba(220, 38, 38, 0.08);
+    }
+
+      /* Quick Stats in Admin Menu */
+      .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+        padding: 0 16px;
+      }
+
+      .quick-stat {
+        background: rgba(var(--primary-rgb), 0.06);
+        padding: 8px;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .quick-stat .stat-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .quick-stat .stat-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      /* Theme Toggle Styles */
+      .theme-toggle {
+        justify-content: space-between;
+        padding-right: 20px;
+      }
+
+      .theme-icon-light,
+      .theme-icon-dark {
+        width: 18px;
+        height: 18px;
+      }
+
+      html[data-theme="light"] .theme-icon-dark,
+      html[data-theme="dark"] .theme-icon-light {
+        display: none;
+      }
+
+      /* Dark mode styles */
+      html[data-theme="dark"] {
+        --background: #1a1b1e;
+        --text: #e5e7eb;
+        --text-muted: #9ca3af;
+        --border: #2d2e32;
+        --primary: #60a5fa;
+        --primary-rgb: 96,165,250;
+      }
+
+      html[data-theme="dark"] .stat-card {
+        background: linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+        border-color: rgba(255,255,255,0.05);
+      }
+
+      html[data-theme="dark"] .admin-menu {
+        background: #1a1b1e;
+        border-color: #2d2e32;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      }
+
+      html[data-theme="dark"] .quick-stat {
+        background: rgba(96,165,250,0.1);
+      }
+
+      /* Keyboard Shortcuts Indicators */
+      .shortcut-hint {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        background: rgba(var(--primary-rgb), 0.1);
+        border-radius: 4px;
+        margin-left: auto;
+        color: var(--text-muted);
+      }
+
+      .menu-item:hover .shortcut-hint {
+        background: rgba(var(--primary-rgb), 0.2);
+      }
+
+    /* Form field tooltips */
+    .form-field input[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 8px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* Keyboard navigation focus styles */
+    .btn:focus-visible,
+    input:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    /* WCAG contrast improvements */
+    .muted {
+      color: #666;
+    }
+    .btn.btn-primary {
+      background: #2563eb;
+    }
+    .btn.btn-danger {
+      background: #dc2626;
+    }
+    .form-field {
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .form-field label {
+      font-size:0.9rem;
+      font-weight:500;
+      color:var(--text-muted);
+      display:flex;
+      align-items:center;
+      gap:4px;
+    }
+    .form-field input {
+      padding:12px 16px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--background);
+      transition:all 0.2s;
+      font-size:0.95rem;
+    }
+    .form-field input:hover {
+      border-color:rgba(var(--primary-rgb),0.4);
+    }
+    .form-field input:focus {
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px rgba(var(--primary-rgb),0.15);
+    }
+    .form-field input:invalid {
+      border-color:#dc2626;
+      box-shadow:none;
+    }
+    .form-field input:invalid:focus {
+      box-shadow:0 0 0 4px rgba(220,38,38,0.15);
+    }
+    .form-field .helper-text {
+      font-size:0.8rem;
+      color:var(--text-muted);
+      margin-top:-2px;
+    }
+    .nav-sidebar {
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .nav-link {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:8px;
+      color:var(--text);
+      text-decoration:none;
+      transition:all 0.2s;
+    }
+    .nav-link:hover {
+      background:rgba(var(--primary-rgb),0.05);
+    }
+    .nav-link.active {
+      background:var(--primary);
+      color:var(--background);
+    }
+    .event-card {
+      padding:16px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      transition:all 0.2s;
+    }
+    .event-card:hover {
+      border-color:var(--primary);
+      background:rgba(var(--primary-rgb),0.02);
+    }
+    @media (max-width:900px){
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .form-grid-sm{grid-template-columns:1fr}
+    }
+  </style>
 </head>
 <body>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 <div class="page">
   <div class="page-header">
     <div>
-      <h2>Welcome, <span th:text="${user != null ? user.username : 'Admin'}">Admin</span></h2>
-      <p class="muted">Manage global policies, create events, and oversee operations.</p>
-    </div>
-    <div class="card" style="padding:12px 18px;">
-      <div class="muted">Quick links</div>
-      <div class="card-actions" style="margin-top:10px;">
-        <a href="/logout" class="btn btn-muted">Sign out</a>
+      <div class="admin-hero">
+        <div>
+          <h2>Welcome, <span th:text="${user != null ? user.username : 'Admin'}">Admin</span></h2>
+          <p class="muted">Manage global policies, create events, and oversee operations.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="admin-controls">
+            <button class="role-badge admin-badge glass-effect" onclick="toggleAdminMenu(event)" aria-expanded="false" aria-controls="adminMenu">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 auto;">
+                <circle cx="12" cy="12" r="10" fill="url(#gadmin)" />
+                <defs>
+                  <linearGradient id="gadmin" x1="0" x2="1">
+                    <stop offset="0" stop-color="#0ea5e9" />
+                    <stop offset="1" stop-color="#06b6d4" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              Admin
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="menu-arrow">
+                <path d="M2 5l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+            </button>
+            <div id="adminMenu" class="admin-menu" hidden>
+              <div class="admin-menu-header">
+                <span class="menu-title">Admin Controls</span>
+                <span class="menu-subtitle" th:text="${user != null ? user.username : 'Admin'}">Admin</span>
+                  <div class="quick-stats">
+                    <div class="quick-stat">
+                      <span class="stat-label">Events</span>
+                      <span class="stat-value" th:text="${events != null ? events.size() : 0}">0</span>
+                    </div>
+                    <div class="quick-stat">
+                      <span class="stat-label">Active</span>
+                      <span class="stat-value" th:text="${totalActiveVendors != null ? totalActiveVendors : 0}">0</span>
+                    </div>
+                    <div class="quick-stat">
+                      <span class="stat-label">Orders</span>
+                      <span class="stat-value" th:text="${totalOrders != null ? totalOrders : 0}">0</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="menu-divider"></div>
+                <!-- If server provided ordered menu items, render them; otherwise fall back to static menu -->
+                <div th:if="${adminMenuItems != null}">
+                  <div th:each="item : ${adminMenuItems}">
+                    <a th:if="${item.href != null}" th:href="${item.href}" class="menu-item" th:text="${item.text}"></a>
+                    <a th:if="${item.href == null}" href="#" class="menu-item" data-action="true" th:text="${item.text}"></a>
+                  </div>
+                </div>
+                <div th:unless="${adminMenuItems != null}">
+                  <button onclick="toggleTheme()" class="menu-item theme-toggle" title="Toggle dark/light mode">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="theme-icon-light">
+                      <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+                    </svg>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="theme-icon-dark">
+                      <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+                    </svg>
+                    <span class="theme-text">Switch Theme</span>
+                  </button>
+                  <button class="menu-item" onclick="saveMenuOrder()" title="Save menu order">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right:6px">
+                      <path d="M3 2h2v2H3V2zm0 4h2v2H3V6zm0 4h2v2H3v-2zM7 2h6v2H7V2zm0 4h6v2H7V6zm0 4h6v2H7v-2z"/>
+                    </svg>
+                    Save menu order
+                  </button>
+                  <div class="menu-divider"></div>
+                  <a href="/admin/dashboard" class="menu-item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1112 0A6 6 0 012 8z"/>
+                    </svg>
+                    Dashboard Overview
+                  </a>
+                  <a href="/admin/events" class="menu-item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M3.5 0a.5.5 0 01.5.5V1h8V.5a.5.5 0 011 0V1h1a2 2 0 012 2v11a2 2 0 01-2 2H2a2 2 0 01-2-2V3a2 2 0 012-2h1V.5a.5.5 0 01.5-.5z"/>
+                    </svg>
+                    Manage Events
+                  </a>
+                  <a href="/admin/policies" class="menu-item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858z"/>
+                    </svg>
+                    Global Policies
+                  </a>
+                  <a href="/admin/logs" class="menu-item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
+                      <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
+                    </svg>
+                    Activity Logs
+                  </a>
+                  <div class="menu-divider"></div>
+                  <a href="/switch-to-user" class="menu-item">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                    </svg>
+                    Switch to User View
+                  </a>
+                  <a href="/logout" class="menu-item text-danger">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                      <path d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                    </svg>
+                    Sign Out
+                  </a>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="stats-grid" style="margin-top:12px">
+        <div class="stat-card">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/>
+          </svg>
+          <div class="muted">Total events</div>
+          <div class="stat-value-group">
+            <div class="stat-value" th:text="${events != null ? events.size() : 0}">0</div>
+            <div class="stat-sparkline">
+              <svg width="60" height="24" viewBox="0 0 60 24" class="sparkline">
+                <path d="M1 18L10 16L20 17L30 13L40 15L50 12L59 8" class="sparkline-path" />
+                <circle cx="59" cy="8" r="2" class="sparkline-point" />
+              </svg>
+            </div>
+          </div>
+          <div class="stat-trend up">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4l4 4H4z"/>
+            </svg>
+            <span>+12% this month</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V18c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-1.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05.02.01.03.03.04.04 1.14.83 1.93 1.94 1.93 3.41V18c0 .35-.07.69-.18 1H22c.55 0 1-.45 1-1v-1.5c0-2.33-4.67-3.5-7-3.5z"/>
+          </svg>
+          <div class="muted">Active vendors</div>
+          <div style="font-weight:700;font-size:1.5rem" th:text="${totalActiveVendors != null ? totalActiveVendors : 0}">0</div>
+          <div class="stat-trend up">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4l4 4H4z"/>
+            </svg>
+            <span>Growing</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-7-2h2V7h-4v2h2z"/>
+          </svg>
+          <div class="muted">Total orders</div>
+          <div style="font-weight:700;font-size:1.5rem" th:text="${totalOrders != null ? totalOrders : 0}">0</div>
+          <div class="stat-trend up">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4l4 4H4z"/>
+            </svg>
+            <span>Increasing</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+          </svg>
+          <div class="muted">Revenue (EGP)</div>
+          <div style="font-weight:700;font-size:1.5rem" th:text="${totalRevenue != null ? #numbers.formatDecimal(totalRevenue,1,'DEFAULT',2,'DEFAULT') : '0.00'}">0.00</div>
+          <div class="stat-trend up">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4l4 4H4z"/>
+            </svg>
+            <span>Profitable</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -24,37 +596,140 @@
   <div th:if="${toastMessage}" class="toast toast-success" th:text="${toastMessage}">Saved</div>
   <div th:if="${toastError}" class="toast toast-error" th:text="${toastError}">Error</div>
 
-  <section class="split-layout">
-    <div class="panel">
-      <h3>Create a new event</h3>
-      <form action="/admin/events" method="post" style="display:flex;flex-direction:column;gap:12px;">
-        <input class="qty-input" type="text" name="code" placeholder="Event code (e.g. G2026)" required>
-        <input class="qty-input" type="text" name="name" placeholder="Event name" required>
-        <label class="muted" style="font-size:0.85rem;">Start time (ISO format: 2025-10-20T18:00)</label>
-        <input class="qty-input" type="text" name="startAt" placeholder="Optional start (ISO)">
-        <label class="muted" style="font-size:0.85rem;">End time (ISO format: 2025-10-20T23:00)</label>
-        <input class="qty-input" type="text" name="endAt" placeholder="Optional end (ISO)">
-        <button class="btn btn-primary" type="submit">Create event</button>
-      </form>
-    </div>
-
-    <div class="panel">
-      <h3>Existing events</h3>
-      <p class="muted" th:if="${events == null || events.isEmpty()}">No events yet.</p>
-      <div class="cart-groups" th:if="${events != null && !events.isEmpty()}">
-        <div class="cart-vendor" th:each="event : ${events}">
-          <div class="cart-vendor-header">
-            <div>
-              <div style="font-weight:600;" th:text="${event.name}">Event</div>
-              <span class="muted" th:text="'Code: ' + ${event.code}">Code</span>
+  <section style="display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px">
+    <div>
+      <div class="card" style="padding:18px;margin-bottom:12px">
+        <h3 style="margin-top:0">Create a new event</h3>
+        <form action="/admin/events" method="post" style="display:grid;gap:16px" id="eventForm">
+          <div class="form-grid-sm">
+            <div class="form-field">
+              <label for="eventCode">Event Code</label>
+              <input id="eventCode" class="field-input" type="text" name="code" placeholder="e.g. G2026" required 
+                pattern="[A-Z][0-9]{4}" title="Must start with a capital letter followed by 4 digits"
+                aria-describedby="eventCodeHelp">
+              <div id="eventCodeHelp" class="helper-text">One capital letter followed by 4 numbers (e.g. G2026)</div>
             </div>
-            <a th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-outline">Policies</a>
+            <div class="form-field">
+              <label for="eventName">Event Name</label>
+              <input id="eventName" class="field-input" type="text" name="name" placeholder="Enter event name" required
+                minlength="3" maxlength="100" title="Event name should be between 3 and 100 characters"
+                aria-describedby="eventNameHelp">
+              <div id="eventNameHelp" class="helper-text">Choose a clear, descriptive name (3-100 characters)</div>
+            </div>
           </div>
-          <p class="muted" th:text="'Running from ' + ${event.startAt} + ' to ' + ${event.endAt}">Dates</p>
+          <div class="form-grid-sm">
+            <div class="form-field">
+              <label for="eventStart">Start Date</label>
+              <input id="eventStart" class="field-input" type="datetime-local" name="startAt">
+            </div>
+            <div class="form-field">
+              <label for="eventEnd">End Date</label>
+              <input id="eventEnd" class="field-input" type="datetime-local" name="endAt">
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:12px">
+            <button class="btn btn-outline" type="reset" onclick="resetForm()" title="Clear all form fields">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right:6px">
+                <path d="M8 4L4 0v3H3C1.3 3 0 4.3 0 6v3h2V6c0-.6.4-1 1-1h1v3l4-4z"/>
+                <path d="M14 7v3c0 .6-.4 1-1 1h-1V8L8 12l4 4V13h1c1.7 0 3-1.3 3-3V7h-2z"/>
+              </svg>
+              Reset form
+            </button>
+            <button class="btn btn-primary" type="submit" title="Create a new event with the provided details">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right:6px">
+                <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
+              </svg>
+              Create event
+            </button>
+          </div>
+        </form>
+        <!-- Event form helpers moved to /js/admin-dashboard.js -->
+      </div>
+
+      <div class="card" style="padding:18px">
+        <h3 style="margin-top:0">Existing events</h3>
+        <p class="muted" th:if="${events == null || events.isEmpty()}">No events yet.</p>
+        <div style="display:grid;gap:12px;margin-top:8px" th:if="${events != null && !events.isEmpty()}">
+          <div th:each="event : ${events}" class="event-card">
+            <div style="display:flex;justify-content:space-between;align-items:start">
+              <div>
+                <div style="font-weight:600;font-size:1.1rem" th:text="${event.name}">Event</div>
+                <div class="muted" style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                  <span th:text="${event.code}" style="font-family:monospace;background:rgba(var(--primary-rgb),0.1);padding:2px 6px;border-radius:4px">Code</span>
+                  <span th:if="${event.startAt}" style="display:flex;align-items:center;gap:4px">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.5">
+                      <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                      <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                    </svg>
+                    <span th:text="${event.startAt}">Start</span>
+                    <span>→</span>
+                    <span th:text="${event.endAt}">End</span>
+                  </span>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <a th:href="@{|/admin/events/${event.code}/policies|}" class="btn btn-outline" title="Manage event policies">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+                  </svg>
+                  <span>Policies</span>
+                </a>
+                <a th:href="@{|/admin/events/${event.code}/vendors|}" class="btn btn-primary" title="Manage event vendors">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                    <path fill-rule="evenodd" d="M5.216 14A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216z"/>
+                    <path d="M4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+                  </svg>
+                  <span>Vendors</span>
+                </a>
+                <button type="button" class="btn btn-danger btn-sm" th:attr="data-event-code=${event.code}" onclick="openDeleteModal(this)" title="Delete event">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="margin-right:6px">
+                    <path d="M6 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3v1H3V2h3zm1 4v6a1 1 0 0 0 2 0V6H7z"/>
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <aside>
+      <div class="card" style="padding:18px">
+        <h4>Admin quick actions</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <a href="/admin/events" class="btn btn-outline">All events</a>
+          <a href="/admin/events/new" class="btn">New event form</a>
+          <a href="/admin/events/policies" class="btn btn-outline">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right:4px">
+              <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+            </svg>
+            Global policies
+          </a>
+        </div>
+      </div>
+    </aside>
   </section>
 </div>
+
+<script src="/js/advanced-ui.js"></script>
+
+<!-- Delete confirmation modal -->
+<div id="confirmModal" class="modal" aria-hidden="true" role="dialog" style="display:none">
+  <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
+  <div class="modal-card" role="document" aria-labelledby="confirmModalTitle">
+    <h3 id="confirmModalTitle">Delete event?</h3>
+    <p class="muted" id="confirmModalBody">This will permanently remove the event and all related data (vendors, policies). This action cannot be undone.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button class="btn btn-outline" type="button" onclick="closeDeleteModal()">Cancel</button>
+      <button id="confirmDeleteBtn" class="btn btn-danger" type="button" onclick="confirmDelete()">Yes, delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin menu + modal behavior moved to /js/admin-dashboard.js -->
+<!-- Centralized admin JS (menu, modal, theme, form helpers) -->
+<script src="/js/admin-dashboard.js"></script>
 </body>
 </html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="'Policies · ' + ${event.name}">Policies</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+  <link href="/css/modern.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2>Event Policies</h2>
+      <p class="muted" th:text="'Configure rules and settings for ' + ${event.name}">Event description</p>
+    </div>
+    <a href="/dashboard" class="btn btn-outline">&larr; Back to dashboard</a>
+  </div>
+
+  <div th:if="${toastMessage}" class="toast toast-success" th:text="${toastMessage}">Saved</div>
+  <div th:if="${toastError}" class="toast toast-error" th:text="${toastError}">Error</div>
+
+  <div class="split-layout">
+    <section class="card" style="padding:24px">
+      <h3 style="margin-top:0">Checkout Behavior</h3>
+      <form th:action="@{|/admin/events/${event.code}/policy|}" method="post" class="form">
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="enableMultiVendorCart" th:checked="${event.enableMultiVendorCart}">
+            Enable multi-vendor cart
+          </label>
+          <span class="form-help">Allow customers to add items from multiple vendors to their cart</span>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="blockAddWhenOpenOrder" th:checked="${event.blockAddWhenOpenOrder}">
+            Block add when order is open
+          </label>
+          <span class="form-help">Prevent adding items to cart when customer has an open order</span>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="regularOneItemPerVendor" th:checked="${event.regularOneItemPerVendor}">
+            One regular item per vendor
+          </label>
+          <span class="form-help">Limit regular tier tickets to one item per vendor</span>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="requireVendorPinForPickup" th:checked="${event.requireVendorPinForPickup}">
+            Require vendor PIN for pickup
+          </label>
+          <span class="form-help">Vendors must enter their PIN to mark orders as picked up</span>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="enableGuestPickupConfirm" th:checked="${event.enableGuestPickupConfirm}">
+            Enable guest pickup confirmation
+          </label>
+          <span class="form-help">Allow guests to confirm their order pickup</span>
+        </div>
+
+        <div style="margin-top:20px">
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" style="padding:24px">
+      <h3 style="margin-top:0">Tier Policies</h3>
+      <div style="display:grid;gap:16px">
+        <div th:each="tier : ${tiers}" class="tier-policy">
+          <form th:action="@{|/admin/events/${event.code}/tier-policy|}" method="post">
+            <input type="hidden" name="tierCode" th:value="${tier}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h4 style="margin:0" th:text="${tier}">Tier</h4>
+              <span th:if="${tier == T(com.fbcorp.gleo.domain.TierCode).VIP}" class="badge badge-primary">Premium</span>
+            </div>
+
+            <div class="form-group">
+              <label>Access mode</label>
+              <div style="display:grid;gap:8px">
+                <label>
+                  <input type="radio" name="accessMode" value="full" 
+                    th:checked="${tierPolicies.get(tier).unlimited}">
+                  Unlimited access
+                </label>
+                <label>
+                  <input type="radio" name="accessMode" value="limited" 
+                    th:checked="${!tierPolicies.get(tier).unlimited}">
+                  Limited items per vendor
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group" th:classappend="${tierPolicies.get(tier).unlimited ? 'hidden' : ''}">
+              <label for="maxItems">Maximum items per vendor</label>
+              <input type="number" id="maxItems" name="maxItemsPerVendor" min="1"
+                th:value="${tierPolicies.get(tier).maxItemsPerVendor}">
+            </div>
+
+            <button type="submit" class="btn btn-outline">Update tier policy</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/js/advanced-ui.js"></script>
+<script>
+document.querySelectorAll('input[name="accessMode"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const form = this.closest('form');
+    const maxItemsGroup = form.querySelector('div:has(#maxItems)');
+    if (this.value === 'full') {
+      maxItemsGroup.classList.add('hidden');
+      form.querySelector('#maxItems').value = '';
+    } else {
+      maxItemsGroup.classList.remove('hidden');
+      if (!form.querySelector('#maxItems').value) {
+        form.querySelector('#maxItems').value = '1';
+      }
+    }
+  });
+});
+</script>
+
+<style>
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+.form-help {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+.tier-policy {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge-primary {
+  background: var(--primary);
+  color: white;
+}
+.hidden {
+  display: none;
+}
+input[type="number"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+}
+.split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+@media (max-width: 768px) {
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</body>
+</html>
