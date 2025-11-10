@@ -55,7 +55,8 @@ public class CartViewService {
             }
 
             if (!lines.isEmpty()) {
-                groups.add(new VendorGroup(vendorId, vendor.getName(), lines, vendorTotal));
+                String note = cartSession.getVendorNote(vendorId);
+                groups.add(new VendorGroup(vendorId, vendor.getName(), lines, vendorTotal, note));
                 grandTotal = grandTotal.add(vendorTotal);
             }
         }
@@ -64,12 +65,36 @@ public class CartViewService {
             return CartSummary.empty();
         }
 
-        return new CartSummary(groups, grandTotal, totalQty);
+        // Simple service fee: 5% (could be externalized to config later)
+    BigDecimal serviceFee = grandTotal.multiply(BigDecimal.valueOf(0.05)).setScale(2, java.math.RoundingMode.HALF_UP);
+        // Basic promo code handling (temporary):  if promo == SAVE10 -> 10% off; if FLAT5 -> 5 currency units off
+        BigDecimal discount = BigDecimal.ZERO;
+        String appliedPromo = null;
+        if (cartSession.getPromoCode() != null) {
+            String code = cartSession.getPromoCode().toUpperCase();
+            appliedPromo = code;
+            switch (code) {
+                case "SAVE10" -> discount = grandTotal.multiply(BigDecimal.valueOf(0.10));
+                case "FLAT5" -> discount = BigDecimal.valueOf(5);
+                default -> appliedPromo = null; // unrecognized; treat as not applied
+            }
+        }
+        if (discount.compareTo(grandTotal) > 0) {
+            discount = grandTotal; // cap
+        }
+        BigDecimal finalTotal = grandTotal.add(serviceFee).subtract(discount);
+        return new CartSummary(groups, grandTotal, serviceFee, discount, appliedPromo, finalTotal, totalQty);
     }
 
-    public record CartSummary(List<VendorGroup> groups, BigDecimal grandTotal, int totalQty) {
+    public record CartSummary(List<VendorGroup> groups,
+                              BigDecimal grandSubtotal,
+                              BigDecimal serviceFee,
+                              BigDecimal discount,
+                              String promoCode,
+                              BigDecimal grandTotal,
+                              int totalQty) {
         public static CartSummary empty() {
-            return new CartSummary(List.of(), BigDecimal.ZERO, 0);
+            return new CartSummary(List.of(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null, BigDecimal.ZERO, 0);
         }
 
         public boolean hasItems() {
@@ -84,7 +109,7 @@ public class CartViewService {
         }
     }
 
-    public record VendorGroup(Long vendorId, String vendorName, List<CartLine> lines, BigDecimal total) {
+    public record VendorGroup(Long vendorId, String vendorName, List<CartLine> lines, BigDecimal total, String note) {
         public int lineCount() {
             return lines != null ? lines.size() : 0;
         }

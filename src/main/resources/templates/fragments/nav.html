@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+<nav th:fragment="top(event, cartSummary)" class="gleo-nav">
+  <div class="gleo-nav__row">
+    <div class="gleo-nav__brand">
+      <a th:href="@{|/e/${event.code}|}" class="gleo-logo" aria-label="Return to event home">
+        <span class="gleo-logo__mark" aria-hidden="true">G</span>
+        <span class="gleo-logo__text">GLEO</span>
+      </a>
+      <div class="gleo-event">
+        <span class="gleo-event__name" th:text="${event.name}">Event</span>
+        <span class="gleo-event__code" th:text="${event.code}">CODE</span>
+      </div>
+    </div>
+    <div class="gleo-nav__actions">
+      <a th:href="@{|/e/${event.code}/checkout|}" class="gleo-btn gleo-btn--ghost" aria-label="Track your order status" title="Track your orders status in real time">
+        <span class="gleo-btn__icon" aria-hidden="true">🕒</span>
+        <span class="gleo-btn__label">Order status</span>
+      </a>
+      <a th:href="@{|/e/${event.code}/cart|}" class="gleo-cart" aria-label="Open your cart">
+        <span class="gleo-cart__icon" aria-hidden="true">🛒</span>
+        <span class="gleo-cart__label">Cart</span>
+        <span class="gleo-cart__count" th:text="${cartSummary != null} ? ${cartSummary.totalQty} : 0" aria-label="Cart items count">0</span>
+      </a>
+    </div>
+  </div>
+</nav>
+</body>
+</html>

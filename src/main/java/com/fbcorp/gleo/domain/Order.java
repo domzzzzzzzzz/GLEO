@@ -27,6 +27,10 @@ public class Order {
     private OrderStatus status = OrderStatus.NEW;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+    
+    // Vendor-specific order number (e.g., Vendor A: #1, #2, #3; Vendor B: #1, #2, #3)
+    @Column(nullable = false)
+    private Integer vendorOrderNumber;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();

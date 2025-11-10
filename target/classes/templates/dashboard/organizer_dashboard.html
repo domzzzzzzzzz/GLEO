@@ -309,7 +309,8 @@
               </ul>
             </div>
 
-            <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu|}" method="post" class="menu-add-form">
+            <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu|}"
+                  method="post" enctype="multipart/form-data" class="menu-add-form">
               <div class="input-group">
                 <label th:for="'item-name-' + ${vendor.id}">Add menu item</label>
                 <input class="field-input" th:id="'item-name-' + ${vendor.id}" type="text" name="name" placeholder="Item name" required>
@@ -322,6 +323,11 @@
                 <div class="input-group">
                   <label th:for="'item-max-' + ${vendor.id}">Max per order</label>
                   <input class="field-input" th:id="'item-max-' + ${vendor.id}" type="number" name="maxPerOrder" min="1" placeholder="Optional">
+                </div>
+                <div class="input-group">
+                  <label th:for="'item-image-' + ${vendor.id}">Image</label>
+                  <input class="field-input" th:id="'item-image-' + ${vendor.id}" type="file" name="image" accept="image/*">
+                  <small class="muted">PNG or JPG up to 5 MB. Optional, but highly recommended for a professional menu.</small>
                 </div>
               </div>
               <div class="menu-add-actions">
@@ -444,12 +450,17 @@
               <h5>Menu</h5>
               <p class="muted" th:if="${menu == null || #lists.isEmpty(menu)}">No menu items yet.</p>
               <ul class="menu-list" th:if="${menu != null && !#lists.isEmpty(menu)}">
-                <li th:each="item : ${menu}">
-                  <strong th:text="${item.name}">Item name</strong>
-                  <span>
-                    <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
-                    <span th:if="${item.maxPerOrder != null}" th:text="' - Max ' + ${item.maxPerOrder}">Limit</span>
-                  </span>
+                <li th:each="item : ${menu}" class="menu-list-item-professional">
+                  <div class="menu-item-image-wrapper" th:if="${item.imagePath != null}">
+                    <img th:src="${item.imagePath}" th:alt="${item.name} + ' image'" class="menu-item-image" style="max-width:64px;max-height:64px;border-radius:8px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-right:12px;">
+                  </div>
+                  <div class="menu-item-details">
+                    <strong th:text="${item.name}">Item name</strong>
+                    <span>
+                      <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
+                      <span th:if="${item.maxPerOrder != null}" th:text="' - Max ' + ${item.maxPerOrder}">Limit</span>
+                    </span>
+                  </div>
                 </li>
               </ul>
             </div>

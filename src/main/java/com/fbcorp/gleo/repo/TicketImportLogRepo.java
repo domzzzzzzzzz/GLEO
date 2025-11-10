@@ -8,5 +8,6 @@ import java.util.List;
 
 public interface TicketImportLogRepo extends JpaRepository<TicketImportLog, Long> {
     List<TicketImportLog> findTop5ByEventOrderByCreatedAtDesc(Event event);
+    List<TicketImportLog> findByEvent(Event event);
 }
 

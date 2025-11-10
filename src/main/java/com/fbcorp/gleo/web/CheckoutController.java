@@ -59,8 +59,9 @@ public class CheckoutController {
         // remove accepted groups from cart
         result.orders.forEach(o -> cart.removeVendorGroup(o.getVendor().getId()));
 
-        populateSummary(model, eventCode, result.orders, result.rejectedByVendor);
-        return "checkout_result";
+        // Use PRG pattern: redirect to GET /checkout so refresh doesn't resubmit the form
+        // Summary page will load recent orders for this device via checkoutSummary()
+        return "redirect:/e/" + eventCode + "/checkout";
     }
 
     private void populateSummary(Model model,

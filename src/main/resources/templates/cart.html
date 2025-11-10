@@ -5,49 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title th:text="${event.name} + ' - Cart'">Cart</title>
   <link href="/css/tailwind.css" rel="stylesheet">
+  <link href="/css/modern.css" rel="stylesheet">
+  <link href="/css/cart-professional.css" rel="stylesheet">
   <script src="https://unpkg.com/htmx.org@2.0.2"></script>
 </head>
 <body>
-<div class="page">
-  <div class="page-header">
-    <div>
-      <a th:href="@{|/e/${event.code}|}" class="btn btn-muted">&larr; Continue browsing</a>
-      <h2 style="margin-top:16px;" th:text="${event.name} + ' - Cart'">Event Cart</h2>
-      <p class="muted" th:text="'QR required: ' + (${cartSummary.groups.isEmpty()} ? 'No' : 'Ready when placing order')">Info</p>
-    </div>
-    <div class="policies-chip">
-      <span>Cart mode:</span>
-      <strong th:text="${isMultiVendor} ? 'Multi-vendor' : 'Single vendor'">Mode</strong>
+<div class="page" id="cart-page">
+  <!-- Professional Cart Header -->
+  <div class="cart-header">
+    <div class="cart-header-content">
+      <a th:href="@{|/e/${event.code}|}" class="back-link">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Continue Shopping
+      </a>
+      <h1 class="cart-title">Shopping Cart</h1>
+      <p class="cart-subtitle" th:if="${!cartSummary.groups.isEmpty()}" th:text="${cartSummary.groups.size() + ' vendor' + (cartSummary.groups.size() > 1 ? 's' : '')}">1 vendor</p>
     </div>
   </div>
 
-  <div class="split-layout">
-    <section class="panel" style="min-height:320px;">
-      <h3>Order Overview</h3>
-      <div th:if="${cartSummary.groups.isEmpty()}" class="empty-state">
-        <h4 style="margin:0 0 8px;">No items yet</h4>
-        <p class="muted" style="margin:0;">Browse vendors and add dishes to start an order.</p>
+  <!-- 2-Column Professional Layout -->
+  <div class="cart-container">
+    <!-- LEFT: Items List -->
+    <div class="cart-items-section">
+      <!-- Empty State -->
+      <div th:if="${cartSummary.groups.isEmpty()}" class="empty-cart">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="38" stroke="#e5e7eb" stroke-width="4"/>
+          <path d="M25 35L35 45L55 25" stroke="#d1d5db" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h3>Your cart is empty</h3>
+        <p>Browse vendors and add delicious items to get started!</p>
+        <a th:href="@{|/e/${event.code}|}" class="btn btn-primary">Start Shopping</a>
       </div>
 
+      <!-- Cart Items -->
       <div th:if="${!cartSummary.groups.isEmpty()}" class="cart-groups">
         <div class="cart-vendor" th:each="group : ${cartSummary.groups}">
           <div class="cart-vendor-header">
-            <div>
-              <div style="font-weight:600;" th:text="${group.vendorName}">Vendor</div>
-              <span class="muted" th:text="${group.lines.size()} + ' item(s)'">items</span>
-            </div>
-            <form th:action="@{|/e/${event.code}/cart/remove-group|}" method="post" class="inline-form">
-              <input type="hidden" name="vendorId" th:value="${group.vendorId}"/>
-              <button class="btn btn-muted" type="submit">Remove</button>
-            </form>
+            <div th:text="${group.vendorName}">Vendor</div>
           </div>
           <div class="cart-lines">
             <div class="cart-line" th:each="line : ${group.lines}">
-              <div>
+              <div class="line-info">
                 <strong th:text="${line.itemName}">Item</strong>
-                <span class="muted" th:text="'x ' + ${line.qty}">x1</span>
+                <span class="line-price" th:text="${#numbers.formatDecimal(line.subtotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
               </div>
-              <span th:text="${#numbers.formatDecimal(line.subtotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
+              <div class="qty-stepper-compact">
+                <form th:action="@{|/e/${event.code}/cart/set-qty|}" 
+                      method="post" 
+                      style="display:inline;"
+                      hx-post th:hx-post="@{|/e/${event.code}/cart/set-qty|}"
+                      hx-target="#cart-page"
+                      hx-swap="outerHTML"
+                      hx-indicator=".qty-stepper-compact">
+                  <input type="hidden" name="vendorId" th:value="${group.vendorId}"/>
+                  <input type="hidden" name="itemId" th:value="${line.itemId}"/>
+                  <input type="hidden" name="qty" th:value="${line.qty - 1}"/>
+                  <button type="submit" class="qty-btn">−</button>
+                </form>
+                <input type="number" th:value="${line.qty}" readonly class="qty-input"/>
+                <form th:action="@{|/e/${event.code}/cart/set-qty|}" 
+                      method="post" 
+                      style="display:inline;"
+                      hx-post th:hx-post="@{|/e/${event.code}/cart/set-qty|}"
+                      hx-target="#cart-page"
+                      hx-swap="outerHTML"
+                      hx-indicator=".qty-stepper-compact">
+                  <input type="hidden" name="vendorId" th:value="${group.vendorId}"/>
+                  <input type="hidden" name="itemId" th:value="${line.itemId}"/>
+                  <input type="hidden" name="qty" th:value="${line.qty + 1}"/>
+                  <button type="submit" class="qty-btn">+</button>
+                </form>
+              </div>
             </div>
           </div>
           <div class="cart-total">
@@ -56,38 +87,75 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <div th:if="${!cartSummary.groups.isEmpty()}" class="cart-total" style="margin-top:24px;">
-        <span>Order total</span>
-        <span th:text="${#numbers.formatDecimal(cartSummary.grandTotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
-      </div>
-    </section>
+    <!-- RIGHT: Order Summary (Sticky) -->
+    <div class="cart-summary-section">
+      <div class="cart-summary-card">
+        <h3 class="summary-title">Order Summary</h3>
+        
+        <div th:if="${!cartSummary.groups.isEmpty()}" class="summary-details">
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span th:text="${#numbers.formatDecimal(cartSummary.grandSubtotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
+          </div>
+          <div class="summary-row">
+            <span>Service fee (5%)</span>
+            <span th:text="${#numbers.formatDecimal(cartSummary.serviceFee, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
+          </div>
+          <div th:if="${cartSummary.discount > 0}" class="summary-row discount-row">
+            <span>Discount <span class="discount-code" th:if="${cartSummary.promoCode}" th:text="'(' + ${cartSummary.promoCode} + ')'">(PROMO)</span></span>
+            <span class="discount-amount">− <span th:text="${#numbers.formatDecimal(cartSummary.discount, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span></span>
+          </div>
+          
+          <div class="summary-divider"></div>
+          
+          <div class="summary-row summary-total">
+            <span>Total</span>
+            <span th:text="${#numbers.formatDecimal(cartSummary.grandTotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
+          </div>
 
-    <aside class="panel">
-      <h3>Confirm &amp; Pay</h3>
-      <p class="muted">Review your order and place it when ready. Ticket QR codes are no longer required.</p>
+          <!-- Promo Code -->
+          <form th:action="@{|/e/${event.code}/cart/promo|}" method="post" class="promo-form-modern">
+            <label for="promo-code">Have a promo code?</label>
+            <div class="promo-input-group">
+              <input id="promo-code" name="code" type="text" placeholder="Enter code" th:value="${cartSummary.promoCode}"/>
+              <button class="btn-apply" type="submit">Apply</button>
+            </div>
+          </form>
 
-      <form th:if="${!cartSummary.groups.isEmpty()}" th:action="@{|/e/${event.code}/checkout|}" method="post" class="qr-tools" id="cart-page-checkout">
-        <div class="card-actions" style="margin:0;">
-          <button class="btn btn-primary" type="submit">Place Order</button>
+          <!-- Checkout Button -->
+          <form th:action="@{|/e/${event.code}/checkout|}" method="post">
+            <button class="btn-checkout" type="submit">
+              <span>Proceed to Checkout</span>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </form>
+
+          <p class="checkout-note">Orders are submitted as walk-ins unless a ticket was previously linked to this device.</p>
         </div>
-        <div class="muted" style="margin-top:12px;">
-          Orders are submitted as walk-ins unless a ticket was previously linked to this device.
-        </div>
-      </form>
 
-      <div th:if="${cartSummary.groups.isEmpty()}" class="empty-state" style="margin-top:12px;">
-        <p class="muted" style="margin:0;">Add items first to unlock checkout.</p>
+        <div th:if="${cartSummary.groups.isEmpty()}" class="summary-empty">
+          <p>Add items to see order summary</p>
+        </div>
       </div>
-    </aside>
+    </div>
   </div>
 </div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    if (window.setupCartPanel) {
-      window.setupCartPanel();
-    }
+    // Debug: Log all qty form submissions
+    document.querySelectorAll('.qty-stepper-compact form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        console.log('Form submitting:', this.action);
+        console.log('Vendor ID:', this.querySelector('[name="vendorId"]').value);
+        console.log('Item ID:', this.querySelector('[name="itemId"]').value);
+        console.log('Quantity:', this.querySelector('[name="qty"]').value);
+      });
+    });
   });
 </script>
 </body>

@@ -28,7 +28,7 @@
       <div class="cart-vendor" th:each="order : ${orders}">
         <div class="cart-vendor-header">
           <div>
-            <div style="font-weight:600;">Order <span th:text="'#' + ${order.id}">#1</span></div>
+            <div style="font-weight:600;">Order <span th:text="'#' + ${order.vendorOrderNumber}">#1</span></div>
             <span class="muted" th:text="'Status: ' + ${order.status}">Status</span>
           </div>
           <a th:href="@{|/e/${order.event.code}/orders/${order.id}|}" class="btn btn-outline">View</a>

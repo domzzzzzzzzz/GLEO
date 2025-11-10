@@ -6,6 +6,304 @@
   <title th:text="${event.name} + ' - Usher board'">Usher board</title>
   <link href="/css/tailwind.css" rel="stylesheet">
   <link href="/css/modern.css" rel="stylesheet">
+  <style>
+    /* Professional Mobile-First Usher Board Enhancements */
+    @media (max-width: 768px) {
+      .page {
+        padding: 0.75rem !important;
+        max-width: 100% !important;
+      }
+
+      .panel {
+        padding: 1rem !important;
+        border-radius: 0.75rem !important;
+        margin-bottom: 1rem !important;
+      }
+
+      .panel > button {
+        background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 700 !important;
+        padding: 1rem !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+        transition: all 0.3s !important;
+      }
+
+      .panel > button:hover {
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
+        transform: translateY(-1px);
+      }
+
+      #search-icon {
+        font-size: 1.25rem;
+        transition: transform 0.3s;
+      }
+
+      .usher-filter label {
+        font-size: 0.9375rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.75rem !important;
+        display: block;
+      }
+
+      .usher-filter-inputs {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+      }
+
+      .usher-filter-inputs input {
+        width: 100% !important;
+        padding: 0.875rem !important;
+        font-size: 1rem !important;
+        border-radius: 0.5rem !important;
+        border: 2px solid #e5e7eb !important;
+      }
+
+      .usher-filter-inputs button,
+      .usher-filter-inputs a {
+        width: 100% !important;
+        padding: 0.875rem 1.25rem !important;
+        font-size: 1rem !important;
+        border-radius: 0.5rem !important;
+        text-align: center;
+        min-height: 44px;
+      }
+
+      .usher-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.5rem !important;
+      }
+
+      .usher-column {
+        width: 100% !important;
+        min-width: auto !important;
+      }
+
+      .usher-column-header {
+        padding: 1rem !important;
+        border-radius: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+      }
+
+      .usher-column-header h3 {
+        color: white !important;
+        font-size: 1.125rem !important;
+        margin: 0 !important;
+        font-weight: 700 !important;
+      }
+
+      .usher-column-header .muted {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-size: 0.875rem !important;
+        margin-top: 0.25rem !important;
+      }
+
+      .usher-order-card {
+        padding: 1rem !important;
+        border-radius: 0.75rem !important;
+        margin-bottom: 1rem !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e5e7eb !important;
+        background: white !important;
+      }
+
+      .usher-order-top {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        align-items: flex-start !important;
+        margin-bottom: 1rem !important;
+      }
+
+      .vendor-block {
+        width: 100%;
+        gap: 0.75rem !important;
+      }
+
+      .vendor-avatar {
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 1.25rem !important;
+        border-radius: 0.75rem !important;
+        flex-shrink: 0;
+      }
+
+      .vendor-info {
+        flex: 1;
+      }
+
+      .vendor-name {
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.25rem !important;
+      }
+
+      .order-meta {
+        font-size: 0.8125rem !important;
+      }
+
+      .order-status {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.8125rem !important;
+        font-weight: 700 !important;
+        border-radius: 0.5rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .usher-order-body {
+        padding: 1rem 0 !important;
+        border-top: 1px solid #f3f4f6 !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+        margin-bottom: 1rem !important;
+      }
+
+      .guest-block {
+        margin-bottom: 1rem !important;
+      }
+
+      .guest-name {
+        font-size: 1.0625rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.25rem !important;
+      }
+
+      .guest-ticket {
+        font-size: 0.875rem !important;
+      }
+
+      .line-items {
+        padding-left: 0 !important;
+        list-style: none !important;
+      }
+
+      .line-items li {
+        padding: 0.625rem 0 !important;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .line-items li:last-child {
+        border-bottom: none !important;
+      }
+
+      .item-name {
+        font-size: 0.9375rem !important;
+        font-weight: 500 !important;
+      }
+
+      .item-qty {
+        font-size: 0.9375rem !important;
+        font-weight: 700 !important;
+        color: #667eea !important;
+      }
+
+      .usher-order-actions {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+      }
+
+      .usher-order-actions form {
+        width: 100% !important;
+        display: block !important;
+        margin: 0 !important;
+      }
+
+      .usher-order-actions input[type="password"] {
+        width: 100% !important;
+        padding: 0.875rem !important;
+        font-size: 1rem !important;
+        border-radius: 0.5rem !important;
+        border: 2px solid #e5e7eb !important;
+        margin-bottom: 0.75rem !important;
+      }
+
+      .usher-order-actions button {
+        width: 100% !important;
+        padding: 0.875rem 1.25rem !important;
+        font-size: 1rem !important;
+        border-radius: 0.5rem !important;
+        font-weight: 600 !important;
+        min-height: 44px !important;
+      }
+
+      .toast {
+        position: fixed !important;
+        bottom: 1rem !important;
+        left: 1rem !important;
+        right: 1rem !important;
+        width: auto !important;
+        border-radius: 0.75rem !important;
+        padding: 1rem !important;
+        font-size: 0.9375rem !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+        z-index: 9999 !important;
+      }
+
+      .card h3 {
+        font-size: 1.25rem !important;
+      }
+
+      .small {
+        font-size: 0.8125rem !important;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .page {
+        padding: 0.5rem !important;
+      }
+
+      .panel {
+        padding: 0.875rem !important;
+      }
+
+      .usher-order-card {
+        padding: 0.875rem !important;
+      }
+
+      .vendor-avatar {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 1.125rem !important;
+      }
+    }
+
+    /* Enhanced badge colors for mobile visibility */
+    @media (max-width: 768px) {
+      .badge.new {
+        background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+        color: white !important;
+      }
+
+      .badge.preparing {
+        background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+        color: white !important;
+      }
+
+      .badge.ready {
+        background: linear-gradient(135deg, #10b981, #059669) !important;
+        color: white !important;
+      }
+
+      .badge.completed {
+        background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+        color: white !important;
+      }
+
+      .badge.cancelled {
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        color: white !important;
+      }
+    }
+  </style>
   <script src="/webjars/sockjs-client/sockjs.min.js"></script>
   <script src="/webjars/stomp-websocket/stomp.min.js"></script>
   <script th:inline="javascript">
@@ -15,39 +313,65 @@
   </script>
 </head>
 <body>
-<div class="page">
-  <div class="page-header">
-    <div>
-      <h2 th:text="${event.name} + ' - Usher board'">GLEO Usher board</h2>
-      <p class="muted">Track guest pickups across vendors and keep the queue moving.</p>
+<!-- Navigation Banner -->
+<nav class="gleo-nav">
+  <div class="gleo-nav__row">
+    <div class="gleo-nav__brand">
+      <a th:href="@{|/e/${event.code}|}" class="gleo-logo" aria-label="Return to event home">
+        <span class="gleo-logo__mark" aria-hidden="true">G</span>
+        <span class="gleo-logo__text">GLEO</span>
+      </a>
+      <div class="gleo-event">
+        <span class="gleo-event__name" th:text="${event.name}">Event</span>
+        <span class="gleo-event__code" th:text="'Usher Board'">Usher Board</span>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <!-- Vendor status controls for ushers: choose vendor then mark On Break / Busy / Available -->
-      <div th:if="${vendors != null and !#lists.isEmpty(vendors)}" style="display:flex;gap:8px;align-items:center;">
-        <label for="vendor-select" class="muted" style="margin-right:6px;">Vendor:</label>
-        <select id="vendor-select" class="field-input" style="min-width:180px;padding:6px;border-radius:6px;border:1px solid #e5e7eb;">
-          <option th:each="v : ${vendors}" th:value="${v.id}" th:text="${v.name}" th:attr="data-status=${v.status}">Vendor</option>
-        </select>
-        <span id="vendor-status" class="muted" style="margin-left:8px;min-width:120px;display:inline-block;">Status</span>
-        <!-- CSRF values rendered here if available; JS will copy into dynamic form -->
-        <input type="hidden" id="_csrf_param" th:if="${_csrf != null}" th:value="${_csrf.parameterName}" />
-        <input type="hidden" id="_csrf_token" th:if="${_csrf != null}" th:value="${_csrf.token}" />
+    <div class="gleo-nav__actions">
+      <form th:action="@{/logout}" method="post" style="margin:0;">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="gleo-btn gleo-btn--ghost" style="cursor:pointer;">
+          <span class="gleo-btn__icon" aria-hidden="true">🚪</span>
+          <span class="gleo-btn__label">Sign out</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <!-- CSRF values for forms -->
+  <input type="hidden" id="_csrf_param" th:if="${_csrf != null}" th:value="${_csrf.parameterName}" />
+  <input type="hidden" id="_csrf_token" th:if="${_csrf != null}" th:value="${_csrf.token}" />
+
+  <!-- Collapsible Vendor Status Panel -->
+  <div class="panel vendor-status-panel" th:if="${vendors != null and !#lists.isEmpty(vendors)}" style="margin-bottom:16px;">
+    <button type="button" class="btn btn-outline vendor-toggle" onclick="toggleVendorPanel()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <span id="vendor-toggle-icon">🏷️</span>
+      <span>Vendor Status</span>
+    </button>
+    <div id="vendor-panel" style="display:none;margin-top:14px;">
+      <label for="vendor-select" class="muted" style="font-weight:600;margin-bottom:6px;display:block;">Select vendor</label>
+      <select id="vendor-select" class="field-input vendor-select" style="width:100%;padding:10px;border-radius:8px;border:2px solid #e5e7eb;">
+        <option th:each="v : ${vendors}" th:value="${v.id}" th:text="${v.name}" th:attr="data-status=${v.status}">Vendor</option>
+      </select>
+      <div id="vendor-status" class="vendor-current-status" style="margin:10px 0 12px 0;font-size:0.875rem;color:#6b7280;font-weight:600;">Status: <span id="vendor-status-text"></span></div>
+      <div class="vendor-status-buttons" style="display:flex;flex-direction:column;gap:10px;">
         <button type="button" class="btn btn-outline" onclick="submitVendorStatus('BREAK')">On Break</button>
         <button type="button" class="btn btn-outline" onclick="submitVendorStatus('BUSY')">Busy</button>
         <button type="button" class="btn btn-outline" onclick="submitVendorStatus('AVAILABLE')">Available</button>
       </div>
-
-      <!-- Replaced 'Back to guest view' and 'Event policies' with a universal Sign out button -->
-      <form th:action="@{/logout}" method="post" style="margin:0;">
-        <!-- If CSRF is enabled this will render the token; if disabled it's ignored -->
-        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-        <button type="submit" class="btn btn-muted">Sign out</button>
-      </form>
     </div>
   </div>
 
   <div class="panel" style="margin-bottom:24px;">
-    <form method="get" class="usher-filter">
+    <!-- Collapsible search toggle button -->
+    <button type="button" class="btn btn-outline" onclick="toggleSearchFilter()" style="width:100%;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <span id="search-icon">🔍</span>
+      <span>Search Orders</span>
+    </button>
+
+    <!-- Collapsible search form -->
+    <form method="get" class="usher-filter" id="search-filter" style="display:none;">
       <label for="ticket-filter">Filter by ticket, serial, or guest name</label>
       <div class="usher-filter-inputs">
         <input id="ticket-filter" name="ticket" type="text" class="qty-input"
@@ -99,7 +423,7 @@
               <div class="vendor-info">
                 <div class="vendor-name" th:text="${order.vendor.name}">Vendor</div>
                 <div class="order-meta small muted">
-                  <span th:text="'Order #' + ${order.id}">#1</span>
+                  <span th:text="'Order #' + ${order.vendorOrderNumber}">#1</span>
                   &middot;
                   <span th:text="${#temporals.format(order.createdAt, 'HH:mm')}">12:30</span>
                 </div>
@@ -148,59 +472,7 @@
 </div>
 </div>
 <script>
-  function submitVendorStatus(status) {
-    const select = document.getElementById('vendor-select');
-    if (!select) return alert('No vendors available');
-    const vendorId = select.value;
-    if (!vendorId) return alert('Please choose a vendor');
-
-    // Build a form and submit so Spring's CSRF and endpoints work as usual
-    // Use fetch to POST without navigating away from the page
-    const csrfParamEl = document.getElementById('_csrf_param');
-    const csrfTokenEl = document.getElementById('_csrf_token');
-
-    const formData = new URLSearchParams();
-    formData.append('status', status);
-
-    const headers = {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    };
-    if (csrfParamEl && csrfTokenEl) {
-      // Spring typically accepts X-CSRF-TOKEN header or form param; include header for fetch
-      headers['X-CSRF-TOKEN'] = csrfTokenEl.value;
-      // also include the param name in the body in case server expects it
-      formData.append(csrfParamEl.value, csrfTokenEl.value);
-    }
-
-    fetch('/api/vendors/' + vendorId + '/status', {
-      method: 'POST',
-      headers: headers,
-      body: formData.toString(),
-      credentials: 'same-origin'
-    }).then(resp => {
-      if (!resp.ok) throw new Error('Server returned ' + resp.status);
-      setToast('Vendor status updated to ' + status + '.', 'success');
-      // Update small status label next to select
-      const sel = document.getElementById('vendor-select');
-      const opt = sel.options[sel.selectedIndex];
-      if (opt) opt.setAttribute('data-status', status);
-      updateVendorStatusLabel();
-    }).catch(err => {
-      console.error(err);
-      setToast('Unable to update vendor status: ' + err.message, 'error');
-    });
-  }
-
-  function updateVendorStatusLabel() {
-    const sel = document.getElementById('vendor-select');
-    const label = document.getElementById('vendor-status');
-    if (!sel || !label) return;
-    const opt = sel.options[sel.selectedIndex];
-    const st = opt ? opt.getAttribute('data-status') : null;
-    label.textContent = st ? st.charAt(0).toUpperCase() + st.slice(1).toLowerCase() : '';
-  }
-
-  // Simple toast helper
+  // Toast helper (shared)
   function setToast(message, type) {
     const existing = document.getElementById('vendor-toast');
     if (existing) existing.remove();
@@ -208,12 +480,77 @@
     toast.id = 'vendor-toast';
     toast.className = 'toast ' + (type === 'error' ? 'toast-error' : 'toast-success');
     toast.style.position = 'fixed';
-    toast.style.right = '24px';
-    toast.style.bottom = '24px';
-    toast.style.zIndex = '1000';
+    toast.style.right = '16px';
+    toast.style.bottom = '16px';
+    toast.style.zIndex = '2000';
     toast.textContent = message;
     document.body.appendChild(toast);
     setTimeout(() => { toast.remove(); }, 3500);
+  }
+
+  // Toggle vendor panel visibility
+  function toggleVendorPanel() {
+    const panel = document.getElementById('vendor-panel');
+    const icon = document.getElementById('vendor-toggle-icon');
+    if (!panel) return;
+    const show = panel.style.display === 'none';
+    panel.style.display = show ? 'block' : 'none';
+    icon.textContent = show ? '✕' : '🏷️';
+    if (show) {
+      updateVendorStatusLabel();
+    }
+  }
+
+  // Toggle search filter visibility
+  function toggleSearchFilter() {
+    const filter = document.getElementById('search-filter');
+    const icon = document.getElementById('search-icon');
+    if (filter.style.display === 'none') {
+      filter.style.display = 'block';
+      icon.textContent = '✕';
+    } else {
+      filter.style.display = 'none';
+      icon.textContent = '🔍';
+    }
+  }
+
+  // Submit vendor status change
+  function submitVendorStatus(status) {
+    const select = document.getElementById('vendor-select');
+    if (!select) return setToast('No vendors loaded.', 'error');
+    const vendorId = select.value;
+    if (!vendorId) return setToast('Choose a vendor first.', 'error');
+
+    const csrfParamEl = document.getElementById('_csrf_param');
+    const csrfTokenEl = document.getElementById('_csrf_token');
+    const formData = new URLSearchParams();
+    formData.append('status', status);
+    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    if (csrfParamEl && csrfTokenEl) {
+      headers['X-CSRF-TOKEN'] = csrfTokenEl.value;
+      formData.append(csrfParamEl.value, csrfTokenEl.value);
+    }
+    fetch('/api/vendors/' + vendorId + '/status', {
+      method: 'POST',
+      headers,
+      body: formData.toString(),
+      credentials: 'same-origin'
+    }).then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      setToast('Vendor status set to ' + status + '.', 'success');
+      const opt = select.options[select.selectedIndex];
+      if (opt) opt.setAttribute('data-status', status);
+      updateVendorStatusLabel();
+    }).catch(err => setToast('Failed: ' + err.message, 'error'));
+  }
+
+  function updateVendorStatusLabel() {
+    const select = document.getElementById('vendor-select');
+    const label = document.getElementById('vendor-status-text');
+    if (!select || !label) return;
+    const opt = select.options[select.selectedIndex];
+    const st = opt ? opt.getAttribute('data-status') : '';
+    label.textContent = st ? st.charAt(0) + st.slice(1).toLowerCase() : '—';
   }
 
   function refreshBoard() {
@@ -228,14 +565,13 @@
       });
   }
 
-  // Initialize label on load and update on selection change
+  // Initialize on load
   document.addEventListener('DOMContentLoaded', function() {
+    // Initialize vendor status when panel opened later
     const sel = document.getElementById('vendor-select');
     if (sel) {
       sel.addEventListener('change', updateVendorStatusLabel);
-      updateVendorStatusLabel();
     }
-
     // Initialize WebSocket connection
     const socket = new SockJS('/ws');
     const stompClient = Stomp.over(socket);

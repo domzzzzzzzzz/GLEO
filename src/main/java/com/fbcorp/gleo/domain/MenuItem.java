@@ -21,4 +21,7 @@ public class MenuItem {
     private BigDecimal price = BigDecimal.ZERO;
     private boolean available = true;
     private Integer maxPerOrder; // nullable
+
+    // Path or URL to the menu item image (optional)
+    private String imagePath;
 }

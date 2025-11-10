@@ -11,7 +11,7 @@
 <div class="page">
   <div class="page-header">
     <div>
-      <h2>Order <span th:text="'#' + ${order.id}">#1</span></h2>
+      <h2>Order <span th:text="'#' + ${order.vendorOrderNumber}">#1</span></h2>
       <p class="muted" th:text="'Vendor: ' + ${order.vendor.name}">Vendor name</p>
     </div>
     <a th:href="@{|/e/${order.event.code}|}" class="btn btn-muted">&larr; Back to event</a>

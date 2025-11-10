@@ -5,34 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title th:text="${vendor.name} + ' - ' + ${event.name}">Vendor Menu</title>
   <link href="/css/tailwind.css" rel="stylesheet">
+  <link href="/css/modern.css?v=20241110" rel="stylesheet">
   <script src="https://unpkg.com/htmx.org@2.0.2"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
   <script src="/js/cart.js"></script>
-  <script src="/webjars/sockjs-client/sockjs.min.js"></script>
-  <script src="/webjars/stomp-websocket/stomp.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
 </head>
 <body>
 <div class="page">
-  <div class="page-header">
-    <div>
-      <a th:href="@{|/e/${event.code}|}" class="btn btn-muted">&larr; Back to vendors</a>
-      <h2 style="margin-top:16px;" th:text="${vendor.name}">Vendor</h2>
-      <div class="muted">
-        <span th:text="'Serving ' + ${event.name}">Event name</span>
-        &middot;
-        <span id="vendor-status" th:attr="data-vendor-id=${vendor.id}" th:text="${vendor.status != null ? vendor.status : 'AVAILABLE'}">AVAILABLE</span>
-      </div>
+  <div th:replace="fragments/nav :: top(${event}, ${cartSummary})"></div>
+  <div class="vendor-page-head">
+    <a th:href="@{|/e/${event.code}|}" class="btn btn-muted btn-sm">&larr; Back to vendors</a>
+    <h2 th:text="${vendor.name}">Vendor</h2>
+    <span id="vendor-status" style="display:none;" th:attr="data-vendor-id=${vendor.id}" th:text="${vendor.status != null ? vendor.status : 'AVAILABLE'}">AVAILABLE</span>
+  </div>
+
+  <!-- Multi-vendor lock banner (only blocks adding, not viewing) -->
+  <div class="vendor-lock-banner" 
+       th:if="${singleVendorLocked}">
+    <div class="vendor-lock-banner__content">
+      <strong>Single-vendor cart active</strong>
+      <p th:text="'Your cart already contains items from ' + ${lockedVendorName} + '. Clear your cart to order from this vendor.'">
+        Your cart already contains items from another vendor. Clear your cart to order from this vendor.
+      </p>
+      <form th:action="@{|/e/${event.code}/cart/clear|}" method="post">
+        <button type="submit" class="btn btn-outline btn-sm">Clear Cart</button>
+      </form>
     </div>
-    <div class="page-header-actions">
-      <div class="flex-center gap-4">
-        <!-- Vendor status controls removed from guest/vendor menu per request; controls moved to usher board -->
-        <a th:href="@{|/e/${event.code}/checkout|}" class="btn btn-outline">View my orders</a>
-        <div class="policies-chip">
-          <span>Cart mode:</span>
-          <strong th:text="${multiVendorEnabled} ? 'Multi-vendor' : 'Single vendor only'">Multi</strong>
-        </div>
-      </div>
-    </div>
+  </div>
+
+  <!-- Success Message Toast -->
+  <div th:if="${successMessage}" class="toast-success">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM8 15L3 10L4.41 8.59L8 12.17L15.59 4.58L17 6L8 15Z" fill="currentColor"/>
+    </svg>
+    <span th:text="${successMessage}">Item added to cart!</span>
   </div>
 
   <div id="toast-region"></div>
@@ -51,36 +59,42 @@
       <h3 class="section-title">Menu</h3>
       <div class="menu-grid">
         <div class="menu-card" th:each="item : ${items}">
-          <div>
-            <h4 th:text="${item.name}">Item name</h4>
-            <div class="menu-meta">
-              <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
-              <span th:text="${item.available} ? 'Available' : 'Sold out'">status</span>
+          <div class="menu-card-layout">
+            <div class="menu-item-image" th:classappend="${item.imagePath == null} ? 'menu-item-image--empty' : ''">
+              <img th:if="${item.imagePath != null}" 
+                   th:src="${item.imagePath}" 
+                   th:alt="${item.name} + ' image'">
+              <span th:if="${item.imagePath == null}" 
+                    class="menu-item-placeholder"
+                    th:text="${#strings.isEmpty(item.name) ? '🍽️' : #strings.toUpperCase(#strings.substring(item.name,0,1))}">🍽️</span>
+            </div>
+            <div class="menu-item-info">
+              <h4 th:text="${item.name}">Item name</h4>
+              <div class="menu-meta">
+                <span class="menu-price" th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
+                <span class="menu-status" th:classappend="${item.available} ? 'menu-status--available' : 'menu-status--unavailable'" th:text="${item.available} ? 'Available' : 'Sold out'">status</span>
+              </div>
             </div>
           </div>
           <form th:action="@{|/e/${event.code}/cart/add|}" method="post"
-                th:attr="hx-post=@{|/e/${event.code}/cart/add|}"
-                hx-target="#cart-panel"
-                hx-swap="outerHTML"
                 class="menu-actions">
             <input type="hidden" name="itemId" th:value="${item.id}"/>
-            <input class="qty-input" type="number" name="qty" min="1" value="1"/>
-            <button class="btn btn-primary" type="submit" th:disabled="${!item.available}">
-              <span th:text="${item.available} ? 'Add to cart' : 'Unavailable'">Add to cart</span>
+            <div class="qty-stepper-inline">
+              <button type="button" class="qty-btn qty-btn-minus" onclick="this.nextElementSibling.stepDown()">−</button>
+              <input class="qty-input-stepper" type="number" name="qty" min="1" max="99" value="1"/>
+              <button type="button" class="qty-btn qty-btn-plus" onclick="this.previousElementSibling.stepUp()">+</button>
+            </div>
+      <button class="btn btn-primary btn-add-cart" type="submit"
+        th:classappend="${singleVendorLocked} ? ' btn-locked' : ''"
+        th:disabled="${!item.available or singleVendorLocked}">
+              <span th:text="${!item.available} ? 'Unavailable' : (singleVendorLocked ? 'Locked' : 'Add to cart')">Add to cart</span>
             </button>
           </form>
         </div>
       </div>
     </section>
 
-    <aside id="cart-panel"
-           hx-trigger="load"
-           hx-swap="outerHTML"
-           th:attr="hx-get=@{|/e/${event.code}/cart|}">
-      <div class="card">
-        Loading cart...
-      </div>
-    </aside>
+    <!-- Removed fixed View Cart bar per request -->
   </div>
 </div>
 
@@ -112,14 +126,21 @@
           menuItems.forEach(btn => {
             if (status === 'BREAK' || status === 'BUSY') {
               btn.disabled = true;
-              btn.querySelector('span').textContent = status === 'BREAK' ? 'On Break' : 'Busy';
+              const btnText = btn.querySelector('span');
+              if (btnText) {
+                btnText.textContent = status === 'BREAK' ? 'On Break' : 'Busy';
+              }
             } else {
               // Only enable if the item itself is available
               const form = btn.closest('form');
               const menuCard = btn.closest('.menu-card');
-              const available = menuCard && !menuCard.querySelector('.menu-meta').textContent.includes('Sold out');
+              const metaEl = menuCard ? menuCard.querySelector('.menu-meta') : null;
+              const available = menuCard && metaEl && !metaEl.textContent.includes('Sold out');
               btn.disabled = !available;
-              btn.querySelector('span').textContent = available ? 'Add to cart' : 'Unavailable';
+              const btnText = btn.querySelector('span');
+              if (btnText) {
+                btnText.textContent = available ? 'Add to cart' : 'Unavailable';
+              }
             }
           });
         }
@@ -135,29 +156,41 @@
     
     // WebSocket connection for real-time updates
     const statusEl = document.getElementById('vendor-status');
-    if (statusEl) {
+    if (statusEl && typeof SockJS !== 'undefined' && typeof StompJs !== 'undefined') {
       const vendorId = statusEl.getAttribute('data-vendor-id');
       const eventCode = window.location.pathname.split('/')[2]; // Extract from /e/{eventCode}/...
       
-      const socket = new SockJS('/ws');
-      const stompClient = Stomp.over(socket);
-      stompClient.connect({}, function() {
-        stompClient.subscribe('/topic/vendor-status/' + eventCode, function(message) {
-          const update = JSON.parse(message.body);
-          if (update.vendorId === vendorId) {
-            updateVendorStatusUI(update.status);
+      try {
+        const stompClient = new StompJs.Client({
+          webSocketFactory: function () {
+            return new SockJS('/ws');
+          },
+          onConnect: function(frame) {
+            stompClient.subscribe('/topic/vendor-status/' + eventCode, function(message) {
+              const update = JSON.parse(message.body);
+              if (update.vendorId == vendorId) {
+                updateVendorStatusUI(update.status);
+              }
+            });
+          },
+          onStompError: function(frame) {
+            console.error('STOMP error:', frame);
           }
         });
-      });
-  }
-  document.addEventListener('htmx:afterSwap', function (event) {
-    if (event.detail && event.detail.target && event.detail.target.id === 'cart-panel') {
-      if (window.setupCartPanel) {
-        window.setupCartPanel();
+        stompClient.activate();
+      } catch(e) {
+        console.warn('WebSocket not available:', e);
       }
     }
-  });
-</script>
+    
+    // HTMX event listener for cart panel updates
+    document.addEventListener('htmx:afterSwap', function (event) {
+      if (event.detail && event.detail.target && event.detail.target.id === 'cart-panel') {
+        if (window.setupCartPanel) {
+          window.setupCartPanel();
+        }
+      }
+    });
+  </script>
 </body>
 </html>
-    

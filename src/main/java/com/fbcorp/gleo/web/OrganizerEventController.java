@@ -189,6 +189,7 @@ public class OrganizerEventController {
                               @RequestParam("name") String name,
                               @RequestParam("price") String priceRaw,
                               @RequestParam(value = "maxPerOrder", required = false) Integer maxPerOrder,
+                              @RequestParam(value = "image", required = false) MultipartFile imageFile,
                               RedirectAttributes redirectAttributes) {
         Event event = policyService.get(eventCode);
         Vendor vendor = vendorRepo.findById(vendorId).orElse(null);
@@ -229,6 +230,23 @@ public class OrganizerEventController {
         menuItem.setPrice(price);
         menuItem.setAvailable(true);
         menuItem.setMaxPerOrder(maxPerOrder);
+
+        // Handle image upload if present
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String contentType = imageFile.getContentType();
+            if (contentType != null && !contentType.startsWith("image/")) {
+                redirectAttributes.addFlashAttribute("toastError", "Please upload an image file (JPG, PNG, or GIF).");
+                return "redirect:/dashboard";
+            }
+            try {
+                String storedPath = assetStorageService.storeMenuItemImage(imageFile);
+                menuItem.setImagePath(storedPath);
+            } catch (IOException | IllegalArgumentException ex) {
+                redirectAttributes.addFlashAttribute("toastError", "Failed to store image: " + ex.getMessage());
+                return "redirect:/dashboard";
+            }
+        }
+
         menuItemRepo.save(menuItem);
 
         redirectAttributes.addFlashAttribute("toastMessage", "Menu item '" + trimmedName + "' added to " + vendor.getName() + ".");

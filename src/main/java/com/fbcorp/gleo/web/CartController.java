@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Map;
 
@@ -53,13 +54,69 @@ public class CartController {
         model.addAttribute("cartSummary", cartViewService.summarize(cartSession));
     }
 
+    // --- New endpoints for quantity, notes, and promo code updates ---
+
+    @PostMapping("/set-qty")
+    public String setQty(@PathVariable String eventCode,
+                         @RequestParam Long vendorId,
+                         @RequestParam Long itemId,
+                         @RequestParam int qty,
+                         HttpSession session,
+                         HttpServletRequest request,
+                         Model model){
+        CartSession cart = cart(session);
+        if (qty <= 0){
+            cart.removeItem(vendorId, itemId);
+        } else {
+            cart.setQty(vendorId, itemId, Math.min(qty, 99));
+        }
+        populateCartModel(eventCode, cart, model);
+        // For HTMX from cart page, return full cart page; for sidebar, return fragment
+        if (isHx(request)) {
+            String hxTarget = request.getHeader("HX-Target");
+            if ("cart-page".equals(hxTarget)) {
+                return "cart"; // Full cart page for HTMX
+            }
+            return CART_FRAGMENT; // Sidebar fragment
+        }
+        return "redirect:/e/" + eventCode + "/cart";
+    }
+
+    @PostMapping("/note")
+    public String setVendorNote(@PathVariable String eventCode,
+                                @RequestParam Long vendorId,
+                                @RequestParam(required=false) String note,
+                                HttpSession session,
+                                HttpServletRequest request,
+                                Model model){
+        CartSession cart = cart(session);
+        cart.setVendorNote(vendorId, note);
+        populateCartModel(eventCode, cart, model);
+        model.addAttribute("successMessage", "Note updated.");
+        return isHx(request) ? CART_FRAGMENT : "redirect:/e/" + eventCode + "/cart";
+    }
+
+    @PostMapping("/promo")
+    public String applyPromo(@PathVariable String eventCode,
+                             @RequestParam String code,
+                             HttpSession session,
+                             HttpServletRequest request,
+                             Model model){
+        CartSession cart = cart(session);
+        cart.setPromoCode(code);
+        populateCartModel(eventCode, cart, model);
+        model.addAttribute("successMessage", "Promo applied (if valid).");
+        return isHx(request) ? CART_FRAGMENT : "redirect:/e/" + eventCode + "/cart";
+    }
+
     @PostMapping("/add")
     public String add(@PathVariable String eventCode,
                       @RequestParam Long itemId,
                       @RequestParam(defaultValue = "1") int qty,
                       HttpSession session,
                       HttpServletRequest request,
-                      Model model){
+                      Model model,
+                      RedirectAttributes redirectAttributes){
         MenuItem item = menuItemRepo.findById(itemId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         Vendor vendor = item.getVendor();
@@ -71,17 +128,31 @@ public class CartController {
         if (!policyService.multiVendorCart(eventCode)) {
             Map<Long, Map<Long, Integer>> lines = cart.getAll();
             if (!lines.isEmpty() && !lines.containsKey(vendor.getId())) {
-                populateCartModel(eventCode, cart, model);
-                model.addAttribute("errorMessage", "This event allows orders from one vendor at a time.");
-                return CART_FRAGMENT;
+                // Single-vendor policy violation
+                if (isHx(request)) {
+                    populateCartModel(eventCode, cart, model);
+                    model.addAttribute("errorMessage", "This event allows orders from one vendor at a time.");
+                    return CART_FRAGMENT;
+                } else {
+                    // Redirect back to vendor menu with flash error
+                    redirectAttributes.addFlashAttribute("errorMessage", "This event allows orders from one vendor at a time.");
+                    return "redirect:/e/" + eventCode + "/v/" + vendor.getId();
+                }
             }
         }
 
         cart.add(vendor.getId(), item.getId(), Math.max(1, qty));
-        populateCartModel(eventCode, cart, model);
-        model.addAttribute("successMessage", item.getName() + " added to cart.");
-
-        return isHx(request) ? CART_FRAGMENT : "redirect:/e/" + eventCode + "/cart";
+        
+        // If HTMX request, return cart fragment for sidebar
+        if (isHx(request)) {
+            populateCartModel(eventCode, cart, model);
+            model.addAttribute("successMessage", item.getName() + " added to cart.");
+            return CART_FRAGMENT;
+        }
+        
+        // Otherwise, redirect back to vendor menu (not cart)
+        redirectAttributes.addFlashAttribute("successMessage", item.getName() + " added to cart!");
+        return "redirect:/e/" + eventCode + "/v/" + vendor.getId();
     }
 
     @GetMapping

@@ -18,4 +18,7 @@ public interface OrderRepo extends JpaRepository<Order, Long> {
     java.util.List<Order> findByVendor(Vendor vendor);
 
     java.util.List<Order> findByTicketOrderByCreatedAtDesc(Ticket ticket);
+    
+    @Query("SELECT COALESCE(MAX(o.vendorOrderNumber), 0) FROM Order o WHERE o.vendor.id = :vendorId")
+    Integer findMaxVendorOrderNumber(@Param("vendorId") Long vendorId);
 }

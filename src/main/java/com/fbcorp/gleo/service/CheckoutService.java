@@ -106,6 +106,11 @@ public class CheckoutService {
             order.setVendor(vendor);
             order.setTicket(ticket);
             order.setStatus(OrderStatus.NEW);
+            
+            // Calculate vendor-specific order number
+            Integer maxOrderNum = orderRepo.findMaxVendorOrderNumber(vendorId);
+            order.setVendorOrderNumber(maxOrderNum + 1);
+            
             orderItems.forEach(order::addItem);
 
             orderRepo.save(order);

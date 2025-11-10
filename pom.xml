@@ -119,5 +119,18 @@
     </plugins>
   </build>
 
+  <profiles>
+    <!-- Development profile: adds H2 database for running locally without PostgreSQL -->
+    <profile>
+      <id>dev</id>
+      <dependencies>
+        <dependency>
+          <groupId>com.h2database</groupId>
+          <artifactId>h2</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
 </project>
 

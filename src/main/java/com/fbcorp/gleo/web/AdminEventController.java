@@ -6,6 +6,7 @@ import com.fbcorp.gleo.domain.TierPolicy;
 import com.fbcorp.gleo.repo.EventRepo;
 import com.fbcorp.gleo.service.EventPolicyService;
 import com.fbcorp.gleo.service.AuditLogService;
+import com.fbcorp.gleo.service.EventService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,6 +30,7 @@ public class AdminEventController {
     private final EventPolicyService policyService;
     private final AuditLogService auditLogService;
     private final com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService;
+    private final EventService eventService;
 
     @GetMapping("/policies")
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -58,11 +60,13 @@ public class AdminEventController {
         return "admin/global_policies";
     }
 
-    public AdminEventController(EventRepo eventRepo, EventPolicyService policyService, AuditLogService auditLogService, com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService){
+    public AdminEventController(EventRepo eventRepo, EventPolicyService policyService, AuditLogService auditLogService, 
+                               com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService, EventService eventService){
         this.eventRepo = eventRepo;
         this.policyService = policyService;
         this.auditLogService = auditLogService;
         this.adminPreferenceService = adminPreferenceService;
+        this.eventService = eventService;
     }
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -193,22 +197,11 @@ public class AdminEventController {
     @PreAuthorize("@permissionService.isAdmin(authentication)")
     @PostMapping("/{eventCode}/delete")
     public String deleteEvent(@PathVariable String eventCode, RedirectAttributes redirectAttributes){
-        var opt = eventRepo.findByCode(eventCode);
-        if (opt.isEmpty()){
-            redirectAttributes.addFlashAttribute("toastError", "Event not found.");
-            return "redirect:/dashboard";
-        }
-        Event event = opt.get();
         try {
-            // Remove related tier policies first to avoid FK issues
-            policyService.deleteEventPolicies(eventCode);
-            eventRepo.delete(event);
-            // Audit delete
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String username = auth != null ? auth.getName() : "anonymous";
-            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT, "Deleted event: code=" + eventCode + ", name=" + event.getName(), username);
-
-            redirectAttributes.addFlashAttribute("toastMessage", "Event '" + event.getName() + "' deleted successfully.");
+            String eventName = eventService.delete(eventCode);
+            redirectAttributes.addFlashAttribute("toastMessage", "Event '" + eventName + "' deleted successfully.");
         } catch (Exception ex){
             redirectAttributes.addFlashAttribute("toastError", "Failed to delete event: " + ex.getMessage());
         }

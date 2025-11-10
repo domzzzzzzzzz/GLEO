@@ -10,4 +10,6 @@ public interface UserAccountRepo extends JpaRepository<UserAccount, Long> {
     Optional<UserAccount> findByUsername(String username);
 
     List<UserAccount> findByVendor(com.fbcorp.gleo.domain.Vendor vendor);
+    
+    List<UserAccount> findByEvent(com.fbcorp.gleo.domain.Event event);
 }

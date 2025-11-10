@@ -32,15 +32,15 @@
         <div class="cart-vendor-header">
           <div>
             <div style="font-weight:600;">Order
-              <a th:href="@{|/e/${order.event.code}/orders/${order.id}|}" th:text="'#' + ${order.id}">#1</a>
+              <a th:href="@{|/e/${order.event.code}/orders/${order.id}|}" th:text="'#' + ${order.vendorOrderNumber}">#1</a>
             </div>
             <span class="muted" th:text="${order.vendor.name}">Vendor</span>
           </div>
           <span class="badge" th:text="${order.status}">NEW</span>
         </div>
         <div class="muted">
-          Guest pickup status:
-          <strong th:text="${order.confirmedByGuest} ? 'Confirmed' : 'Awaiting confirmation'">Awaiting</strong>
+          Pickup confirmation:
+          <strong th:text="${order.confirmedByGuest} ? 'Verified' : 'Pending verification'">Pending</strong>
         </div>
       </div>
     </div>
