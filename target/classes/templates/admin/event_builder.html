@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:attr="data-theme=${adminTheme}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta th:if="${_csrf != null}" name="_csrf" th:content="${_csrf.token}" />
+  <meta th:if="${_csrf != null}" name="_csrf_header" th:content="${_csrf.headerName}" />
+  <title>Event Builder · GLEO</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+  <link href="/css/modern.css" rel="stylesheet">
+  <link href="/css/organizer.css" rel="stylesheet">
+  <link href="/css/responsive.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(180deg, #f6f7fb 0%, #f0f2f8 40%, #f7f8fb 100%);
+      min-height: 100vh;
+      padding: 32px 16px 48px;
+    }
+    .builder-page {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+    .builder-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:18px;
+    }
+    .builder-header h1 {
+      margin:0;
+      font-size:1.6rem;
+    }
+    .wizard-card {
+      width: 100%;
+      background:#fff;
+      border-radius:18px;
+      box-shadow:0 30px 60px rgba(15,23,42,0.15);
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      padding:24px;
+    }
+    .wizard-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .wizard-steps {
+      display:flex;
+      gap:12px;
+    }
+    .wizard-step {
+      flex:1;
+      text-align:center;
+      padding:10px 0;
+      border-radius:999px;
+      background:rgba(148,163,184,0.18);
+      font-weight:600;
+      font-size:0.92rem;
+    }
+    .wizard-step.active {
+      background:var(--primary);
+      color:#fff;
+    }
+    .wizard-body {
+      max-height:70vh;
+      overflow-y:auto;
+      padding-right:6px;
+    }
+    .wizard-panel {
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .wizard-panel-header h4 { margin:0; }
+    .wizard-panel-header p { margin:4px 0 0 0; }
+    .wizard-form-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+    }
+    .wizard-vendor-list {
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .wizard-vendor {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr)) auto;
+      gap:10px;
+      padding:14px;
+      border:1px solid rgba(148,163,184,0.25);
+      border-radius:12px;
+      background:rgba(248,250,252,0.95);
+    }
+    .wizard-vendor-actions {
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .wizard-vendor-actions .btn-icon {
+      background:rgba(15,23,42,0.08);
+      color:#0f172a;
+    }
+    .wizard-menu-list {
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .wizard-menu-card {
+      border:1px solid rgba(148,163,184,0.28);
+      border-radius:12px;
+      padding:14px;
+      background:#fff;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .wizard-menu-card__header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .wizard-menu-items {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .wizard-menu-row {
+      display:grid;
+      grid-template-columns:2fr 1fr 1fr auto;
+      gap:8px;
+      align-items:center;
+    }
+    .wizard-menu-row .btn-icon {
+      background:rgba(15,23,42,0.08);
+      color:#0f172a;
+    }
+    .wizard-menu-row .btn-icon:hover {
+      background:rgba(15,23,42,0.18);
+    }
+    .wizard-footer {
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+    }
+    .page-link {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-weight:600;
+      text-decoration:none;
+      color:var(--primary);
+    }
+    @media (max-width:720px){
+      .wizard-menu-row {
+        grid-template-columns:1fr;
+      }
+      .wizard-vendor {
+        grid-template-columns:1fr;
+      }
+      .wizard-body {
+        max-height:none;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- Navigation Banner -->
+<nav class="gleo-nav">
+  <div class="gleo-nav__row">
+    <div class="gleo-nav__brand">
+      <a href="/dashboard" class="gleo-logo" aria-label="Return to dashboard">
+        <span class="gleo-logo__mark" aria-hidden="true">G</span>
+        <span class="gleo-logo__text">GLEO</span>
+      </a>
+      <div class="gleo-event">
+        <span class="gleo-event__name">Admin Console</span>
+        <span class="gleo-event__code" th:text="${user != null ? user.username : 'ADMIN'}">ADMIN</span>
+      </div>
+    </div>
+    <div class="gleo-nav__actions">
+      <form th:action="@{/logout}" method="post" style="margin:0;">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="gleo-btn gleo-btn--ghost" style="cursor:pointer;">
+          <span class="gleo-btn__icon" aria-hidden="true">&#128682;</span>
+          <span class="gleo-btn__label">Sign out</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<div class="builder-page">
+  <div class="builder-header">
+    <h1>Event builder</h1>
+    <a class="page-link" href="/dashboard">&larr; Back to dashboard</a>
+  </div>
+  <div id="event-wizard-page" data-wizard-page class="wizard-card">
+    <div class="wizard-header">
+      <div>
+        <h3>Build a new event</h3>
+        <p class="muted">3 steps • Event → Vendors → Menus</p>
+      </div>
+    </div>
+    <div class="wizard-steps">
+      <div class="wizard-step active" data-step="1">Event</div>
+      <div class="wizard-step" data-step="2">Vendors</div>
+      <div class="wizard-step" data-step="3">Menus</div>
+    </div>
+    <div class="wizard-body">
+      <section class="wizard-panel" data-step-panel="1">
+        <form id="wizard-event-form" class="wizard-form-grid">
+          <div class="input-group">
+            <label for="wizard-event-code">Event code</label>
+            <input id="wizard-event-code" name="code" class="field-input" type="text" placeholder="e.g. G2030" required pattern="[A-Z][0-9]{4}">
+            <small class="muted">One capital letter followed by 4 digits.</small>
+          </div>
+          <div class="input-group">
+            <label for="wizard-event-name">Event name</label>
+            <input id="wizard-event-name" name="name" class="field-input" type="text" placeholder="Summer Feast" required minlength="3">
+          </div>
+          <div class="input-group">
+            <label for="wizard-event-start">Start date & time</label>
+            <input id="wizard-event-start" name="startAt" class="field-input" type="datetime-local">
+          </div>
+          <div class="input-group">
+            <label for="wizard-event-end">End date & time</label>
+            <input id="wizard-event-end" name="endAt" class="field-input" type="datetime-local">
+          </div>
+        </form>
+      </section>
+      <section class="wizard-panel" data-step-panel="2" hidden>
+        <div class="wizard-panel-header">
+          <h4>Vendors</h4>
+          <p class="muted">Aim for 4 to 8 vendors. You can adjust later.</p>
+        </div>
+        <div id="wizard-vendors" class="wizard-vendor-list"></div>
+        <button type="button" class="btn btn-outline btn-sm" data-action="add-vendor">Add vendor</button>
+      </section>
+      <section class="wizard-panel" data-step-panel="3" hidden>
+        <div class="wizard-panel-header">
+          <h4>Menus</h4>
+          <p class="muted">Each vendor should have between 1 and 5 menu items.</p>
+        </div>
+        <div id="wizard-menus" class="wizard-menu-list"></div>
+      </section>
+    </div>
+    <div class="wizard-footer">
+      <button type="button" class="btn btn-outline" data-action="back">Back</button>
+      <button type="button" class="btn btn" data-action="next">Next</button>
+      <button type="button" class="btn btn-primary" data-action="submit">Create event</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/advanced-ui.js"></script>
+<script src="/js/admin-dashboard.js"></script>
+</body>
+</html>

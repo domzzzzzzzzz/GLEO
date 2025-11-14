@@ -408,6 +408,18 @@
       border-color:var(--primary);
       background:rgba(var(--primary-rgb),0.02);
     }
+    .wizard-launch {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:18px;
+      background:rgba(15,23,42,0.04);
+      border:1px solid rgba(148,163,184,0.3);
+      border-radius:18px;
+      padding:16px 22px;
+      margin:16px auto;
+      max-width:1080px;
+    }
     @media (max-width:900px){
       .stats-grid{grid-template-columns:repeat(2,1fr)}
       .form-grid-sm{grid-template-columns:1fr}
@@ -416,120 +428,39 @@
 </head>
 <body>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-<div class="page">
-  <div class="page-header">
-    <div>
-      <div class="admin-hero">
-        <div>
-          <h2>Welcome, <span th:text="${user != null ? user.username : 'Admin'}">Admin</span></h2>
-          <p class="muted">Manage global policies, create events, and oversee operations.</p>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <div class="admin-controls">
-            <button class="role-badge admin-badge glass-effect" onclick="toggleAdminMenu(event)" aria-expanded="false" aria-controls="adminMenu">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 auto;">
-                <circle cx="12" cy="12" r="10" fill="url(#gadmin)" />
-                <defs>
-                  <linearGradient id="gadmin" x1="0" x2="1">
-                    <stop offset="0" stop-color="#0ea5e9" />
-                    <stop offset="1" stop-color="#06b6d4" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              Admin
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="menu-arrow">
-                <path d="M2 5l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none"/>
-              </svg>
-            </button>
-            <div id="adminMenu" class="admin-menu" hidden>
-              <div class="admin-menu-header">
-                <span class="menu-title">Admin Controls</span>
-                <span class="menu-subtitle" th:text="${user != null ? user.username : 'Admin'}">Admin</span>
-                  <div class="quick-stats">
-                    <div class="quick-stat">
-                      <span class="stat-label">Events</span>
-                      <span class="stat-value" th:text="${events != null ? events.size() : 0}">0</span>
-                    </div>
-                    <div class="quick-stat">
-                      <span class="stat-label">Active</span>
-                      <span class="stat-value" th:text="${totalActiveVendors != null ? totalActiveVendors : 0}">0</span>
-                    </div>
-                    <div class="quick-stat">
-                      <span class="stat-label">Orders</span>
-                      <span class="stat-value" th:text="${totalOrders != null ? totalOrders : 0}">0</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="menu-divider"></div>
-                <!-- If server provided ordered menu items, render them; otherwise fall back to static menu -->
-                <div th:if="${adminMenuItems != null}">
-                  <div th:each="item : ${adminMenuItems}">
-                    <a th:if="${item.href != null}" th:href="${item.href}" class="menu-item" th:text="${item.text}"></a>
-                    <a th:if="${item.href == null}" href="#" class="menu-item" data-action="true" th:text="${item.text}"></a>
-                  </div>
-                </div>
-                <div th:unless="${adminMenuItems != null}">
-                  <button data-action="toggleTheme" onclick="toggleTheme()" class="menu-item theme-toggle" title="Toggle dark/light mode">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="theme-icon-light">
-                      <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
-                    </svg>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="theme-icon-dark">
-                      <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
-                    </svg>
-                    <span class="theme-text">Switch Theme</span>
-                  </button>
-                  <button data-action="saveMenuOrder" class="menu-item" onclick="saveMenuOrder()" title="Save menu order">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right:6px">
-                      <path d="M3 2h2v2H3V2zm0 4h2v2H3V6zm0 4h2v2H3v-2zM7 2h6v2H7V2zm0 4h6v2H7V6zm0 4h6v2H7v-2z"/>
-                    </svg>
-                    Save menu order
-                  </button>
-                  <div class="menu-divider"></div>
-                  <a href="/admin/dashboard" class="menu-item">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1112 0A6 6 0 012 8z"/>
-                    </svg>
-                    Dashboard Overview
-                  </a>
-                  <a href="/admin/events" class="menu-item">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M3.5 0a.5.5 0 01.5.5V1h8V.5a.5.5 0 011 0V1h1a2 2 0 012 2v11a2 2 0 01-2 2H2a2 2 0 01-2-2V3a2 2 0 012-2h1V.5a.5.5 0 01.5-.5z"/>
-                    </svg>
-                    Manage Events
-                  </a>
-                  <a href="/admin/policies" class="menu-item">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858z"/>
-                    </svg>
-                    Global Policies
-                  </a>
-                  <a href="/admin/logs" class="menu-item">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
-                      <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
-                    </svg>
-                    Activity Logs
-                  </a>
-                  <div class="menu-divider"></div>
-                  <a href="/switch-to-user" class="menu-item">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-                    </svg>
-                    Switch to User View
-                  </a>
-                  <a href="/logout" class="menu-item text-danger">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
-                      <path d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-                    </svg>
-                    Sign Out
-                  </a>
-                </div>
-            </div>
-          </div>
-        </div>
+<!-- Navigation Banner -->
+<nav class="gleo-nav">
+  <div class="gleo-nav__row">
+    <div class="gleo-nav__brand">
+      <a href="/dashboard" class="gleo-logo" aria-label="Return to dashboard">
+        <span class="gleo-logo__mark" aria-hidden="true">G</span>
+        <span class="gleo-logo__text">GLEO</span>
+      </a>
+      <div class="gleo-event">
+        <span class="gleo-event__name">Admin Console</span>
+        <span class="gleo-event__code" th:text="${user != null ? user.username : 'ADMIN'}">ADMIN</span>
       </div>
-      <div class="stats-grid" style="margin-top:12px">
+    </div>
+    <div class="gleo-nav__actions">
+      <form th:action="@{/logout}" method="post" style="margin:0;">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="gleo-btn gleo-btn--ghost" style="cursor:pointer;">
+          <span class="gleo-btn__icon" aria-hidden="true">&#128682;</span>
+          <span class="gleo-btn__label">Sign out</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</nav>
+<div class="wizard-launch">
+  <div>
+    <h3>Need to spin up a full event fast?</h3>
+    <p class="muted">Use the guided builder to create an event with its vendors and menus in minutes.</p>
+  </div>
+  <a class="btn btn-primary" href="/admin/events/builder">Open builder</a>
+</div>
+<div class="page">
+  <div class="stats-grid" style="margin-top:12px">
         <div class="stat-card">
           <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/>
@@ -683,6 +614,14 @@
                   </svg>
                   <span>Vendors</span>
                 </a>
+                <a th:href="@{|/admin/events/${event.code}/tickets/new|}" class="btn btn-outline" title="Add QR tickets">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M3 2h2v2H3V2zm8 0h2v2h-2V2zM3 12h2v2H3v-2zm8 0h2v2h-2v-2z"/>
+                    <path d="M1 5h4v1H2v4h3v1H1V5zm10 0h4v6h-3v-1h2V6h-3V5z"/>
+                    <path d="M7 7h2v2H7V7zm3 3H6V6h4v4z"/>
+                  </svg>
+                  <span>Tickets</span>
+                </a>
                 <button type="button" data-action="openDeleteModal" class="btn btn-danger btn-sm" th:attr="data-event-code=${event.code}" onclick="openDeleteModal(this)" title="Delete event">
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="margin-right:6px">
                     <path d="M6 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3v1H3V2h3zm1 4v6a1 1 0 0 0 2 0V6H7z"/>
@@ -711,9 +650,8 @@
         </div>
       </div>
     </aside>
-  </section>
+</section>
 </div>
-
 <script src="/js/advanced-ui.js"></script>
 
 <!-- Delete confirmation modal -->

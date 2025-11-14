@@ -27,7 +27,6 @@ com\fbcorp\gleo\repo\TicketImportLogRepo.class
 com\fbcorp\gleo\service\CartService$CheckResult.class
 com\fbcorp\gleo\web\UsherController$1.class
 com\fbcorp\gleo\repo\VendorRepo.class
-com\fbcorp\gleo\web\CheckoutController.class
 com\fbcorp\gleo\model\AuditLog.class
 com\fbcorp\gleo\repo\RoleRepo.class
 com\fbcorp\gleo\config\SecurityConfig.class

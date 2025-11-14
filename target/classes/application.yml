@@ -14,6 +14,10 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   thymeleaf:
     cache: false
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 8MB
 
 server:
   port: 8080

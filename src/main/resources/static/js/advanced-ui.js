@@ -30,6 +30,49 @@ const AdvancedUI = {
         this.setupDataTables();
     },
 
+    // Simple tooltip system for elements with `data-tooltip`.
+    // This prevents errors when components expect tooltips to exist.
+    setupTooltips() {
+        const tooltipClass = 'advui-tooltip';
+
+        function createTooltip(text) {
+            const t = document.createElement('div');
+            t.className = tooltipClass;
+            t.style.position = 'absolute';
+            t.style.padding = '6px 10px';
+            t.style.background = 'rgba(0,0,0,0.75)';
+            t.style.color = '#fff';
+            t.style.borderRadius = '6px';
+            t.style.fontSize = '13px';
+            t.style.pointerEvents = 'none';
+            t.style.zIndex = 9999;
+            t.textContent = text;
+            return t;
+        }
+
+        document.querySelectorAll('[data-tooltip]').forEach(el => {
+            let tipEl = null;
+            const text = el.dataset.tooltip || el.getAttribute('title') || '';
+            if (!text) return;
+
+            el.addEventListener('mouseenter', (e) => {
+                tipEl = createTooltip(text);
+                document.body.appendChild(tipEl);
+                const rect = el.getBoundingClientRect();
+                const top = rect.top + window.scrollY - tipEl.offsetHeight - 8;
+                const left = rect.left + window.scrollX + (rect.width / 2) - (tipEl.offsetWidth / 2);
+                // Position after appending so offsetWidth/Height are available
+                tipEl.style.top = (top > 0 ? top : rect.bottom + window.scrollY + 8) + 'px';
+                tipEl.style.left = (left > 0 ? left : rect.left + window.scrollX) + 'px';
+            });
+
+            el.addEventListener('mouseleave', () => {
+                if (tipEl && tipEl.parentNode) tipEl.parentNode.removeChild(tipEl);
+                tipEl = null;
+            });
+        });
+    },
+
     setupEventListeners() {
         document.addEventListener('DOMContentLoaded', () => {
             this.handleResponsiveLayout();
@@ -111,6 +154,27 @@ const AdvancedUI = {
         });
     },
 
+    // Table helpers (no-op defaults to avoid errors in pages without real implementations)
+    addTableSorting(table) {
+        // noop: implement sorting if desired
+    },
+
+    addTableSearch(table) {
+        // noop: implement search if desired
+    },
+
+    addTablePagination(table) {
+        // noop: implement pagination if desired
+    },
+
+    // Responsive layout handler: reflow components that depend on viewport size
+    handleResponsiveLayout() {
+        // Example: ensure charts update size after layout change
+        this.updateChartsResponsiveness();
+        // Potential place to collapse/expand sidebar or adjust grid classes
+        // (left intentionally minimal to avoid opinionated UI changes)
+    },
+
     // Chart Initialization
     initializeCharts() {
         const chartElements = document.querySelectorAll('[data-chart]');
@@ -122,6 +186,74 @@ const AdvancedUI = {
         });
     },
 
+    // Create a chart element when Chart.js is available. If Chart.js is not
+    // loaded, this is a no-op to avoid runtime errors in environments without it.
+    createChart(element, type, data) {
+        if (window.Chart) {
+            try {
+                // Use provided config options where possible
+                const cfg = Object.assign({ type: type, data: data, options: this.config.chartOptions }, {});
+                new Chart(element, cfg);
+            } catch (e) {
+                // If creation fails, don't block the rest of the app
+                console.warn('Chart creation failed', e);
+            }
+        }
+    },
+
+    // Ensure charts resize correctly on layout changes. Uses Chart.js helpers
+    // when available, otherwise fall back to a harmless window resize event.
+    updateChartsResponsiveness() {
+        if (window.Chart && typeof window.Chart.helpers === 'object') {
+            // Chart.js v3+ will listen to resize; attempt to update existing chart instances
+            try {
+                // Chart.getChart is v3+ helper to retrieve by canvas id
+                if (typeof Chart.getChart === 'function') {
+                    // iterate over canvases on the page
+                    document.querySelectorAll('canvas').forEach(c => {
+                        const cInst = Chart.getChart(c);
+                        if (cInst && typeof cInst.resize === 'function') cInst.resize();
+                    });
+                }
+            } catch (e) {
+                // ignore
+            }
+        } else {
+            // Fallback: trigger a resize event listeners may react to
+            try { window.dispatchEvent(new Event('resize')); } catch (e) { /* ignore */ }
+        }
+    },
+
+    // Lightweight animations initializer. Prefer GSAP if available, otherwise
+    // fall back to IntersectionObserver-driven CSS class toggles for scroll animations.
+    initializeAnimations() {
+        // If GSAP and ScrollTrigger are available, register plugin (safe-guarded)
+        if (window.gsap) {
+            try {
+                if (window.gsap.registerPlugin && window.ScrollTrigger) {
+                    window.gsap.registerPlugin(window.ScrollTrigger);
+                }
+            } catch (e) {
+                // ignore registration errors
+            }
+        }
+
+        // Fallback: simple scroll-based reveal using IntersectionObserver
+        const toReveal = document.querySelectorAll('.animate-on-scroll');
+        if (toReveal.length > 0 && 'IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('in-view');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+
+            toReveal.forEach(el => observer.observe(el));
+        }
+    },
+
     // Advanced Modal System
     setupModalSystem() {
         const modalTriggers = document.querySelectorAll('[data-modal-trigger]');
@@ -131,6 +263,44 @@ const AdvancedUI = {
                 this.openModal(modalId);
             });
         });
+    },
+
+    // Simple scroll effects initializer (non-blocking fallback for GSAP ScrollTrigger)
+    initializeScrollEffects() {
+        // If GSAP + ScrollTrigger available, user templates may register animations directly.
+        if (window.gsap && window.ScrollTrigger) {
+            try {
+                // nothing to do here; templates use gsap directly
+            } catch (e) { /* ignore */ }
+            return;
+        }
+
+        // Fallback for counters: animate elements with .stat-value when they enter view
+        const counters = document.querySelectorAll('.stat-value');
+        if ('IntersectionObserver' in window && counters.length > 0) {
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        const to = parseInt(el.textContent) || 0;
+                        // simple numeric tween
+                        let current = 0;
+                        const step = Math.max(1, Math.round(to / 40));
+                        const iv = setInterval(() => {
+                            current += step;
+                            if (current >= to) {
+                                el.textContent = to;
+                                clearInterval(iv);
+                            } else {
+                                el.textContent = current;
+                            }
+                        }, 40);
+                        obs.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.2 });
+            counters.forEach(c => obs.observe(c));
+        }
     },
 
     // Advanced Tab System
@@ -180,6 +350,31 @@ const AdvancedUI = {
             toast.classList.add('animate-out');
             setTimeout(() => toast.remove(), 300);
         });
+    },
+
+    // Form helpers used by setupAdvancedForms
+    validateForm(form) {
+        // Basic validation: rely on browser constraint validation, plus any custom validators
+        try {
+            return form.checkValidity();
+        } catch (e) {
+            return true;
+        }
+    },
+
+    showFormErrors(form) {
+        // Highlight invalid fields using browser validity API
+        Array.from(form.elements).forEach(el => {
+            if (el.willValidate && !el.checkValidity()) {
+                el.classList.add('invalid');
+                // optionally show title/validation message
+            }
+        });
+    },
+
+    handleFormSubmission(form, event) {
+        // Default behaviour: allow submission. If dev wants AJAX, they can override this
+        return true;
     },
 
     // Utility Functions

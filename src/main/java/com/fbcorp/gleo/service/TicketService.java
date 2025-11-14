@@ -31,6 +31,13 @@ public class TicketService {
                 .or(() -> ticketRepo.findByEvent_CodeAndBoundDeviceHash(eventCode, normalized));
     }
 
+    public Optional<Ticket> findTicketByIdAndEvent(Long ticketId, String eventCode) {
+        if (ticketId == null) {
+            return Optional.empty();
+        }
+        return ticketRepo.findByIdAndEvent_Code(ticketId, eventCode);
+    }
+
     public Ticket validateAndBind(String eventCode, String qrCode, String deviceHash){
         Ticket t = ticketRepo.findByQrCode(qrCode)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket not found"));

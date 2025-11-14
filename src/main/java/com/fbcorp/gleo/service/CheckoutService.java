@@ -27,6 +27,11 @@ public class CheckoutService {
     public static class CheckoutResult {
         public final List<Order> orders = new ArrayList<>();
         public final Map<Long, String> rejectedByVendor = new LinkedHashMap<>();
+        private Ticket ticket;
+
+        public Ticket getTicket() {
+            return ticket;
+        }
     }
 
     private final TicketService ticketService;
@@ -56,10 +61,15 @@ public class CheckoutService {
                 .orElseGet(List::of);
     }
 
+    public List<Order> recentOrdersForTicket(Ticket ticket) {
+        return orderRepo.findByTicketOrderByCreatedAtDesc(ticket);
+    }
+
     @Transactional
     public CheckoutResult checkout(String eventCode, String qr, String deviceHash, Map<Long, List<CartLine>> groupedLines) {
         Ticket ticket = ticketService.resolveTicket(eventCode, qr, deviceHash);
         CheckoutResult result = new CheckoutResult();
+        result.ticket = ticket;
 
         for (var entry : groupedLines.entrySet()) {
             Long vendorId = entry.getKey();

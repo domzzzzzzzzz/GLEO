@@ -19,6 +19,7 @@ C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\service\CartS
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\AuditLogEntry.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\AdminLogsController.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\CartSession.java
+C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\AdminTicketController.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\repo\EventRepo.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\service\CheckoutService.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\AdminPreference.java
@@ -28,6 +29,7 @@ C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\GleoApplicati
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\MenuOrderItem.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\repo\TicketRepo.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\Event.java
+C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\util\DeviceFingerprint.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\config\WebSocketConfig.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\Vendor.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\model\StatusUpdateMessage.java
@@ -42,6 +44,7 @@ C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\TierPo
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\CartController.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\HomeController.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\OrderItem.java
+C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\service\QrDecoderService.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\service\TicketImportService.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\config\SecurityConfig.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\repo\TierPolicyRepo.java
@@ -52,6 +55,7 @@ C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\service\Event
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\AuthController.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\MenuItem.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\VendorStatusController.java
+C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\config\TicketSessionInterceptor.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\TierConsumption.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\repo\AuditLogRepository.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\AdminEventController.java
@@ -66,9 +70,11 @@ C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\repo\AuditLog
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\service\OrderService.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\service\VendorService.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\UsherController.java
+C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\web\GlobalExceptionHandler.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\OrderStatus.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\Order.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\repo\AdminPreferenceRepo.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\domain\Role.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\model\OrderUpdateMessage.java
+C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\config\TicketSessionMvcConfig.java
 C:\Users\ahmed ghobashy\Desktop\gleo\src\main\java\com\fbcorp\gleo\service\CartViewService.java

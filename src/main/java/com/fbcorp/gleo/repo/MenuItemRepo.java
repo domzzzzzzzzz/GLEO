@@ -11,7 +11,7 @@ public interface MenuItemRepo extends JpaRepository<MenuItem, Long> {
 
     List<MenuItem> findByVendorOrderByNameAsc(Vendor vendor);
 
-    java.util.Optional<MenuItem> findByVendorAndNameIgnoreCase(Vendor vendor, String name);
+    List<MenuItem> findByVendorAndNameIgnoreCase(Vendor vendor, String name);
 
     void deleteByVendor(Vendor vendor);
 }

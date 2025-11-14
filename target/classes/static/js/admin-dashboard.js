@@ -248,6 +248,7 @@
   window.toggleAdminMenu = function(event){
     const button = event.currentTarget;
     const menu = document.getElementById('adminMenu');
+    if (!button || !menu) return;
     const isExpanded = button.getAttribute('aria-expanded') === 'true';
     button.setAttribute('aria-expanded', !isExpanded);
     menu.hidden = isExpanded;
@@ -320,7 +321,22 @@
     // global shortcuts
     if (e.ctrlKey || e.metaKey){
       if (e.key === 'b'){ e.preventDefault(); window.toggleTheme(); }
-      if (e.key === 'k'){ e.preventDefault(); const adminBadge = document.querySelector('.admin-badge'); const adminMenu = document.getElementById('adminMenu'); if (adminMenu.hidden){ adminBadge.setAttribute('aria-expanded','true'); adminMenu.hidden = false; const first = adminMenu.querySelector('.menu-item'); if (first) first.focus(); } else { adminBadge.setAttribute('aria-expanded','false'); adminMenu.hidden = true; adminBadge.focus(); } }
+      if (e.key === 'k'){
+        const adminBadge = document.querySelector('.admin-badge');
+        const adminMenu = document.getElementById('adminMenu');
+        if (!adminBadge || !adminMenu) return;
+        e.preventDefault();
+        if (adminMenu.hidden){
+          adminBadge.setAttribute('aria-expanded','true');
+          adminMenu.hidden = false;
+          const first = adminMenu.querySelector('.menu-item');
+          if (first) first.focus();
+        } else {
+          adminBadge.setAttribute('aria-expanded','false');
+          adminMenu.hidden = true;
+          adminBadge.focus();
+        }
+      }
     }
   });
 
@@ -438,12 +454,348 @@
     }
   }
 
+  class EventWizard {
+    constructor(root, options = {}) {
+      this.root = root || document.getElementById('event-wizard');
+      if (!this.root) return;
+      this.options = options;
+      this.isStandalone = !!options.standalone;
+      this.trigger = options.trigger || document.getElementById('open-event-wizard');
+
+      this.eventForm = this.root.querySelector('#wizard-event-form');
+      this.vendorContainer = this.root.querySelector('#wizard-vendors');
+      this.menuContainer = this.root.querySelector('#wizard-menus');
+      this.stepEls = Array.from(this.root.querySelectorAll('.wizard-step'));
+      this.panels = Array.from(this.root.querySelectorAll('.wizard-panel'));
+      this.backBtn = this.root.querySelector('[data-action="back"]');
+      this.nextBtn = this.root.querySelector('[data-action="next"]');
+      this.submitBtn = this.root.querySelector('[data-action="submit"]');
+      this.addVendorBtn = this.root.querySelector('[data-action="add-vendor"]');
+      this.closeBtn = this.root.querySelector('[data-action="close"]');
+      this.currentStep = 1;
+      this.maxStep = 3;
+      this.vendorCounter = 0;
+      this.submitting = false;
+
+      if (!this.isStandalone) {
+        if (this.trigger) {
+          this.trigger.addEventListener('click', () => this.open());
+        }
+        if (this.closeBtn) this.closeBtn.addEventListener('click', () => this.close());
+        this.root.addEventListener('click', (e) => {
+          if (e.target === this.root) this.close();
+        });
+      }
+
+      if (this.backBtn) this.backBtn.addEventListener('click', () => this.prev());
+      if (this.nextBtn) this.nextBtn.addEventListener('click', () => this.next());
+      if (this.submitBtn) this.submitBtn.addEventListener('click', () => this.submit());
+      if (this.addVendorBtn) this.addVendorBtn.addEventListener('click', () => this.addVendor());
+
+      this.renderInitial();
+      if (this.isStandalone) {
+        this.gotoStep(1);
+      }
+    }
+
+    open() {
+      this.renderInitial();
+      this.gotoStep(1);
+      if (!this.isStandalone) {
+        this.root.hidden = false;
+        document.body.classList.add('wizard-open');
+      }
+    }
+
+    close() {
+      if (!this.isStandalone) {
+        this.root.hidden = true;
+        document.body.classList.remove('wizard-open');
+      }
+      this.renderInitial();
+    }
+
+    renderInitial() {
+      if (this.eventForm) this.eventForm.reset();
+      this.vendorContainer.innerHTML = '';
+      this.menuContainer.innerHTML = '';
+      this.vendorCounter = 0;
+      const initialVendors = 4;
+      for (let i = 0; i < initialVendors; i++) {
+        this.addVendor();
+      }
+    }
+
+    gotoStep(step) {
+      this.currentStep = Math.min(Math.max(step, 1), this.maxStep);
+      this.stepEls.forEach((el, idx) => el.classList.toggle('active', idx + 1 === this.currentStep));
+      this.panels.forEach((panel, idx) => panel.hidden = idx + 1 !== this.currentStep);
+      this.backBtn.disabled = this.currentStep === 1;
+      this.nextBtn.hidden = this.currentStep === this.maxStep;
+      this.submitBtn.hidden = this.currentStep !== this.maxStep;
+    }
+
+    next() {
+      if (!this.validateCurrentStep()) return;
+      if (this.currentStep < this.maxStep) this.gotoStep(this.currentStep + 1);
+    }
+
+    prev() {
+      if (this.currentStep > 1) this.gotoStep(this.currentStep - 1);
+    }
+
+    validateCurrentStep() {
+      if (this.currentStep === 1) return this.validateStep1();
+      if (this.currentStep === 2) return this.validateStep2();
+      if (this.currentStep === 3) return this.validateStep3();
+      return true;
+    }
+
+    validateStep1() {
+      const code = this.eventForm.querySelector('#wizard-event-code')?.value.trim();
+      const name = this.eventForm.querySelector('#wizard-event-name')?.value.trim();
+      const start = this.eventForm.querySelector('#wizard-event-start')?.value;
+      const end = this.eventForm.querySelector('#wizard-event-end')?.value;
+      if (!code || !/^[A-Z][0-9]{4}$/.test(code)) {
+        AdvancedUI.showToast('Event code must be 1 capital letter followed by 4 digits.', 'warning');
+        return false;
+      }
+      if (!name || name.length < 3) {
+        AdvancedUI.showToast('Event name must be at least 3 characters.', 'warning');
+        return false;
+      }
+      if (start && end && new Date(start) >= new Date(end)) {
+        AdvancedUI.showToast('End date must be after start date.', 'warning');
+        return false;
+      }
+      return true;
+    }
+
+    validateStep2() {
+      const vendors = Array.from(this.vendorContainer.querySelectorAll('[data-vendor-id]'));
+      if (vendors.length === 0) {
+        AdvancedUI.showToast('Add at least one vendor.', 'warning');
+        return false;
+      }
+      if (vendors.length > 8) {
+        AdvancedUI.showToast('You can add up to 8 vendors.', 'warning');
+        return false;
+      }
+      for (const vendor of vendors) {
+        const nameInput = vendor.querySelector('[data-field="name"]');
+        if (!nameInput || !nameInput.value.trim()) {
+          nameInput?.focus();
+          AdvancedUI.showToast('Each vendor needs a name.', 'warning');
+          return false;
+        }
+      }
+      return true;
+    }
+
+    validateStep3() {
+      const vendors = Array.from(this.vendorContainer.querySelectorAll('[data-vendor-id]'));
+      for (const vendor of vendors) {
+        const id = vendor.dataset.vendorId;
+        const card = this.menuContainer.querySelector(`.wizard-menu-card[data-vendor-id="${id}"]`);
+        if (!card) {
+          AdvancedUI.showToast('Missing menu section for one vendor.', 'warning');
+          return false;
+        }
+        const rows = Array.from(card.querySelectorAll('.wizard-menu-row'));
+        if (rows.length === 0) {
+          AdvancedUI.showToast('Each vendor must have at least one menu item.', 'warning');
+          return false;
+        }
+        if (rows.length > 5) {
+          AdvancedUI.showToast('Each vendor can have up to 5 menu items.', 'warning');
+          return false;
+        }
+        for (const row of rows) {
+          const nameInput = row.querySelector('[data-field="menu-name"]');
+          const priceInput = row.querySelector('[data-field="menu-price"]');
+          if (!nameInput.value.trim()) {
+            nameInput.focus();
+            AdvancedUI.showToast('Menu items need a name.', 'warning');
+            return false;
+          }
+          const price = priceInput.value.trim();
+          if (!price || Number(price) < 0) {
+            priceInput.focus();
+            AdvancedUI.showToast('Menu item price must be zero or positive.', 'warning');
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    addVendor(prefill = {}) {
+      if (this.vendorContainer.querySelectorAll('[data-vendor-id]').length >= 8) {
+        AdvancedUI.showToast('Maximum 8 vendors allowed.', 'warning');
+        return;
+      }
+      const id = `vendor-${++this.vendorCounter}`;
+      const vendorRow = document.createElement('div');
+      vendorRow.className = 'wizard-vendor';
+      vendorRow.dataset.vendorId = id;
+      vendorRow.innerHTML = `
+        <div class="input-group">
+          <label>Vendor name</label>
+          <input type="text" class="field-input" data-field="name" placeholder="e.g. BRGR" value="${prefill.name || ''}" required>
+        </div>
+        <div class="input-group">
+          <label>Pickup PIN (optional)</label>
+          <input type="text" class="field-input" data-field="pin" placeholder="1234" value="${prefill.pin || ''}">
+        </div>
+        <div class="wizard-vendor-actions">
+          <button type="button" class="btn-icon" data-action="remove-vendor" title="Remove vendor">&times;</button>
+        </div>
+      `;
+      vendorRow.querySelector('[data-action="remove-vendor"]').addEventListener('click', () => this.removeVendor(id));
+      vendorRow.querySelector('[data-field="name"]').addEventListener('input', (e) => this.updateMenuCardTitle(id, e.target.value));
+      this.vendorContainer.appendChild(vendorRow);
+      this.addMenuCard(id, prefill.menuItems);
+    }
+
+    removeVendor(id) {
+      const vendors = this.vendorContainer.querySelectorAll('[data-vendor-id]');
+      if (vendors.length <= 1) {
+        AdvancedUI.showToast('At least one vendor is required.', 'warning');
+        return;
+      }
+      const row = this.vendorContainer.querySelector(`[data-vendor-id="${id}"]`);
+      row?.remove();
+      const card = this.menuContainer.querySelector(`.wizard-menu-card[data-vendor-id="${id}"]`);
+      card?.remove();
+    }
+
+    addMenuCard(id, menuItems = []) {
+      const card = document.createElement('div');
+      card.className = 'wizard-menu-card';
+      card.dataset.vendorId = id;
+      card.innerHTML = `
+        <div class="wizard-menu-card__header">
+          <strong data-menu-title>Menu</strong>
+          <button type="button" class="btn btn-outline btn-sm" data-action="add-menu-item" data-vendor="${id}">Add item</button>
+        </div>
+        <div class="wizard-menu-items"></div>
+      `;
+      card.querySelector('[data-action="add-menu-item"]').addEventListener('click', () => this.addMenuRow(card));
+      this.menuContainer.appendChild(card);
+      const initialItems = menuItems.length ? menuItems : new Array(3).fill({});
+      initialItems.forEach(item => this.addMenuRow(card, item));
+      this.updateMenuCardTitle(id, this.vendorContainer.querySelector(`[data-vendor-id="${id}"] [data-field="name"]`)?.value);
+    }
+
+    addMenuRow(card, prefill = {}) {
+      const rows = card.querySelectorAll('.wizard-menu-row');
+      if (rows.length >= 5) {
+        AdvancedUI.showToast('Limit of 5 menu items per vendor.', 'warning');
+        return;
+      }
+      const row = document.createElement('div');
+      row.className = 'wizard-menu-row';
+      row.innerHTML = `
+        <input type="text" class="field-input" data-field="menu-name" placeholder="Item name" value="${prefill.name || ''}" required>
+        <input type="number" class="field-input" data-field="menu-price" placeholder="Price" min="0" step="0.01" value="${prefill.price || ''}" required>
+        <input type="number" class="field-input" data-field="menu-max" placeholder="Max/order (optional)" min="1" value="${prefill.maxPerOrder || ''}">
+        <button type="button" class="btn-icon" data-action="remove-menu-item" title="Remove item">&times;</button>
+      `;
+      row.querySelector('[data-action="remove-menu-item"]').addEventListener('click', () => this.removeMenuRow(card, row));
+      card.querySelector('.wizard-menu-items').appendChild(row);
+    }
+
+    removeMenuRow(card, row) {
+      const rows = card.querySelectorAll('.wizard-menu-row');
+      if (rows.length <= 1) {
+        AdvancedUI.showToast('Keep at least one menu item per vendor.', 'warning');
+        return;
+      }
+      row.remove();
+    }
+
+    updateMenuCardTitle(id, name) {
+      const card = this.menuContainer.querySelector(`.wizard-menu-card[data-vendor-id="${id}"] [data-menu-title]`);
+      if (card) {
+        card.textContent = name?.trim() ? `${name.trim()} menu` : 'Menu';
+      }
+    }
+
+    collectPayload() {
+      const payload = {
+        code: this.eventForm.querySelector('#wizard-event-code')?.value.trim(),
+        name: this.eventForm.querySelector('#wizard-event-name')?.value.trim(),
+        startAt: this.eventForm.querySelector('#wizard-event-start')?.value || null,
+        endAt: this.eventForm.querySelector('#wizard-event-end')?.value || null,
+        vendors: []
+      };
+      const vendorRows = Array.from(this.vendorContainer.querySelectorAll('[data-vendor-id]'));
+      vendorRows.forEach(row => {
+        const id = row.dataset.vendorId;
+        const vendor = {
+          name: row.querySelector('[data-field="name"]').value.trim(),
+          pin: row.querySelector('[data-field="pin"]').value.trim(),
+          menuItems: []
+        };
+        const card = this.menuContainer.querySelector(`.wizard-menu-card[data-vendor-id="${id}"]`);
+        const menuRows = card ? Array.from(card.querySelectorAll('.wizard-menu-row')) : [];
+        menuRows.forEach(menuRow => {
+          const maxRaw = menuRow.querySelector('[data-field="menu-max"]').value.trim();
+          const maxValue = maxRaw ? Number.parseInt(maxRaw, 10) : null;
+          vendor.menuItems.push({
+            name: menuRow.querySelector('[data-field="menu-name"]').value.trim(),
+            price: menuRow.querySelector('[data-field="menu-price"]').value.trim(),
+            maxPerOrder: Number.isNaN(maxValue) ? null : maxValue
+          });
+        });
+        payload.vendors.push(vendor);
+      });
+      return payload;
+    }
+
+    setSubmitting(flag) {
+      this.submitting = flag;
+      this.submitBtn.disabled = flag;
+      this.submitBtn.textContent = flag ? 'Creating…' : 'Create event';
+    }
+
+    async submit() {
+      if (this.submitting) return;
+      if (!this.validateStep3()) return;
+      const payload = this.collectPayload();
+      try {
+        this.setSubmitting(true);
+        const headers = Object.assign({'Content-Type': 'application/json'}, readCsrfHeaders());
+        const response = await fetch('/admin/events/wizard', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create event.');
+        }
+        AdvancedUI.showToast(data.message || 'Event created successfully.', 'success');
+        this.close();
+        setTimeout(() => window.location.reload(), 800);
+      } catch (err) {
+        AdvancedUI.showToast(err.message || 'Failed to create event.', 'error');
+      } finally {
+        this.setSubmitting(false);
+      }
+    }
+  }
+
   // initialize on DOMContentLoaded
   document.addEventListener('DOMContentLoaded', function(){
     try { 
       window.initializeTheme();
       enableMenuDrag();
       enableMobileMenu();
+      const wizardModal = document.getElementById('event-wizard');
+      if (wizardModal) new EventWizard(wizardModal, { trigger: document.getElementById('open-event-wizard') });
+      const wizardPage = document.querySelector('[data-wizard-page]');
+      if (wizardPage) new EventWizard(wizardPage, { standalone: true });
       // Attach programmatic admin controls so menu actions work even if inline onclicks are blocked
       try{ attachAdminControls(); }catch(e){ /* no-op if function missing */ }
       

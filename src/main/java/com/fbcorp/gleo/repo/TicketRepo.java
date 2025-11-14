@@ -12,5 +12,7 @@ public interface TicketRepo extends JpaRepository<Ticket, Long> {
 
     Optional<Ticket> findByEvent_CodeAndBoundDeviceHash(String eventCode, String boundDeviceHash);
 
+    Optional<Ticket> findByIdAndEvent_Code(Long id, String eventCode);
+
     List<Ticket> findByEvent(Event event);
 }

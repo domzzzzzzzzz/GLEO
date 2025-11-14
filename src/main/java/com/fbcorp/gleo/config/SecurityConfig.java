@@ -45,19 +45,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/error").permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/e/*/usher/**")).hasAnyRole("USHER", "ADMIN", "ORGANIZER")
-                        .requestMatchers("/e/**").permitAll()
-                        .requestMatchers("/login", "/").permitAll()
-                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "ORGANIZER")
-                        .requestMatchers("/organizer/**").hasRole("ORGANIZER")
-                        .requestMatchers("/vendor/**").hasAnyRole("VENDOR", "STAFF")
-                        .anyRequest().authenticated()
-                )
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+            .requestMatchers("/uploads/**").permitAll()
+            .requestMatchers("/h2-console/**").permitAll()
+            .requestMatchers("/error").permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/e/*/usher/**")).hasAnyRole("USHER", "ADMIN", "ORGANIZER")
+            .requestMatchers("/e/**").permitAll() // Allow all event/guest pages for everyone
+            .requestMatchers("/login", "/").permitAll()
+            .requestMatchers("/admin/**").hasAnyRole("ADMIN", "ORGANIZER")
+            .requestMatchers("/organizer/**").hasRole("ORGANIZER")
+            .requestMatchers("/vendor/**").hasAnyRole("VENDOR", "STAFF")
+            .anyRequest().authenticated()
+        )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler(successHandler)
@@ -70,7 +70,7 @@ public class SecurityConfig {
             .permitAll()
         )
                 .authenticationProvider(authenticationProvider())
-                .httpBasic(Customizer.withDefaults())
+                // Remove httpBasic to prevent browser sign-in popup for guests
                 .csrf(csrf -> csrf.disable());
         http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 

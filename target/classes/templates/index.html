@@ -6,6 +6,77 @@
   <title th:text="${event.name} + ' - GLEO'">GLEO Event</title>
   <link th:href="@{/css/tailwind.css?v=20241020}" rel="stylesheet">
   <link th:href="@{/css/modern.css?v=20241110}" rel="stylesheet">
+  <style>
+    .ticket-overlay-root {
+      position: fixed;
+      inset: 0;
+      z-index: 1400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .ticket-overlay-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(8px);
+      pointer-events: auto;
+    }
+    .ticket-overlay-card {
+      position: relative;
+      width: min(520px, 90vw);
+      border-radius: 28px;
+      border: 1px solid rgba(148,163,184,0.3);
+      background: rgba(255,255,255,0.95);
+      box-shadow: 0 40px 70px rgba(15,23,42,0.25);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      pointer-events: auto;
+    }
+    .ticket-overlay-card h2 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+    .ticket-upload-field {
+      border: 1px dashed rgba(99,102,241,0.5);
+      border-radius: 20px;
+      padding: 18px;
+      text-align: center;
+      background: rgba(99,102,241,0.08);
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+    .ticket-upload-field:hover {
+      border-color: rgba(99,102,241,0.9);
+    }
+    .ticket-upload-field input[type="file"] {
+      display: none;
+    }
+    .ticket-upload-preview {
+      display: none;
+      margin-top: 12px;
+      max-width: 240px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.18);
+    }
+    .ticket-overlay-card button {
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(120deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-weight: 600;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .ticket-overlay-card button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 36px rgba(99,102,241,0.35);
+    }
+  </style>
 </head>
 <body>
 <div class="page">
@@ -50,5 +121,49 @@
     </div>
   </section>
 </div>
+<div class="ticket-overlay-root" th:if="${needsTicket}">
+  <div class="ticket-overlay-backdrop"></div>
+  <div class="ticket-overlay-card">
+    <div>
+      <p class="muted" style="margin:0 0 6px;">Secure your session</p>
+      <h2>Upload your QR ticket</h2>
+      <p class="muted" style="margin:0;">Scan once to unlock all vendors on this device. You’ll see the background content update live.</p>
+    </div>
+    <form th:action="${ticketPostUrl}" method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:14px;">
+      <label class="ticket-upload-field" id="ticket-upload-field">
+        <span id="ticket-upload-placeholder">Tap to upload a photo / screenshot of your QR</span>
+        <img id="ticket-upload-preview" class="ticket-upload-preview" alt="QR preview">
+        <input type="file" name="qrFile" accept="image/*" required>
+      </label>
+      <button type="submit">Link ticket & continue</button>
+    </form>
+    <small class="muted">Need a new ticket later? Just upload again and we’ll switch the session.</small>
+  </div>
+</div>
+<script>
+  (function(){
+    const field = document.getElementById('ticket-upload-field');
+    if (!field) return;
+    const input = field.querySelector('input[type="file"]');
+    const placeholder = document.getElementById('ticket-upload-placeholder');
+    const preview = document.getElementById('ticket-upload-preview');
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      if (!file){
+        preview.style.display = 'none';
+        placeholder.style.display = 'block';
+        preview.src = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  })();
+</script>
 </body>
 </html>

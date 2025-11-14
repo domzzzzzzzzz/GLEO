@@ -12,10 +12,7 @@ public class AuthController {
 
     @GetMapping("/login")
     public String login(Model model){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
-            return "redirect:/dashboard";
-        }
+        // Only show login page for dashboard/admin/organizer/vendor, not for guests
         return "login";
     }
 }

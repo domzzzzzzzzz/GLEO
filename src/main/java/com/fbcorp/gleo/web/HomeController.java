@@ -28,11 +28,16 @@ public class HomeController {
     }
 
     @GetMapping
-    public String landing(@PathVariable String eventCode, Model model, HttpSession session){
+    public String landing(@PathVariable String eventCode,
+                          Model model,
+                          HttpSession session){
         var event = policyService.get(eventCode);
         model.addAttribute("event", event);
         model.addAttribute("vendors", vendorRepo.findByEventAndActiveTrue(event));
         model.addAttribute("cartSummary", cartViewService.summarize(getOrCreateCart(session)));
+        boolean needsTicket = session.getAttribute(com.fbcorp.gleo.config.TicketSessionInterceptor.SESSION_TICKET_ATTR) == null;
+        model.addAttribute("needsTicket", needsTicket);
+        model.addAttribute("ticketPostUrl", "/e/" + eventCode + "/ticket");
         return "index";
     }
 

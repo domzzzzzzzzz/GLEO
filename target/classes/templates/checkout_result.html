@@ -3,56 +3,213 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Order Confirmation - GLEO</title>
+  <title>Order confirmation · GLEO</title>
   <link href="/css/tailwind.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", -apple-system, sans-serif;
+      background: linear-gradient(180deg, #f6f7fb 0%, #eef2ff 60%, #f9fafc 100%);
+      color: #0f172a;
+      min-height: 100vh;
+      padding: 32px 16px 56px;
+    }
+    .confirmation-shell {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .confirmation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .confirmation-header h1 {
+      margin: 4px 0;
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+    }
+    .confirmation-header p {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+    .ghost-link {
+      border: 1px solid rgba(148,163,184,0.5);
+      color: #0f172a;
+      padding: 10px 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .ghost-link:hover {
+      border-color: rgba(79,70,229,0.5);
+      color: #4f46e5;
+    }
+  .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .summary-card {
+      background: rgba(255,255,255,0.85);
+      border-radius: 16px;
+      border: 1px solid rgba(148,163,184,0.2);
+      padding: 16px;
+      box-shadow: 0 20px 40px rgba(15,23,42,0.08);
+    }
+    .summary-card span {
+      display:block;
+      font-size:0.85rem;
+      color:#94a3b8;
+    }
+    .summary-card strong {
+      display:block;
+      font-size:1.8rem;
+      margin:4px 0;
+  }
+  .orders-card {
+      padding: 24px;
+      border-radius: 24px;
+      background: linear-gradient(120deg, rgba(255,255,255,0.92), rgba(244,246,255,0.95));
+      border: 1px solid rgba(148,163,184,0.18);
+      box-shadow: 0 35px 60px rgba(15,23,42,0.12);
+    }
+    .orders-card h2 {
+      margin: 0 0 18px;
+      font-size: 1.3rem;
+    }
+    .order-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      padding:16px 18px;
+      border-radius:16px;
+      border:1px solid rgba(148,163,184,0.25);
+      background:#fff;
+      margin-bottom:12px;
+    }
+    .order-row:last-child { margin-bottom:0; }
+    .order-info strong {
+      display:block;
+      font-size:1rem;
+      margin-bottom:4px;
+    }
+    .order-info span {
+      display:block;
+      font-size:0.9rem;
+      color:#94a3b8;
+    }
+    .order-info small {
+      font-size:0.85rem;
+      color:#475569;
+    }
+    .status-chip {
+      padding:8px 16px;
+      border-radius:999px;
+      font-weight:600;
+      font-size:0.85rem;
+      background:rgba(99,102,241,0.1);
+      color:#4338ca;
+    }
+    .empty-state-pro {
+      text-align:center;
+      padding:40px 20px;
+      border:1px dashed rgba(148,163,184,0.4);
+      border-radius:18px;
+      background:rgba(255,255,255,0.8);
+    }
+    .empty-state-pro h3 { margin:0 0 8px; }
+  .rejected-card {
+      background:#fff;
+      border-radius:20px;
+      border:1px solid rgba(248,113,113,0.4);
+      padding:20px;
+      box-shadow:0 25px 45px rgba(15,23,42,0.08);
+    }
+    .rejected-card h3 { margin:0 0 12px; }
+    .reject-row {
+      display:flex;
+      justify-content:space-between;
+      border-top:1px solid rgba(148,163,184,0.2);
+      padding:12px 0;
+      font-size:0.95rem;
+    }
+    .reject-row:first-child { border-top:none; padding-top:0; }
+    @media (max-width:640px) {
+      .order-row {
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .status-chip {
+        align-self:flex-start;
+    }
+  }
+  </style>
 </head>
 <body>
-<div class="page">
-  <div class="page-header">
+<div class="confirmation-shell">
+  <header class="confirmation-header">
     <div>
-      <h2>Order confirmation</h2>
-      <p class="muted">
-        <span th:text="${createdCount} + ' order(s) dispatched'">0 orders</span>
-        <span th:if="${rejectedCount > 0}" th:text="' - ' + ${rejectedCount} + ' vendor(s) rejected'"> - 0 rejected</span>
+      <p>Order confirmation</p>
+      <h1>Orders dispatched</h1>
+      <p>
+        <span th:text="${createdCount} + ' order(s) dispatched'">0 orders dispatched</span>
+        <span th:if="${rejectedCount > 0}" th:text="' · ' + ${rejectedCount} + ' vendor(s) rejected'"> · 0 rejected</span>
       </p>
     </div>
-    <a th:href="@{|/e/${#lists.isEmpty(orders) ? eventCode : orders[0].event.code}|}" class="btn btn-muted">
+    <a th:href="@{|/e/${#lists.isEmpty(orders) ? eventCode : orders[0].event.code}|}" class="ghost-link">
       &larr; Back to vendors
     </a>
-  </div>
+  </header>
 
-  <section class="card">
-    <h3 style="margin-top:0;">Orders dispatched</h3>
-    <div th:if="${#lists.isEmpty(orders)}" class="empty-state">
-      <h4 style="margin:0 0 8px;">No orders created</h4>
-      <p class="muted" style="margin:0;">All vendor groups were rejected. Review the reasons below.</p>
+  <section class="summary-grid">
+    <div class="summary-card">
+      <span>Dispatched</span>
+      <strong th:text="${createdCount}">0</strong>
+      <small>orders sent to vendors</small>
     </div>
-    <div class="cart-groups" th:if="${!#lists.isEmpty(orders)}">
-      <div class="cart-vendor" th:each="order : ${orders}">
-        <div class="cart-vendor-header">
-          <div>
-            <div style="font-weight:600;">Order
-              <a th:href="@{|/e/${order.event.code}/orders/${order.id}|}" th:text="'#' + ${order.vendorOrderNumber}">#1</a>
-            </div>
-            <span class="muted" th:text="${order.vendor.name}">Vendor</span>
-          </div>
-          <span class="badge" th:text="${order.status}">NEW</span>
+    <div class="summary-card">
+      <span>Rejected</span>
+      <strong th:text="${rejectedCount}">0</strong>
+      <small>vendor groups declined</small>
+    </div>
+  </section>
+
+  <section class="orders-card">
+    <h2>Orders dispatched</h2>
+    <div th:if="${#lists.isEmpty(orders)}" class="empty-state-pro">
+      <h3>No orders created</h3>
+      <p class="muted">All vendor groups were rejected. Review the reasons below.</p>
+    </div>
+    <div th:if="${!#lists.isEmpty(orders)}">
+      <div class="order-row" th:each="order : ${orders}">
+        <div class="order-info">
+          <strong>
+            Order
+            <a th:href="@{|/e/${order.event.code}/orders/${order.id}|}" th:text="'#' + ${order.vendorOrderNumber}">#1</a>
+          </strong>
+          <span th:text="${order.vendor.name}">Vendor name</span>
+          <small>Pickup confirmation:
+            <strong th:text="${order.confirmedByGuest} ? 'Verified' : 'Pending verification'">Pending</strong>
+          </small>
         </div>
-        <div class="muted">
-          Pickup confirmation:
-          <strong th:text="${order.confirmedByGuest} ? 'Verified' : 'Pending verification'">Pending</strong>
-        </div>
+        <span class="status-chip" th:text="${order.status}">COMPLETED</span>
       </div>
     </div>
   </section>
 
-  <section class="card" style="margin-top:24px;" th:if="${!#maps.isEmpty(rejected)}">
-    <h3 style="margin-top:0;">Rejected vendor groups</h3>
-    <div class="cart-lines" th:each="entry : ${rejected.entrySet()}">
-      <div class="cart-line">
-        <strong th:text="'Vendor ID ' + ${entry.key}">Vendor</strong>
-        <span class="muted" th:text="${entry.value}">Reason</span>
-      </div>
+  <section class="rejected-card" th:if="${!#maps.isEmpty(rejected)}">
+    <h3>Rejected vendor groups</h3>
+    <div class="reject-row" th:each="entry : ${rejected.entrySet()}">
+      <strong th:text="'Vendor ID ' + ${entry.key}">Vendor</strong>
+      <span th:text="${entry.value}">Reason</span>
     </div>
   </section>
 </div>

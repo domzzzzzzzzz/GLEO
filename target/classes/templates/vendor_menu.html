@@ -35,12 +35,16 @@
     </div>
   </div>
 
-  <!-- Success Message Toast -->
-  <div th:if="${successMessage}" class="toast-success">
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM8 15L3 10L4.41 8.59L8 12.17L15.59 4.58L17 6L8 15Z" fill="currentColor"/>
-    </svg>
-    <span th:text="${successMessage}">Item added to cart!</span>
+
+  <!-- Professional Toast Notification (bottom center, never covers cart/nav) -->
+  <div id="toast-region">
+    <div th:if="${successMessage}" class="toast-modern animate-in">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="10" fill="#10b981"/>
+        <path d="M8 13l-3-3 1.4-1.4L8 10.2l5.6-5.6L15 6l-7 7z" fill="#fff"/>
+      </svg>
+      <span th:text="${successMessage}">Item added to cart!</span>
+    </div>
   </div>
 
   <div id="toast-region"></div>
@@ -57,8 +61,11 @@
   <div class="layout-columns">
     <section>
       <h3 class="section-title">Menu</h3>
-      <div class="menu-grid">
-        <div class="menu-card" th:each="item : ${items}">
+      <div>
+        <div th:each="entry : ${itemsByCategory}">
+          <h4 th:text="${entry.key}" style="margin-top:1.25rem;margin-bottom:0.5rem;color:var(--gray-700);">Category</h4>
+          <div class="menu-grid">
+            <div class="menu-card" th:each="item : ${entry.value}">
           <div class="menu-card-layout">
             <div class="menu-item-image" th:classappend="${item.imagePath == null} ? 'menu-item-image--empty' : ''">
               <img th:if="${item.imagePath != null}" 
@@ -90,6 +97,8 @@
               <span th:text="${!item.available} ? 'Unavailable' : (singleVendorLocked ? 'Locked' : 'Add to cart')">Add to cart</span>
             </button>
           </form>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -193,4 +202,49 @@
     });
   </script>
 </body>
+<style>
+  .toast-modern {
+    position: fixed;
+    left: 50%;
+    bottom: 2.5rem;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 1rem 1.75rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 8px 32px rgba(16,185,129,0.18);
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+    z-index: 1200;
+    min-width: 220px;
+    max-width: 90vw;
+    animation: toastIn 0.35s cubic-bezier(0.4,0,0.2,1), toastOut 0.45s cubic-bezier(0.4,0,0.2,1) 2.5s forwards;
+  }
+  .toast-modern svg {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(30px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateX(-50%) translateY(0); }
+    to   { opacity: 0; transform: translateX(-50%) translateY(30px); }
+  }
+  @media (max-width: 640px) {
+    .toast-modern {
+      bottom: 1.25rem;
+      padding: 0.85rem 1.1rem;
+      font-size: 0.97rem;
+      min-width: 0;
+      max-width: 98vw;
+    }
+    .toast-modern svg { width: 20px; height: 20px; }
+  }
+</style>
 </html>

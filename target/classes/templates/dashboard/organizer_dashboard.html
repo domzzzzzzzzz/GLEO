@@ -8,7 +8,7 @@
   <link href="/css/organizer.css" rel="stylesheet">
   <link href="/css/modern.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
+  <!-- Chart.js has no stylesheet; avoid loading a missing CSS file -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   <style>
     :root {
@@ -107,32 +107,31 @@
   </style>
 </head>
 <body>
-<div class="page">
-  <div class="page-header">
-    <div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <h2 th:text="'Welcome, ' + (${user != null ? user.username : 'Organizer'})">Welcome, organizer</h2>
-        <span class="role-badge glass-effect" style="padding:6px 12px;border-radius:999px;font-weight:600;color:var(--background);font-size:0.9rem;display:inline-flex;align-items:center;gap:8px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 auto;">
-            <circle cx="12" cy="12" r="10" fill="url(#g)" />
-            <defs>
-              <linearGradient id="g" x1="0" x2="1">
-                <stop offset="0" stop-color="#4f46e5" />
-                <stop offset="1" stop-color="#4338ca" />
-              </linearGradient>
-            </defs>
-          </svg>
-          Organizer
-        </span>
+<!-- Navigation Banner -->
+<nav th:if="${event != null}" class="gleo-nav">
+  <div class="gleo-nav__row">
+    <div class="gleo-nav__brand">
+      <a th:href="@{|/e/${event.code}|}" class="gleo-logo" aria-label="Return to event home">
+        <span class="gleo-logo__mark" aria-hidden="true">G</span>
+        <span class="gleo-logo__text">GLEO</span>
+      </a>
+      <div class="gleo-event">
+        <span class="gleo-event__name" th:text="${event.name}">Event</span>
+        <span class="gleo-event__code">Organizer Control</span>
       </div>
-      <p class="muted">Manage your event, onboard vendors, and keep trucks ready for rush hours.</p>
     </div>
-    <div class="quick-actions-card">
-      <div class="muted" style="font-weight:600;">Quick actions</div>
-      <a href="/logout" class="btn btn-muted">Sign out</a>
+    <div class="gleo-nav__actions">
+      <form th:action="@{/logout}" method="post" style="margin:0;">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="gleo-btn gleo-btn--ghost" style="cursor:pointer;">
+          <span class="gleo-btn__icon" aria-hidden="true">&#128682;</span>
+          <span class="gleo-btn__label">Sign out</span>
+        </button>
+      </form>
     </div>
   </div>
-
+</nav>
+<div class="page">
   <div th:if="${toastMessage}" class="toast toast-success" th:text="${toastMessage}">Saved</div>
   <div th:if="${toastError}" class="toast toast-error" th:text="${toastError}">Error</div>
   <div th:if="${toastDetail}" class="card muted" style="margin-bottom:16px;padding:14px 18px;background:rgba(248,250,252,0.85);" th:text="${toastDetail}">Details</div>
@@ -186,51 +185,6 @@
       </section>
 
       <section class="panel vendor-section">
-        <header>
-          <div>
-            <h3>Vendor roster</h3>
-            <p class="muted">Monitor performance, adjust menus, and keep trucks ready for rush hours.</p>
-          </div>
-        </header>
-
-        <div class="vendor-controls" th:if="${(totalActiveVendors + totalArchivedVendors) > 0}">
-          <form class="vendor-controls-group" method="get" th:action="@{/dashboard}">
-            <input class="search-input" type="search" name="vendorQuery" placeholder="Search vendors" th:value="${vendorQuery}">
-            <select class="select-input" name="vendorStatus">
-              <option value="all" th:selected="${vendorStatus == 'all'}">All</option>
-              <option value="active" th:selected="${vendorStatus == 'active'}">Active</option>
-              <option value="archived" th:selected="${vendorStatus == 'archived'}">Archived</option>
-            </select>
-            <select class="select-input" name="vendorSort">
-              <option value="name" th:selected="${vendorSort == 'name'}">Name A-Z</option>
-              <option value="revenue" th:selected="${vendorSort == 'revenue'}">Revenue (High-Low)</option>
-            </select>
-            <button class="btn btn-outline" type="submit">Apply</button>
-            <a class="btn btn-muted" th:href="@{/dashboard}">Reset</a>
-            <span class="vendor-counts" th:text="'Active: ' + ${totalActiveVendors} + ' - Archived: ' + ${totalArchivedVendors}"></span>
-          </form>
-          <div class="bulk-actions" style="display:flex;align-items:center;gap:10px;">
-            <label class="checkbox-inline" style="display:flex;align-items:center;gap:8px;margin-right:6px;">
-              <input type="checkbox" id="vendor-bulk-select-all">
-              <span>Select all</span>
-            </label>
-
-            <select class="select-input" id="vendor-bulk-action-select">
-              <option value="">Bulk actions</option>
-              <option value="activate">Activate selected</option>
-              <option value="archive">Archive selected</option>
-            </select>
-            <button class="btn btn-outline" type="button" id="vendor-bulk-apply" disabled>Apply</button>
-          </div>
-        </div>
-
-        <form th:if="${(totalActiveVendors + totalArchivedVendors) > 0}" th:action="@{|/organizer/events/${event.code}/vendors/bulk|}" method="post" id="vendor-bulk-form">
-          <input type="hidden" name="action" id="vendor-bulk-action-input">
-          <input type="hidden" name="vendorQuery" th:value="${vendorQuery}">
-          <input type="hidden" name="vendorStatus" th:value="${vendorStatus}">
-          <input type="hidden" name="vendorSort" th:value="${vendorSort}">
-        </form>
-
         <div th:if="${vendorStatus != 'archived'}"
              th:with="activeList=${vendorsActive != null ? vendorsActive : vendors}">
           <div class="empty-state" th:if="${activeFilteredCount == null || activeFilteredCount == 0}">
@@ -254,10 +208,6 @@
                 </div>
               </div>
               <div class="roster-actions">
-                <label class="vendor-select-toggle">
-                  <input type="checkbox" name="vendorIds" th:value="${vendor.id}" form="vendor-bulk-form">
-                  <span>Select</span>
-                </label>
                 <span class="status-chip" th:classappend="${!vendor.active} ? ' inactive'" th:text="${vendor.active} ? 'Active' : 'Archived'">Active</span>
                 <form th:if="${vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete|}" method="post"
                       onsubmit="return confirm('Remove this vendor from the event?');">
@@ -300,11 +250,108 @@
               <p class="muted" th:if="${menu == null || #lists.isEmpty(menu)}">No menu items yet.</p>
               <ul class="menu-list" th:if="${menu != null && !#lists.isEmpty(menu)}">
                 <li th:each="item : ${menu}">
-                  <strong th:text="${item.name}">Item name</strong>
-                  <span>
-                    <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
-                    <span th:if="${item.maxPerOrder != null}" th:text="' - Max ' + ${item.maxPerOrder}">Limit</span>
-                  </span>
+                  <div class="menu-item-head">
+                    <div class="menu-item-main">
+                      <div class="menu-item-image-wrapper" th:if="${item.imagePath != null}">
+                        <img th:src="${item.imagePath}" th:alt="${item.name} + ' image'" class="menu-item-image">
+                      </div>
+                      <div class="menu-item-details">
+                        <strong th:text="${item.name}">Item name</strong>
+                      <span class="menu-item-meta">
+                        <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
+                        <span class="menu-item-meta__max" th:if="${item.maxPerOrder != null}" th:text="'Max ' + ${item.maxPerOrder}">Limit</span>
+                      </span>
+                      </div>
+                    </div>
+                    <form th:action="@{/organizer/events/{eventCode}/vendors/{vendorId}/menu/{menuItemId}/delete(eventCode=${event.code},vendorId=${vendor.id},menuItemId=${item.id})}"
+                          method="post" class="menu-item-delete"
+                          onsubmit="return confirm('Delete this menu item?');">
+                      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                      <button type="submit" class="btn-icon" title="Delete item">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                          <path d="M6 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3v1H3V2h3zm1 3.5v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0zm3 0v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0z"/>
+                          <path d="M4.5 4h7a.5.5 0 0 1 .5.5v8A1.5 1.5 0 0 1 10.5 14h-5A1.5 1.5 0 0 1 4 12.5v-8a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                        <span class="sr-only">Delete menu item</span>
+                      </button>
+                    </form>
+                  </div>
+                  <details class="menu-item-edit">
+                    <summary>Edit item</summary>
+                    <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu/${item.id}/edit|}"
+                          method="post" enctype="multipart/form-data" class="menu-item-edit-form">
+                      <div class="menu-edit-grid">
+                        <div class="input-group">
+                          <label th:for="'menu-edit-name-' + ${item.id}">Item name</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-name-' + ${item.id}"
+                                 type="text"
+                                 name="name"
+                                 th:value="${item.name}"
+                                 required>
+                        </div>
+                        <div class="input-group">
+                          <label th:for="'menu-edit-price-' + ${item.id}">Price (EGP)</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-price-' + ${item.id}"
+                                 type="number"
+                                 name="price"
+                                 min="0"
+                                 step="0.01"
+                                 th:value="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')}"
+                                 required>
+                        </div>
+                        <div class="input-group">
+                          <label th:for="'menu-edit-max-' + ${item.id}">Max per order</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-max-' + ${item.id}"
+                                 type="number"
+                                 name="maxPerOrder"
+                                 min="1"
+                                 placeholder="Optional"
+                                 th:value="${item.maxPerOrder}">
+                        </div>
+                        <div class="input-group">
+                          <label th:for="'menu-edit-category-' + ${item.id}">Category</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-category-' + ${item.id}"
+                                 type="text"
+                                 name="category"
+                                 placeholder="e.g. Burgers, Drinks, Sides"
+                                 th:value="${item.category}">
+                          <small class="muted">Optional: group items on the public menu</small>
+                        </div>
+                        <div class="input-group">
+                          <label th:for="'menu-edit-category-order-' + ${item.id}">Category order</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-category-order-' + ${item.id}"
+                                 type="number"
+                                 name="categoryOrder"
+                                 min="0"
+                                 th:value="${item.categoryOrder}">
+                          <small class="muted">Optional: lower numbers appear first (set same number for items in same category)</small>
+                        </div>
+                        <div class="input-group">
+                          <label th:for="'menu-edit-image-' + ${item.id}">Replace image</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-image-' + ${item.id}"
+                                 type="file"
+                                 name="image"
+                                 accept="image/*">
+                          <small class="muted">PNG or JPG up to 5 MB.</small>
+                        </div>
+                        <div class="input-group" th:if="${item.imagePath}">
+                          <label class="checkbox-inline">
+                            <input type="checkbox" name="removeImage" value="true">
+                            <span>Remove current image</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="menu-edit-actions">
+                        <button class="btn btn-primary btn-sm" type="submit">Save item</button>
+                      </div>
+                    </form>
+                  </details>
                 </li>
               </ul>
             </div>
@@ -328,6 +375,16 @@
                   <label th:for="'item-image-' + ${vendor.id}">Image</label>
                   <input class="field-input" th:id="'item-image-' + ${vendor.id}" type="file" name="image" accept="image/*">
                   <small class="muted">PNG or JPG up to 5 MB. Optional, but highly recommended for a professional menu.</small>
+                </div>
+                <div class="input-group">
+                  <label th:for="'item-category-' + ${vendor.id}">Category</label>
+                  <input class="field-input" th:id="'item-category-' + ${vendor.id}" type="text" name="category" placeholder="e.g. Burgers, Drinks, Sides">
+                  <small class="muted">Optional: type a new category or reuse an existing one.</small>
+                </div>
+                <div class="input-group">
+                  <label th:for="'item-category-order-' + ${vendor.id}">Category order</label>
+                  <input class="field-input" th:id="'item-category-order-' + ${vendor.id}" type="number" name="categoryOrder" placeholder="0" min="0">
+                  <small class="muted">Optional: lower numbers appear first (e.g. 1 = Burgers, 2 = Fries, 3 = Drinks)</small>
                 </div>
               </div>
               <div class="menu-add-actions">
@@ -405,10 +462,6 @@
                 </div>
               </div>
               <div class="roster-actions">
-                <label class="vendor-select-toggle">
-                  <input type="checkbox" name="vendorIds" th:value="${vendor.id}" form="vendor-bulk-form">
-                  <span>Select</span>
-                </label>
                 <span class="status-chip" th:classappend="${!vendor.active} ? ' inactive'" th:text="${vendor.active} ? 'Active' : 'Archived'">Archived</span>
                 <form th:if="${vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete|}" method="post"
                       onsubmit="return confirm('Remove this vendor from the event?');">
@@ -450,17 +503,89 @@
               <h5>Menu</h5>
               <p class="muted" th:if="${menu == null || #lists.isEmpty(menu)}">No menu items yet.</p>
               <ul class="menu-list" th:if="${menu != null && !#lists.isEmpty(menu)}">
-                <li th:each="item : ${menu}" class="menu-list-item-professional">
-                  <div class="menu-item-image-wrapper" th:if="${item.imagePath != null}">
-                    <img th:src="${item.imagePath}" th:alt="${item.name} + ' image'" class="menu-item-image" style="max-width:64px;max-height:64px;border-radius:8px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-right:12px;">
+                <li th:each="item : ${menu}">
+                  <div class="menu-item-head">
+                    <div class="menu-item-main">
+                      <div class="menu-item-image-wrapper" th:if="${item.imagePath != null}">
+                        <img th:src="${item.imagePath}" th:alt="${item.name} + ' image'" class="menu-item-image">
+                      </div>
+                      <div class="menu-item-details">
+                      <strong th:text="${item.name}">Item name</strong>
+                      <span class="menu-item-meta">
+                        <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
+                        <span class="menu-item-meta__max" th:if="${item.maxPerOrder != null}" th:text="'Max ' + ${item.maxPerOrder}">Limit</span>
+                      </span>
+                      </div>
+                    </div>
+                    <form th:action="@{/organizer/events/{eventCode}/vendors/{vendorId}/menu/{menuItemId}/delete(eventCode=${event.code},vendorId=${vendor.id},menuItemId=${item.id})}"
+                          method="post" class="menu-item-delete"
+                          onsubmit="return confirm('Delete this menu item?');">
+                      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                      <button type="submit" class="btn-icon" title="Delete item">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                          <path d="M6 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3v1H3V2h3zm1 3.5v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0zm3 0v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0z"/>
+                          <path d="M4.5 4h7a.5.5 0 0 1 .5.5v8A1.5 1.5 0 0 1 10.5 14h-5A1.5 1.5 0 0 1 4 12.5v-8a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                        <span class="sr-only">Delete menu item</span>
+                      </button>
+                    </form>
                   </div>
-                  <div class="menu-item-details">
-                    <strong th:text="${item.name}">Item name</strong>
-                    <span>
-                      <span th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00</span>
-                      <span th:if="${item.maxPerOrder != null}" th:text="' - Max ' + ${item.maxPerOrder}">Limit</span>
-                    </span>
-                  </div>
+                  <details class="menu-item-edit">
+                    <summary>Edit item</summary>
+                    <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu/${item.id}/edit|}"
+                          method="post" enctype="multipart/form-data" class="menu-item-edit-form">
+                      <div class="menu-edit-grid">
+                        <div class="input-group">
+                          <label th:for="'menu-edit-name-' + ${item.id}">Item name</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-name-' + ${item.id}"
+                                 type="text"
+                                 name="name"
+                                 th:value="${item.name}"
+                                 required>
+                        </div>
+                        <div class="input-group">
+                          <label th:for="'menu-edit-price-' + ${item.id}">Price (EGP)</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-price-' + ${item.id}"
+                                 type="number"
+                                 name="price"
+                                 min="0"
+                                 step="0.01"
+                                 th:value="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')}"
+                                 required>
+                        </div>
+                        <div class="input-group">
+                          <label th:for="'menu-edit-max-' + ${item.id}">Max per order</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-max-' + ${item.id}"
+                                 type="number"
+                                 name="maxPerOrder"
+                                 min="1"
+                                 placeholder="Optional"
+                                 th:value="${item.maxPerOrder}">
+                        </div>
+                        <div class="input-group">
+                          <label th:for="'menu-edit-image-' + ${item.id}">Replace image</label>
+                          <input class="field-input"
+                                 th:id="'menu-edit-image-' + ${item.id}"
+                                 type="file"
+                                 name="image"
+                                 accept="image/*">
+                          <small class="muted">PNG or JPG up to 5 MB.</small>
+                        </div>
+                        <div class="input-group" th:if="${item.imagePath}">
+                          <label class="checkbox-inline">
+                            <input type="checkbox" name="removeImage" value="true">
+                            <span>Remove current image</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="menu-edit-actions">
+                        <button class="btn btn-primary btn-sm" type="submit">Save item</button>
+                      </div>
+                    </form>
+                  </details>
                 </li>
               </ul>
             </div>
@@ -642,6 +767,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+<!-- GSAP ScrollTrigger plugin (optional) to enable scroll-based animations used in templates -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/ScrollTrigger.min.js"></script>
 <script src="/js/organizer.js"></script>
 <script src="/js/modern-interactions.js"></script>
 <script src="/js/advanced-ui.js"></script>
@@ -712,180 +839,6 @@
       });
     }
   });
-</script>
-<script>
-// Organizer: Bulk vendor actions (clean, maintainable, uses AdvancedUI utilities)
-document.addEventListener('DOMContentLoaded', function () {
-  class VendorBulkActions {
-    constructor() {
-      this.form = document.getElementById('vendor-bulk-form');
-      this.select = document.getElementById('vendor-bulk-action-select');
-      this.applyButton = document.getElementById('vendor-bulk-apply');
-      this.actionInput = document.getElementById('vendor-bulk-action-input');
-      this.selectAll = document.getElementById('vendor-bulk-select-all');
-
-      if (!this.form || !this.select || !this.applyButton || !this.actionInput) return;
-
-      // bind main handlers
-      this.applyButton.addEventListener('click', (e) => this.handleApply(e));
-      if (this.select) this.select.addEventListener('change', () => this.updateApplyState());
-      if (this.selectAll) this.selectAll.addEventListener('change', (e) => this.toggleAll(e.target.checked));
-
-      // bind existing vendor checkboxes
-      this.bindCheckboxes();
-    }
-    vendorCheckboxes() {
-      return document.querySelectorAll('input[name="vendorIds"][form="vendor-bulk-form"]');
-    }
-
-    bindCheckboxes() {
-      const boxes = this.vendorCheckboxes();
-      boxes.forEach(box => {
-        box.addEventListener('change', () => {
-          this.updateSelectAllState();
-          this.updateApplyState();
-        });
-      });
-      // initial state
-      this.updateSelectAllState();
-      this.updateApplyState();
-    }
-
-    updateSelectAllState() {
-      if (!this.selectAll) return;
-      const boxes = this.vendorCheckboxes();
-      const checked = Array.from(boxes).filter(b => b.checked).length;
-      if (checked === 0) {
-        this.selectAll.checked = false;
-        this.selectAll.indeterminate = false;
-      } else if (checked === boxes.length) {
-        this.selectAll.checked = true;
-        this.selectAll.indeterminate = false;
-      } else {
-        this.selectAll.checked = false;
-        this.selectAll.indeterminate = true;
-      }
-    }
-
-    updateApplyState() {
-      const selectedAction = this.select && this.select.value;
-      const checked = document.querySelectorAll('input[name="vendorIds"][form="vendor-bulk-form"]:checked').length;
-      // enable only when an action is chosen and at least one vendor selected
-      this.applyButton.disabled = !(selectedAction && checked > 0);
-    }
-
-    toggleAll(checked) {
-      const boxes = this.vendorCheckboxes();
-      boxes.forEach(b => { b.checked = checked; });
-      this.updateApplyState();
-      this.updateSelectAllState();
-    }
-
-    async handleApply(e) {
-      e.preventDefault();
-
-      const action = this.select.value;
-      if (!action) {
-        if (window.AdvancedUI && typeof window.AdvancedUI.showToast === 'function') {
-          window.AdvancedUI.showToast('Please choose a bulk action first.', 'warning');
-        } else {
-          alert('Please choose a bulk action first.');
-        }
-        return;
-      }
-
-      const checked = document.querySelectorAll('input[name="vendorIds"][form="vendor-bulk-form"]:checked');
-      if (!checked || checked.length === 0) {
-        if (window.AdvancedUI && typeof window.AdvancedUI.showToast === 'function') {
-          window.AdvancedUI.showToast('Please select at least one vendor.', 'warning');
-        } else {
-          alert('Please select at least one vendor.');
-        }
-        return;
-      }
-
-      // For potentially destructive actions, show confirmation modal
-      if (action === 'archive') {
-        const confirmed = await __showBulkConfirm('Archive the selected vendor(s)? They will be hidden from the active roster.');
-        if (!confirmed) return;
-      }
-
-      // Set loading state
-      try {
-        if (window.AdvancedUI && typeof window.AdvancedUI.showLoading === 'function') {
-          window.AdvancedUI.showLoading(this.applyButton, 'spinner');
-        } else {
-          this.applyButton.disabled = true;
-          this.applyButton.classList.add('loading');
-        }
-
-        this.actionInput.value = action;
-        setTimeout(() => this.form.submit(), 50);
-
-      } catch (err) {
-        console.error('Bulk action error', err);
-        if (window.AdvancedUI && typeof window.AdvancedUI.showToast === 'function') {
-          window.AdvancedUI.showToast('An error occurred while applying the bulk action.', 'error');
-        } else {
-          alert('An error occurred while applying the bulk action.');
-        }
-        if (window.AdvancedUI && typeof window.AdvancedUI.hideLoading === 'function') {
-          window.AdvancedUI.hideLoading(this.applyButton);
-        } else {
-          this.applyButton.disabled = false;
-          this.applyButton.classList.remove('loading');
-        }
-      }
-    }
-  }
-
-  // initialize
-  new VendorBulkActions();
-});
-</script>
-<script>
-// Small confirmation modal helper used by the vendor bulk actions.
-// This injects a lightweight modal into the DOM the first time it's needed.
-function __ensureBulkConfirmModal() {
-  if (document.getElementById('bulk-confirm-modal')) return;
-  const modal = document.createElement('div');
-  modal.id = 'bulk-confirm-modal';
-  modal.className = 'modal muted';
-  modal.style.cssText = 'position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:1200;';
-  modal.innerHTML = `
-    <div class="modal-backdrop" style="position:absolute;inset:0;background:rgba(15,23,42,0.6);"></div>
-    <div class="modal-card card" style="position:relative;z-index:2;max-width:520px;padding:20px;border-radius:10px;">
-      <h3 id="bulk-confirm-title">Confirm action</h3>
-      <p id="bulk-confirm-message" class="muted">Are you sure you want to continue?</p>
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
-        <button id="bulk-confirm-cancel" class="btn btn-outline">Cancel</button>
-        <button id="bulk-confirm-ok" class="btn btn-primary">Confirm</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-}
-
-function __showBulkConfirm(message) {
-  __ensureBulkConfirmModal();
-  const modal = document.getElementById('bulk-confirm-modal');
-  const msgEl = modal.querySelector('#bulk-confirm-message');
-  const ok = modal.querySelector('#bulk-confirm-ok');
-  const cancel = modal.querySelector('#bulk-confirm-cancel');
-  msgEl.textContent = message;
-  return new Promise((resolve) => {
-    modal.style.display = 'flex';
-    function cleanup() {
-      ok.removeEventListener('click', onOk);
-      cancel.removeEventListener('click', onCancel);
-      modal.style.display = 'none';
-    }
-    function onOk() { cleanup(); resolve(true); }
-    function onCancel() { cleanup(); resolve(false); }
-    ok.addEventListener('click', onOk);
-    cancel.addEventListener('click', onCancel);
-  });
-}
 </script>
 </body>
 </html>

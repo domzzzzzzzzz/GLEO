@@ -184,13 +184,46 @@ public class OrganizerEventController {
     }
 
     @PostMapping("/{eventCode}/vendors/{vendorId}/menu")
-    public String addMenuItem(@PathVariable String eventCode,
-                              @PathVariable Long vendorId,
-                              @RequestParam("name") String name,
-                              @RequestParam("price") String priceRaw,
-                              @RequestParam(value = "maxPerOrder", required = false) Integer maxPerOrder,
-                              @RequestParam(value = "image", required = false) MultipartFile imageFile,
-                              RedirectAttributes redirectAttributes) {
+    public String saveMenuItem(@PathVariable String eventCode,
+                               @PathVariable Long vendorId,
+                               @RequestParam("name") String name,
+                               @RequestParam("price") String priceRaw,
+                               @RequestParam(value = "maxPerOrder", required = false) Integer maxPerOrder,
+                               @RequestParam(value = "category", required = false) String category,
+                               @RequestParam(value = "categoryOrder", required = false) Integer categoryOrder,
+                               @RequestParam(value = "image", required = false) MultipartFile imageFile,
+                               @RequestParam(value = "menuItemId", required = false) Long menuItemId,
+                               @RequestParam(value = "removeImage", defaultValue = "false") boolean removeImage,
+                               RedirectAttributes redirectAttributes) {
+        return upsertMenuItem(eventCode, vendorId, menuItemId, name, priceRaw, maxPerOrder, category, categoryOrder, imageFile, removeImage, redirectAttributes);
+    }
+
+    @PostMapping("/{eventCode}/vendors/{vendorId}/menu/{menuItemId}/edit")
+    public String editMenuItem(@PathVariable String eventCode,
+                               @PathVariable Long vendorId,
+                               @PathVariable Long menuItemId,
+                               @RequestParam("name") String name,
+                               @RequestParam("price") String priceRaw,
+                               @RequestParam(value = "maxPerOrder", required = false) Integer maxPerOrder,
+                               @RequestParam(value = "category", required = false) String category,
+                               @RequestParam(value = "categoryOrder", required = false) Integer categoryOrder,
+                               @RequestParam(value = "image", required = false) MultipartFile imageFile,
+                               @RequestParam(value = "removeImage", defaultValue = "false") boolean removeImage,
+                               RedirectAttributes redirectAttributes) {
+        return upsertMenuItem(eventCode, vendorId, menuItemId, name, priceRaw, maxPerOrder, category, categoryOrder, imageFile, removeImage, redirectAttributes);
+    }
+
+    private String upsertMenuItem(String eventCode,
+                                  Long vendorId,
+                                  Long menuItemId,
+                                  String name,
+                                  String priceRaw,
+                                  Integer maxPerOrder,
+                                  String category,
+                                  Integer categoryOrder,
+                                  MultipartFile imageFile,
+                                  boolean removeImage,
+                                  RedirectAttributes redirectAttributes) {
         Event event = policyService.get(eventCode);
         Vendor vendor = vendorRepo.findById(vendorId).orElse(null);
         if (vendor == null || !vendor.getEvent().getId().equals(event.getId())) {
@@ -224,15 +257,36 @@ public class OrganizerEventController {
 
         price = price.setScale(2, RoundingMode.HALF_UP);
 
-        MenuItem menuItem = new MenuItem();
-        menuItem.setVendor(vendor);
+        MenuItem menuItem;
+        boolean isNew = (menuItemId == null);
+        if (isNew) {
+            menuItem = new MenuItem();
+            menuItem.setVendor(vendor);
+            menuItem.setAvailable(true);
+        } else {
+            menuItem = menuItemRepo.findById(menuItemId).orElse(null);
+            if (menuItem == null || !menuItem.getVendor().getId().equals(vendor.getId())) {
+                redirectAttributes.addFlashAttribute("toastError", "Menu item not found for this vendor.");
+                return "redirect:/dashboard";
+            }
+        }
+
         menuItem.setName(trimmedName);
         menuItem.setPrice(price);
-        menuItem.setAvailable(true);
         menuItem.setMaxPerOrder(maxPerOrder);
+        // Normalize category (empty -> null)
+        if (category != null) {
+            String c = category.trim();
+            menuItem.setCategory(c.isEmpty() ? null : c);
+        } else {
+            menuItem.setCategory(null);
+        }
+        // Category order: organizer may supply an integer to control category sorting.
+        menuItem.setCategoryOrder(categoryOrder == null ? 0 : categoryOrder);
 
-        // Handle image upload if present
-        if (imageFile != null && !imageFile.isEmpty()) {
+        if (!isNew && removeImage) {
+            menuItem.setImagePath(null);
+        } else if (imageFile != null && !imageFile.isEmpty()) {
             String contentType = imageFile.getContentType();
             if (contentType != null && !contentType.startsWith("image/")) {
                 redirectAttributes.addFlashAttribute("toastError", "Please upload an image file (JPG, PNG, or GIF).");
@@ -249,10 +303,46 @@ public class OrganizerEventController {
 
         menuItemRepo.save(menuItem);
 
-        redirectAttributes.addFlashAttribute("toastMessage", "Menu item '" + trimmedName + "' added to " + vendor.getName() + ".");
-        auditLogService.record(AuditLogEntry.Category.MENU,
-                "Added menu item '" + trimmedName + "' (" + price + " EGP) to " + vendor.getName(),
+        if (isNew) {
+            menuItem.setAvailable(true);
+            redirectAttributes.addFlashAttribute("toastMessage", "Menu item '" + trimmedName + "' added to " + vendor.getName() + ".");
+            auditLogService.record(AuditLogEntry.Category.MENU,
+                    "Added menu item '" + trimmedName + "' (" + price + " EGP) to " + vendor.getName(),
+                    currentUsername());
+        } else {
+            redirectAttributes.addFlashAttribute("toastMessage", "Menu item '" + trimmedName + "' updated.");
+            auditLogService.record(
+                    AuditLogEntry.Category.MENU,
+                    "Updated menu item '" + trimmedName + "' for vendor '" + vendor.getName() + "'",
+                    currentUsername());
+        }
+        return "redirect:/dashboard";
+    }
+
+    @PostMapping("/{eventCode}/vendors/{vendorId}/menu/{menuItemId}/delete")
+    public String deleteMenuItem(@PathVariable String eventCode,
+                                 @PathVariable Long vendorId,
+                                 @PathVariable Long menuItemId,
+                                 RedirectAttributes redirectAttributes) {
+        Event event = policyService.get(eventCode);
+        Vendor vendor = vendorRepo.findById(vendorId).orElse(null);
+        if (vendor == null || !vendor.getEvent().getId().equals(event.getId())) {
+            redirectAttributes.addFlashAttribute("toastError", "Vendor not found for this event.");
+            return "redirect:/dashboard";
+        }
+        MenuItem menuItem = menuItemRepo.findById(menuItemId).orElse(null);
+        if (menuItem == null || !menuItem.getVendor().getId().equals(vendor.getId())) {
+            redirectAttributes.addFlashAttribute("toastError", "Menu item not found for this vendor.");
+            return "redirect:/dashboard";
+        }
+
+        String itemName = menuItem.getName() != null ? menuItem.getName() : "Menu item";
+        menuItemRepo.delete(menuItem);
+        auditLogService.record(
+                AuditLogEntry.Category.MENU,
+                "Deleted menu item '" + itemName + "' from vendor '" + vendor.getName() + "'",
                 currentUsername());
+        redirectAttributes.addFlashAttribute("toastMessage", itemName + " deleted.");
         return "redirect:/dashboard";
     }
 

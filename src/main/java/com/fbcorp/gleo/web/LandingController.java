@@ -18,6 +18,6 @@ public class LandingController {
         return eventRepo.findAll().stream()
                 .findFirst()
                 .map(event -> "redirect:/e/" + event.getCode())
-                .orElse("redirect:/login");
+                .orElse("Event not found"); // never redirect to login, just show error if no event
     }
 }

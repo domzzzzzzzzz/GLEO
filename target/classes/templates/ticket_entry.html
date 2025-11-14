@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Link your ticket · GLEO</title>
+  <link href="/css/tailwind.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", -apple-system, sans-serif;
+      background: linear-gradient(150deg, #eef2ff, #f8fafc 50%, #ffffff);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #0f172a;
+    }
+    .ticket-card {
+      width: min(520px, 95vw);
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.25);
+      background: rgba(255,255,255,0.95);
+      box-shadow: 0 30px 60px rgba(15,23,42,0.12);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .ticket-card h1 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+    .ticket-card p {
+      margin: 0;
+      color: #64748b;
+      font-size: 0.95rem;
+    }
+    .ticket-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .ticket-form input[type="text"] {
+      border: 1px solid rgba(148,163,184,0.5);
+      border-radius: 16px;
+      padding: 12px 16px;
+      font-size: 1rem;
+    }
+    .upload-field {
+      border: 1px dashed rgba(99,102,241,0.5);
+      border-radius: 18px;
+      padding: 14px;
+      text-align: center;
+      background: rgba(99,102,241,0.04);
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+    .upload-field:hover {
+      border-color: rgba(99,102,241,0.9);
+    }
+    .upload-field input[type="file"] {
+      display: none;
+    }
+    .ticket-form button {
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(120deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-weight: 600;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .ticket-form button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(99,102,241,0.25);
+    }
+    .notice {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    .toast {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      background: rgba(248,113,113,0.15);
+      color: #b91c1c;
+    }
+    .back-link {
+      text-decoration: none;
+      color: #6366f1;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+<div class="ticket-card">
+  <a th:href="@{|/e/${eventCode}|}" class="back-link">&larr; Back to event</a>
+  <h1>Link your QR ticket</h1>
+  <p>Authenticate once to unlock ordering and track your own orders securely on this device.</p>
+  <div th:if="${toastError}" class="toast" th:text="${toastError}">Error</div>
+  <form class="ticket-form" th:action="@{|/e/${eventCode}/ticket|}" method="post" enctype="multipart/form-data">
+    <label class="upload-field" id="qr-upload-field">
+      <span id="upload-placeholder">Upload a photo / screenshot of the QR</span>
+      <img id="qr-preview" alt="QR preview" style="display:none;max-width:240px;border-radius:12px;margin-top:10px;">
+      <input type="file" name="qrFile" accept="image/*" required>
+    </label>
+    <input type="hidden" name="next" th:value="${next}">
+    <button type="submit">Link ticket & continue</button>
+  </form>
+  <p class="notice">Need to switch tickets later? Just revisit this page and scan again.</p>
+</div>
+<script>
+  const uploadField = document.getElementById('qr-upload-field');
+  const input = uploadField.querySelector('input[type="file"]');
+  const preview = document.getElementById('qr-preview');
+  const placeholder = document.getElementById('upload-placeholder');
+
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0];
+    if (!file) {
+      preview.style.display = 'none';
+      placeholder.style.display = 'block';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      placeholder.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+</script>
+</body>
+</html>

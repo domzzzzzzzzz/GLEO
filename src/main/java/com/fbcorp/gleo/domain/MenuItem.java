@@ -24,4 +24,13 @@ public class MenuItem {
 
     // Path or URL to the menu item image (optional)
     private String imagePath;
+    
+    // Optional free-text category for grouping (e.g. Burgers, Drinks, Fries)
+    private String category;
+    
+    // Numeric order for the category. Organizer can set the same number for items
+    // that belong to the same category to control category ordering on the public menu.
+    // Lower numbers appear first. Defaults to 0 (unspecified).
+    @Column(name = "category_order")
+    private Integer categoryOrder = 0;
 }

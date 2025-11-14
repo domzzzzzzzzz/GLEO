@@ -144,16 +144,18 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private void ensureMenuItem(Vendor vendor, String name) {
-        menuItemRepo.findByVendorAndNameIgnoreCase(vendor, name)
-                .map(existing -> updateMenuItem(existing, vendor, name))
-                .orElseGet(() -> {
-                    MenuItem item = new MenuItem();
-                    item.setVendor(vendor);
-                    item.setName(name);
-                    item.setPrice(BigDecimal.ZERO);
-                    item.setAvailable(true);
-                    return menuItemRepo.save(item);
-                });
+        var existingItems = menuItemRepo.findByVendorAndNameIgnoreCase(vendor, name);
+        if (existingItems.isEmpty()) {
+            MenuItem item = new MenuItem();
+            item.setVendor(vendor);
+            item.setName(name);
+            item.setPrice(BigDecimal.ZERO);
+            item.setAvailable(true);
+            menuItemRepo.save(item);
+            return;
+        }
+        MenuItem primary = existingItems.get(0);
+        updateMenuItem(primary, vendor, name);
     }
 
     private MenuItem updateMenuItem(MenuItem item, Vendor vendor, String name) {
