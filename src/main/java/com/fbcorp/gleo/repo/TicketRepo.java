@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface TicketRepo extends JpaRepository<Ticket, Long> {
     Optional<Ticket> findByQrCode(String qrCode);
 
-    Optional<Ticket> findByEvent_CodeAndBoundDeviceHash(String eventCode, String boundDeviceHash);
+    Optional<Ticket> findFirstByEvent_CodeAndBoundDeviceHash(String eventCode, String boundDeviceHash);
 
     Optional<Ticket> findByIdAndEvent_Code(Long id, String eventCode);
 

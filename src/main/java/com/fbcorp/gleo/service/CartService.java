@@ -5,6 +5,8 @@ import com.fbcorp.gleo.repo.OrderRepo;
 import com.fbcorp.gleo.repo.TierConsumptionRepo;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class CartService {
     private final EventPolicyService policyService;
@@ -26,21 +28,88 @@ public class CartService {
         boolean blockOnOpen = policyService.blockAddWhenOpenOrder(eventCode);
 
         if (blockOnOpen && orderRepo.existsOpenOrder(ticket.getId(), vendor.getId())) {
-            return CheckResult.deny("You have an open order with this vendor. Complete it first.");
+            return CheckResult.deny("⚠️ You have an open order with this vendor. Please complete it first before ordering more items.");
         }
 
         TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket.getTierCode());
+        
+        // Check if tier is locked to a specific vendor
+        if (tierPolicy.hasVendorRestriction()) {
+            TierConsumption consumption = tcRepo.findByEventAndTicket(vendor.getEvent(), ticket).orElse(null);
+            
+            // First check: if already completed an order and locked to a vendor
+            if (consumption != null && consumption.getLockedVendor() != null) {
+                if (!consumption.getLockedVendor().getId().equals(vendor.getId())) {
+                    return CheckResult.deny("🔒 Your " + ticket.getTierCode() + " tier is restricted to " + consumption.getLockedVendor().getName() + " only.");
+                }
+            }
+            
+            // Second check: if has ANY orders (pending/ready) from another vendor - BLOCK immediately
+            List<Order> existingOrders = orderRepo.findByTicketOrderByCreatedAtDesc(ticket);
+            if (!existingOrders.isEmpty()) {
+                for (Order order : existingOrders) {
+                    if (!order.getVendor().getId().equals(vendor.getId())) {
+                        return CheckResult.deny("🔒 Your " + ticket.getTierCode() + " tier is restricted to " + order.getVendor().getName() + " only. Complete your existing order first.");
+                    }
+                }
+            }
+        }
+
         if (tierPolicy.hasLimit()) {
             int limit = Math.max(0, tierPolicy.getMaxItemsPerVendor());
             Integer consumed = tcRepo.consumedCount(vendor.getEvent(), ticket, vendor);
             int alreadyConsumed = consumed != null ? consumed : 0;
             if (alreadyConsumed >= limit) {
-                return CheckResult.deny("Limit reached for this vendor.");
+                return CheckResult.deny("🚫 Vendor limit reached! You've ordered " + alreadyConsumed + " item(s) from this vendor (max: " + limit + ").");
             }
             if (alreadyConsumed + qtySum > limit) {
-                return CheckResult.deny("Only " + Math.max(0, limit - alreadyConsumed) + " more item(s) allowed for this vendor.");
+                int remaining = Math.max(0, limit - alreadyConsumed);
+                return CheckResult.deny("⚠️ Only " + remaining + " more item(s) allowed from this vendor (limit: " + limit + ").");
             }
         }
         return CheckResult.allow();
     }
+
+    /**
+     * Check if items can be added to cart based on category restrictions.
+     * @param items List of items with their categories and quantities
+     */
+    public CheckResult canAddItemsWithCategories(String eventCode, Ticket ticket, Vendor vendor, List<CategoryItem> items) {
+        // First check basic vendor restrictions
+        CheckResult basicCheck = canAddToCart(eventCode, ticket, vendor, 
+            items.stream().mapToInt(CategoryItem::quantity).sum());
+        if (!basicCheck.allowed()) {
+            return basicCheck;
+        }
+
+        TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket.getTierCode());
+        
+        // Check category restrictions
+        if (tierPolicy.hasCategoryRestriction()) {
+            TierConsumption consumption = tcRepo.findByEventAndTicket(vendor.getEvent(), ticket)
+                .orElse(null);
+
+            for (CategoryItem item : items) {
+                if (item.category() == null || item.category().isBlank()) continue;
+
+                int alreadyConsumed = consumption != null ? 
+                    consumption.getCategoryConsumption(item.category()) : 0;
+
+                Integer categoryLimit = tierPolicy.getCategoryLimit(item.category());
+                if (categoryLimit != null) {
+                    if (alreadyConsumed >= categoryLimit) {
+                        return CheckResult.deny("🍔 Category limit reached! You've already ordered " + alreadyConsumed + " '" + item.category() + "' item(s) (max: " + categoryLimit + ").");
+                    }
+                    if (alreadyConsumed + item.quantity() > categoryLimit) {
+                        int remaining = Math.max(0, categoryLimit - alreadyConsumed);
+                        return CheckResult.deny("⚠️ Only " + remaining + " more '" + item.category() + "' item(s) allowed (limit: " + categoryLimit + ").");
+                    }
+                }
+            }
+        }
+
+        return CheckResult.allow();
+    }
+
+    public record CategoryItem(String category, int quantity) {}
 }

@@ -2,9 +2,12 @@ package com.fbcorp.gleo.web;
 
 import com.fbcorp.gleo.domain.MenuItem;
 import com.fbcorp.gleo.domain.Vendor;
+import com.fbcorp.gleo.domain.Ticket;
 import com.fbcorp.gleo.repo.MenuItemRepo;
+import com.fbcorp.gleo.repo.TicketRepo;
 import com.fbcorp.gleo.service.CartViewService;
 import com.fbcorp.gleo.service.EventPolicyService;
+import com.fbcorp.gleo.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -13,8 +16,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.security.core.Authentication;
 
 import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 @Controller
 @RequestMapping("/e/{eventCode}/cart")
@@ -23,15 +30,21 @@ public class CartController {
     private static final String CART_FRAGMENT = "fragments/cart_panel :: panel";
 
     private final MenuItemRepo menuItemRepo;
+    private final TicketRepo ticketRepo;
     private final EventPolicyService policyService;
     private final CartViewService cartViewService;
+    private final CartService cartService;
 
     public CartController(MenuItemRepo menuItemRepo,
+                          TicketRepo ticketRepo,
                           EventPolicyService policyService,
-                          CartViewService cartViewService){
+                          CartViewService cartViewService,
+                          CartService cartService){
         this.menuItemRepo = menuItemRepo;
+        this.ticketRepo = ticketRepo;
         this.policyService = policyService;
         this.cartViewService = cartViewService;
+        this.cartService = cartService;
     }
 
     private CartSession cart(HttpSession session){
@@ -63,21 +76,76 @@ public class CartController {
                          @RequestParam int qty,
                          HttpSession session,
                          HttpServletRequest request,
-                         Model model){
+                         Model model,
+                         Authentication authentication){
         CartSession cart = cart(session);
+        
         if (qty <= 0){
             cart.removeItem(vendorId, itemId);
+            populateCartModel(eventCode, cart, model);
         } else {
-            cart.setQty(vendorId, itemId, Math.min(qty, 99));
-        }
-        populateCartModel(eventCode, cart, model);
-        // For HTMX from cart page, return full cart page; for sidebar, return fragment
-        if (isHx(request)) {
-            String hxTarget = request.getHeader("HX-Target");
-            if ("cart-page".equals(hxTarget)) {
-                return "cart"; // Full cart page for HTMX
+            // Get the item to check category limits
+            MenuItem item = menuItemRepo.findById(itemId).orElse(null);
+            if (item == null) {
+                populateCartModel(eventCode, cart, model);
+                model.addAttribute("errorMessage", "Item not found.");
+                if (isHx(request)) {
+                    return "cart";
+                }
+                return "redirect:/e/" + eventCode + "/cart";
             }
-            return CART_FRAGMENT; // Sidebar fragment
+            
+            Vendor vendor = item.getVendor();
+            String username = authentication != null && authentication.isAuthenticated() ? authentication.getName() : null;
+            Ticket ticket = username != null ? ticketRepo.findByQrCode(username).orElse(null) : null;
+            
+            // Check category limits before updating quantity
+            if (ticket != null && ticket.getEvent().getCode().equals(eventCode)) {
+                Map<Long, Integer> vendorCart = cart.getAll().get(vendor.getId());
+                Map<String, Integer> categoryTotals = new HashMap<>();
+                
+                // Build category totals with NEW quantity
+                if (vendorCart != null) {
+                    for (Map.Entry<Long, Integer> entry : vendorCart.entrySet()) {
+                        MenuItem cartItem = menuItemRepo.findById(entry.getKey()).orElse(null);
+                        if (cartItem != null) {
+                            String category = cartItem.getCategory() != null ? cartItem.getCategory() : "";
+                            if (!category.isBlank()) {
+                                int itemQty = entry.getKey().equals(itemId) ? qty : entry.getValue();
+                                categoryTotals.merge(category, itemQty, Integer::sum);
+                            }
+                        }
+                    }
+                }
+                
+                // Check if new quantity is allowed
+                List<CartService.CategoryItem> itemsToCheck = categoryTotals.entrySet().stream()
+                    .map(e -> new CartService.CategoryItem(e.getKey(), e.getValue()))
+                    .toList();
+                
+                CartService.CheckResult check = cartService.canAddItemsWithCategories(
+                    eventCode, ticket, vendor, itemsToCheck
+                );
+                
+                if (!check.allowed()) {
+                    // DON'T UPDATE QUANTITY - just show error and return current cart
+                    populateCartModel(eventCode, cart, model);
+                    model.addAttribute("errorMessage", check.message());
+                    if (isHx(request)) {
+                        return "cart";
+                    }
+                    return "redirect:/e/" + eventCode + "/cart";
+                }
+            }
+            
+            // If validation passed, update quantity
+            cart.setQty(vendorId, itemId, Math.min(qty, 99));
+            populateCartModel(eventCode, cart, model);
+        }
+        
+        // For HTMX from cart page, return full cart page
+        if (isHx(request)) {
+            return "cart";
         }
         return "redirect:/e/" + eventCode + "/cart";
     }
@@ -116,6 +184,7 @@ public class CartController {
                       HttpSession session,
                       HttpServletRequest request,
                       Model model,
+                      Authentication authentication,
                       RedirectAttributes redirectAttributes){
         MenuItem item = menuItemRepo.findById(itemId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -125,33 +194,104 @@ public class CartController {
         }
 
         CartSession cart = cart(session);
+        
+        // Multi-vendor policy check
         if (!policyService.multiVendorCart(eventCode)) {
             Map<Long, Map<Long, Integer>> lines = cart.getAll();
             if (!lines.isEmpty() && !lines.containsKey(vendor.getId())) {
-                // Single-vendor policy violation
+                String errorMessage = "🏪 This event allows orders from one vendor at a time. Please complete or clear your current cart first.";
                 if (isHx(request)) {
                     populateCartModel(eventCode, cart, model);
-                    model.addAttribute("errorMessage", "This event allows orders from one vendor at a time.");
+                    model.addAttribute("errorMessage", errorMessage);
                     return CART_FRAGMENT;
                 } else {
-                    // Redirect back to vendor menu with flash error
-                    redirectAttributes.addFlashAttribute("errorMessage", "This event allows orders from one vendor at a time.");
+                    redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
                     return "redirect:/e/" + eventCode + "/v/" + vendor.getId();
                 }
             }
         }
 
+        // Category restrictions check - works for both authenticated and guest users
+        String username = authentication != null && authentication.isAuthenticated() ? authentication.getName() : null;
+        Ticket ticket = username != null ? ticketRepo.findByQrCode(username).orElse(null) : null;
+        
+        // Check vendor restriction FIRST (for oneVendorOnly policy)
+        if (ticket != null && ticket.getEvent().getCode().equals(eventCode)) {
+            CartService.CheckResult vendorCheck = cartService.canAddToCart(eventCode, ticket, vendor, qty);
+            if (!vendorCheck.allowed()) {
+                if (isHx(request)) {
+                    populateCartModel(eventCode, cart, model);
+                    model.addAttribute("errorMessage", vendorCheck.message());
+                    return CART_FRAGMENT;
+                } else {
+                    redirectAttributes.addFlashAttribute("errorMessage", vendorCheck.message());
+                    return "redirect:/e/" + eventCode + "/v/" + vendor.getId();
+                }
+            }
+        }
+        
+        // Check if this ticket has category limits set
+        if (ticket != null && ticket.getEvent().getCode().equals(eventCode)) {
+            // Get existing items in cart for this vendor
+            Map<Long, Integer> vendorCart = cart.getAll().get(vendor.getId());
+            
+            // Build category totals map including the NEW item we're trying to add
+            Map<String, Integer> categoryTotals = new HashMap<>();
+            
+            // First, add existing cart items
+            if (vendorCart != null) {
+                for (Map.Entry<Long, Integer> entry : vendorCart.entrySet()) {
+                    MenuItem existingItem = menuItemRepo.findById(entry.getKey()).orElse(null);
+                    if (existingItem != null) {
+                        String existingCategory = existingItem.getCategory() != null ? existingItem.getCategory() : "";
+                        if (!existingCategory.isBlank()) {
+                            categoryTotals.put(existingCategory, entry.getValue());
+                        }
+                    }
+                }
+            }
+            
+            // Then, simulate adding the new item
+            String newItemCategory = item.getCategory() != null ? item.getCategory() : "";
+            if (!newItemCategory.isBlank()) {
+                categoryTotals.merge(newItemCategory, Math.max(1, qty), Integer::sum);
+            }
+            
+            // Convert to CategoryItem list
+            List<CartService.CategoryItem> itemsToAdd = categoryTotals.entrySet().stream()
+                .map(e -> new CartService.CategoryItem(e.getKey(), e.getValue()))
+                .toList();
+            
+            // Check if can add with category restrictions BEFORE adding to cart
+            CartService.CheckResult check = cartService.canAddItemsWithCategories(
+                eventCode, ticket, vendor, itemsToAdd
+            );
+            
+            if (!check.allowed()) {
+                // BLOCK the add operation and show error immediately
+                if (isHx(request)) {
+                    populateCartModel(eventCode, cart, model);
+                    model.addAttribute("errorMessage", check.message());
+                    return CART_FRAGMENT;
+                } else {
+                    redirectAttributes.addFlashAttribute("errorMessage", check.message());
+                    return "redirect:/e/" + eventCode + "/v/" + vendor.getId();
+                }
+            }
+        }
+
+        // Only add to cart if all checks passed
         cart.add(vendor.getId(), item.getId(), Math.max(1, qty));
         
         // If HTMX request, return cart fragment for sidebar
         if (isHx(request)) {
             populateCartModel(eventCode, cart, model);
-            model.addAttribute("successMessage", item.getName() + " added to cart.");
+            model.addAttribute("successMessage", "✅ " + item.getName() + " added to cart!");
             return CART_FRAGMENT;
         }
         
         // Otherwise, redirect back to vendor menu (not cart)
-        redirectAttributes.addFlashAttribute("successMessage", item.getName() + " added to cart!");
+        redirectAttributes.addFlashAttribute("successMessage", "✅ " + item.getName() + " added to cart!");
         return "redirect:/e/" + eventCode + "/v/" + vendor.getId();
     }
 

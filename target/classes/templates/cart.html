@@ -2,12 +2,346 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title th:text="${event.name} + ' - Cart'">Cart</title>
-  <link href="/css/tailwind.css" rel="stylesheet">
-  <link href="/css/modern.css" rel="stylesheet">
-  <link href="/css/cart-professional.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 32px;
+    }
+    .cart-header {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #667eea;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .back-link:active { opacity: 0.7; }
+    .cart-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+    .cart-subtitle {
+      font-size: 0.875rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .cart-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .cart-items-section, .cart-summary-section {
+      width: 100%;
+    }
+    
+    /* Responsive Desktop Layout */
+    @media (min-width: 768px) {
+      .page {
+        padding: 32px;
+      }
+      .cart-container {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+      .cart-items-section {
+        flex: 1;
+      }
+      .cart-summary-section {
+        width: 380px;
+        flex-shrink: 0;
+      }
+      .cart-header {
+        padding: 28px;
+      }
+      .cart-title {
+        font-size: 2rem;
+      }
+      .cart-vendor {
+        padding: 28px;
+      }
+      .cart-summary-card {
+        position: sticky;
+        top: 32px;
+      }
+    }
+    /* Empty State */
+    .empty-cart {
+      background: white;
+      border-radius: 16px;
+      padding: 48px 24px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .empty-cart svg {
+      margin: 0 auto 20px;
+      opacity: 0.5;
+    }
+    .empty-cart h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .empty-cart p {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .empty-cart .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9375rem;
+    }
+    /* Cart Vendor Groups */
+    .cart-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .cart-vendor {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .cart-vendor-header {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    .cart-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .cart-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .line-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .line-info strong {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .line-price {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #667eea;
+    }
+    .qty-stepper-compact {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .qty-btn {
+      width: 32px;
+      height: 32px;
+      border: 2px solid #e5e7eb;
+      background: white;
+      border-radius: 8px;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qty-btn:active {
+      background: #f8fafc;
+      border-color: #667eea;
+      color: #667eea;
+    }
+    .qty-input {
+      width: 40px;
+      text-align: center;
+      border: none;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 6px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .cart-total {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 2px solid #f1f5f9;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    /* Order Summary */
+    .cart-summary-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .summary-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 20px;
+    }
+    .summary-details {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9375rem;
+      color: #475569;
+    }
+    .summary-row span:last-child {
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .discount-row {
+      color: #10b981;
+    }
+    .discount-amount {
+      color: #10b981 !important;
+      font-weight: 700 !important;
+    }
+    .summary-divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 4px 0;
+    }
+    .summary-total {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .summary-total span:last-child {
+      font-size: 1.5rem;
+      color: #667eea;
+    }
+    .promo-form-modern {
+      margin-top: 4px;
+    }
+    .promo-form-modern label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+    .promo-input-group {
+      display: flex;
+      gap: 8px;
+    }
+    .promo-input-group input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 0.9375rem;
+      font-family: inherit;
+    }
+    .promo-input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .btn-apply {
+      padding: 10px 20px;
+      background: #f8fafc;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-apply:active {
+      background: #667eea;
+      border-color: #667eea;
+      color: white;
+    }
+    .btn-checkout {
+      width: 100%;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+      font-family: inherit;
+    }
+    .btn-checkout:active {
+      transform: scale(0.98);
+    }
+    .checkout-note {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .summary-empty {
+      text-align: center;
+      padding: 32px 0;
+      color: #94a3b8;
+      font-size: 0.875rem;
+    }
+  </style>
 </head>
 <body>
 <div class="page" id="cart-page">
@@ -27,6 +361,10 @@
 
   <!-- 2-Column Professional Layout -->
   <div class="cart-container">
+    <!-- Alert Banner (hidden by default, shown via model attributes) -->
+    <div th:if="${errorMessage}" class="alert-bar error-bar" th:text="${errorMessage}" style="background:#fee;color:#c00;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;font-weight:500;display:none;">Error</div>
+    <div th:if="${successMessage}" class="alert-bar success-bar" th:text="${successMessage}" style="background:#efe;color:#060;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;font-weight:500;display:none;">Success</div>
+    
     <!-- LEFT: Items List -->
     <div class="cart-items-section">
       <!-- Empty State -->
@@ -52,7 +390,7 @@
                 <strong th:text="${line.itemName}">Item</strong>
                 <span class="line-price" th:text="${#numbers.formatDecimal(line.subtotal, 1, 'DEFAULT', 2, 'DEFAULT')}">0.00</span>
               </div>
-              <div class="qty-stepper-compact">
+              <div class="qty-stepper-compact" th:attr="data-item-id=${line.itemId},data-current-qty=${line.qty}">
                 <form th:action="@{|/e/${event.code}/cart/set-qty|}" 
                       method="post" 
                       style="display:inline;"
@@ -145,18 +483,150 @@
   </div>
 </div>
 
-<script>
+<script th:inline="javascript">
   document.addEventListener('DOMContentLoaded', function () {
-    // Debug: Log all qty form submissions
-    document.querySelectorAll('.qty-stepper-compact form').forEach(form => {
-      form.addEventListener('submit', function(e) {
-        console.log('Form submitting:', this.action);
-        console.log('Vendor ID:', this.querySelector('[name="vendorId"]').value);
-        console.log('Item ID:', this.querySelector('[name="itemId"]').value);
-        console.log('Quantity:', this.querySelector('[name="qty"]').value);
-      });
-    });
+    // Check for error/success messages
+    var errorMsg = /*[[${errorMessage}]]*/ null;
+    var successMsg = /*[[${successMessage}]]*/ null;
+    
+    if (errorMsg) {
+      showToast(errorMsg, 'error');
+    }
+    if (successMsg) {
+      showToast(successMsg, 'success');
+    }
   });
+  
+  // HTMX afterSwap event to handle response
+  document.body.addEventListener('htmx:afterSwap', function(event) {
+    if (event.detail.target.id === 'cart-page') {
+      // Check for alerts in the swapped content
+      const newContent = event.detail.target;
+      const alertBar = newContent.querySelector('.alert-bar');
+      
+      if (alertBar && alertBar.textContent.trim()) {
+        const message = alertBar.textContent.trim();
+        // Check if it's an error (contains emoji or starts with certain words)
+        const isError = message.includes('🍔') || message.includes('🚫') || message.includes('⚠️') || 
+                       message.includes('limit') || message.includes('Only');
+        showToast(message, isError ? 'error' : 'success');
+      }
+    }
+  });
+  
+  // Professional Toast notification function
+  function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = 'professional-toast';
+    
+    // Create icon
+    const icon = document.createElement('div');
+    icon.className = 'toast-icon';
+    
+    if (type === 'success') {
+      icon.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2"/>
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+      toast.style.cssText = `
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 15px;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 420px;
+        min-width: 280px;
+        animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      `;
+    } else if (type === 'error') {
+      icon.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2"/>
+          <path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      `;
+      toast.style.cssText = `
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(239, 68, 68, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 15px;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 420px;
+        min-width: 280px;
+        animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      `;
+    }
+    
+    // Create message container
+    const messageEl = document.createElement('div');
+    messageEl.className = 'toast-message';
+    messageEl.textContent = message;
+    messageEl.style.cssText = 'flex: 1; line-height: 1.5;';
+    
+    // Create close button
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '×';
+    closeBtn.style.cssText = `
+      background: none; border: none; color: white;
+      font-size: 24px; cursor: pointer; padding: 0;
+      width: 24px; height: 24px; display: flex;
+      align-items: center; justify-content: center;
+      opacity: 0.7; transition: opacity 0.2s;
+    `;
+    closeBtn.onmouseover = () => closeBtn.style.opacity = '1';
+    closeBtn.onmouseout = () => closeBtn.style.opacity = '0.7';
+    closeBtn.onclick = () => {
+      toast.style.animation = 'toastSlideOut 0.3s ease-out';
+      setTimeout(() => toast.remove(), 300);
+    };
+    
+    toast.appendChild(icon);
+    toast.appendChild(messageEl);
+    toast.appendChild(closeBtn);
+    document.body.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.style.animation = 'toastSlideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+      }
+    }, 5000);
+  }
 </script>
+<style>
+  @keyframes toastSlideIn {
+    from { transform: translateX(450px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes toastSlideOut {
+    from { transform: translateX(0) scale(1); opacity: 1; }
+    to { transform: translateX(450px) scale(0.9); opacity: 0; }
+  }
+  .professional-toast:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+  }
+</style>
 </body>
 </html>

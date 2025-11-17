@@ -11,7 +11,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 
 @Configuration
@@ -50,7 +49,7 @@ public class SecurityConfig {
             .requestMatchers("/uploads/**").permitAll()
             .requestMatchers("/h2-console/**").permitAll()
             .requestMatchers("/error").permitAll()
-            .requestMatchers(new AntPathRequestMatcher("/e/*/usher/**")).hasAnyRole("USHER", "ADMIN", "ORGANIZER")
+            .requestMatchers("/e/{eventCode}/usher/**").hasAnyRole("USHER", "ADMIN", "ORGANIZER")
             .requestMatchers("/e/**").permitAll() // Allow all event/guest pages for everyone
             .requestMatchers("/login", "/").permitAll()
             .requestMatchers("/admin/**").hasAnyRole("ADMIN", "ORGANIZER")
@@ -63,10 +62,17 @@ public class SecurityConfig {
                         .successHandler(successHandler)
                         .permitAll()
                 )
+        .rememberMe(remember -> remember
+            .key("gleo-remember-me-secret-key-2025")
+            .tokenValiditySeconds(86400 * 30) // 30 days
+            .rememberMeParameter("remember-me")
+            .userDetailsService(userDetailsService)
+        )
         .logout(logout -> logout
             .logoutUrl("/logout")
             // redirect users to the login page after sign-out instead of the public guest page
             .logoutSuccessUrl("/login")
+            .deleteCookies("JSESSIONID", "remember-me")
             .permitAll()
         )
                 .authenticationProvider(authenticationProvider())

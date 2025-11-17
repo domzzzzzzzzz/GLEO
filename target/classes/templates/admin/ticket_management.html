@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title th:text="'Manage Tickets · ' + ${event.name}">Ticket Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      padding: 24px 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    .back-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: white;
+      flex: 1;
+    }
+    
+    /* Toast */
+    .toast {
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      font-size: 0.9375rem;
+    }
+    .toast-success {
+      background: rgba(34,197,94,0.15);
+      color: #166534;
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+    
+    /* Card */
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .stat-label {
+      font-size: 0.875rem;
+      color: #64748b;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+    
+    /* Search */
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 250px;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 0.9375rem;
+      font-family: inherit;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    #bulkActions {
+      display: none;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+      border-radius: 10px;
+      border: 2px solid #c7d2fe;
+    }
+    
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      text-align: left;
+      padding: 12px;
+      background: #f8fafc;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    td {
+      padding: 16px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.9375rem;
+    }
+    tr:hover {
+      background: #f8fafc;
+    }
+    
+    /* Badge */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .badge-inactive {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .badge-vip {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .badge-reg {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    /* Select */
+    select {
+      padding: 6px 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-family: inherit;
+      cursor: pointer;
+      background: white;
+    }
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    /* Checkbox */
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #667eea;
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .btn-danger:hover {
+      background: #fecaca;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+    }
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+    
+    /* Pagination */
+    .pagination {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+    .page-btn {
+      padding: 8px 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+    .page-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    .page-btn:hover:not(.active) {
+      background: #f8fafc;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      .page-title {
+        font-size: 1.5rem;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      table {
+        font-size: 0.8125rem;
+      }
+      th, td {
+        padding: 10px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <a th:href="@{/dashboard}" class="back-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+      </svg>
+      Back
+    </a>
+    <h1 class="page-title" th:text="'Manage Tickets · ' + ${event.name}">Manage Tickets</h1>
+  </div>
+
+  <!-- Toast -->
+  <div th:if="${toastMessage}" class="toast toast-success" th:text="${toastMessage}"></div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Tickets</div>
+      <div class="stat-value" th:text="${totalTickets}">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Tickets</div>
+      <div class="stat-value" th:text="${activeTickets}">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">VIP Tickets</div>
+      <div class="stat-value" th:text="${vipTickets}">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">REG Tickets</div>
+      <div class="stat-value" th:text="${regTickets}">0</div>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card">
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by QR code, holder name, or phone...">
+      <div id="bulkActions">
+        <select id="bulkTierSelect" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem;">
+          <option value="">Change Tier...</option>
+          <option value="VIP">VIP</option>
+          <option value="REG">REG</option>
+        </select>
+        <button type="button" onclick="bulkChangeTier()" class="btn btn-outline">Apply Tier</button>
+        <button type="button" onclick="bulkDelete()" class="btn" style="background: #ef4444; color: white;">🗑️ Delete Selected</button>
+      </div>
+      <a th:href="@{/admin/events/{code}/tickets/new(code=${event.code})}" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        Add Tickets
+      </a>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table id="ticketsTable">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+            <th>ID</th>
+            <th>QR Code</th>
+            <th>Holder Name</th>
+            <th>Phone</th>
+            <th>Tier</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="ticket : ${tickets}">
+            <td><input type="checkbox" class="ticket-checkbox" th:data-id="${ticket.id}" onchange="updateBulkActions()"></td>
+            <td th:text="${ticket.id}">#1</td>
+            <td style="font-family: monospace; font-weight: 600;" th:text="${ticket.qrCode}">QR001</td>
+            <td th:text="${ticket.holderName ?: '-'}">-</td>
+            <td th:text="${ticket.holderPhone ?: '-'}">-</td>
+            <td>
+              <form th:action="@{|/admin/events/${event.code}/tickets/${ticket.id}/tier|}" method="post" style="display: inline;">
+                <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <select name="tier" th:value="${ticket.tierCode}" onchange="this.form.submit()">
+                  <option value="VIP" th:selected="${ticket.tierCode.name() == 'VIP'}">VIP</option>
+                  <option value="REG" th:selected="${ticket.tierCode.name() == 'REG'}">REG</option>
+                </select>
+              </form>
+            </td>
+            <td>
+              <span class="badge" th:classappend="${ticket.active ? 'badge-active' : 'badge-inactive'}" 
+                    th:text="${ticket.active ? 'Active' : 'Inactive'}">Active</span>
+            </td>
+            <td>
+              <form th:action="@{|/admin/events/${event.code}/tickets/${ticket.id}/delete|}" method="post" 
+                    style="display: inline;" onsubmit="return confirm('Delete this ticket?')">
+                <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-danger">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                  </svg>
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div th:if="${tickets.isEmpty()}" class="empty-state">
+        <div class="empty-icon">🎫</div>
+        <div style="font-weight: 600; font-size: 1.125rem; color: #1e293b; margin-bottom: 8px;">No tickets found</div>
+        <div style="font-size: 0.9375rem;">Start by adding tickets to this event</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  const eventCode = /*[[${event.code}]]*/ 'G2025';
+  const csrfToken = /*[[${_csrf.token}]]*/ '';
+  const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+  
+  // Search functionality
+  const searchInput = document.getElementById('searchInput');
+  const table = document.getElementById('ticketsTable');
+  const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+  
+  searchInput.addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    
+    for (let row of rows) {
+      const text = row.textContent.toLowerCase();
+      if (text.includes(searchTerm)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    }
+  });
+
+  // Select All functionality
+  function toggleSelectAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.ticket-checkbox');
+    checkboxes.forEach(cb => {
+      if (cb.closest('tr').style.display !== 'none') {
+        cb.checked = checkbox.checked;
+      }
+    });
+    updateBulkActions();
+  }
+
+  // Update bulk actions visibility
+  function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.ticket-checkbox:checked');
+    const bulkActions = document.getElementById('bulkActions');
+    
+    if (checkboxes.length > 0) {
+      bulkActions.style.display = 'flex';
+    } else {
+      bulkActions.style.display = 'none';
+      document.getElementById('selectAll').checked = false;
+    }
+  }
+
+  // Bulk change tier
+  function bulkChangeTier() {
+    const tierSelect = document.getElementById('bulkTierSelect');
+    const tier = tierSelect.value;
+    
+    if (!tier) {
+      alert('Please select a tier');
+      return;
+    }
+
+    const checkboxes = document.querySelectorAll('.ticket-checkbox:checked');
+    if (checkboxes.length === 0) {
+      alert('Please select tickets first');
+      return;
+    }
+
+    if (!confirm(`Change tier to ${tier} for ${checkboxes.length} ticket(s)?`)) {
+      return;
+    }
+
+    let completed = 0;
+    checkboxes.forEach((checkbox, index) => {
+      const ticketId = checkbox.dataset.id;
+      const formData = new FormData();
+      formData.append('tier', tier);
+      formData.append('_csrf', csrfToken);
+
+      fetch(`/admin/events/${eventCode}/tickets/${ticketId}/tier`, {
+        method: 'POST',
+        body: formData
+      }).then(response => {
+        completed++;
+        if (completed === checkboxes.length) {
+          location.reload();
+        }
+      });
+    });
+  }
+
+  // Bulk delete
+  function bulkDelete() {
+    const checkboxes = document.querySelectorAll('.ticket-checkbox:checked');
+    if (checkboxes.length === 0) {
+      alert('Please select tickets first');
+      return;
+    }
+
+    if (!confirm(`Delete ${checkboxes.length} ticket(s)? This cannot be undone!`)) {
+      return;
+    }
+
+    let completed = 0;
+    checkboxes.forEach((checkbox, index) => {
+      const ticketId = checkbox.dataset.id;
+      const formData = new FormData();
+      formData.append('_csrf', csrfToken);
+
+      fetch(`/admin/events/${eventCode}/tickets/${ticketId}/delete`, {
+        method: 'POST',
+        body: formData
+      }).then(response => {
+        completed++;
+        if (completed === checkboxes.length) {
+          location.reload();
+        }
+      });
+    });
+  }
+</script>
+</body>
+</html>

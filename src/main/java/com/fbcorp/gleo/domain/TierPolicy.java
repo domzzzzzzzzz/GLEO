@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Entity
 @Getter
 @Setter
@@ -32,7 +35,46 @@ public class TierPolicy {
      */
     private Integer maxItemsPerVendor;
 
+    /**
+     * If true, this tier can only order from ONE vendor for the entire event.
+     * Once they order from a vendor, they cannot order from any other vendor.
+     */
+    @Column(name = "one_vendor_only")
+    private boolean oneVendorOnly = false;
+
+    /**
+     * If true, this tier can only order ONE item per category.
+     * For example: one item from "Burgers", one from "Drinks", etc.
+     */
+    @Column(name = "one_item_per_category")
+    private boolean oneItemPerCategory = false;
+
+    /**
+     * Per-category item limits. Key = category name, Value = max items allowed.
+     * Example: {"Burgers": 1, "Drinks": 1, "Sides": 1}
+     * This allows fine-grained control over how many items from each category.
+     */
+    @ElementCollection
+    @CollectionTable(name = "tier_category_limits", 
+                     joinColumns = @JoinColumn(name = "tier_policy_id"))
+    @MapKeyColumn(name = "category")
+    @Column(name = "max_items")
+    private Map<String, Integer> categoryLimits = new HashMap<>();
+
     public boolean hasLimit() {
         return !unlimited && maxItemsPerVendor != null;
+    }
+
+    public boolean hasVendorRestriction() {
+        return oneVendorOnly;
+    }
+
+    public boolean hasCategoryRestriction() {
+        return oneItemPerCategory || !categoryLimits.isEmpty();
+    }
+
+    public Integer getCategoryLimit(String category) {
+        if (oneItemPerCategory) return 1;
+        return categoryLimits.getOrDefault(category, null);
     }
 }

@@ -55,24 +55,44 @@ public class OrderService {
         // Broadcast order update
         broadcastOrderUpdate(o);
 
-        // Track tier consumption for limited tiers
+        // Track tier consumption
         Ticket t = o.getTicket();
         TierPolicy tierPolicy = policyService.tierPolicy(o.getEvent().getCode(), t.getTierCode());
+        
+        // Get or create tier consumption record
+        TierConsumption tc = tierConsumptionRepo
+                .findByEventAndTicket(o.getEvent(), t)
+                .orElseGet(() -> {
+                    TierConsumption n = new TierConsumption();
+                    n.setEvent(o.getEvent());
+                    n.setTicket(t);
+                    return n;
+                });
+
+        // Lock to vendor if oneVendorOnly is enabled
+        if (tierPolicy.hasVendorRestriction() && tc.getLockedVendor() == null) {
+            tc.setLockedVendor(o.getVendor());
+        }
+
+        // Track category consumption
+        if (tierPolicy.hasCategoryRestriction()) {
+            for (OrderItem item : o.getItems()) {
+                String category = item.getMenuItem().getCategory();
+                if (category != null && !category.isBlank()) {
+                    tc.incrementCategory(category, item.getQty());
+                }
+            }
+        }
+
+        // Track vendor consumption (for legacy maxItemsPerVendor)
         if (tierPolicy.hasLimit()) {
-            TierConsumption tc = tierConsumptionRepo
-                    .findByEventAndTicketAndVendor(o.getEvent(), t, o.getVendor())
-                    .orElseGet(() -> {
-                        TierConsumption n = new TierConsumption();
-                        n.setEvent(o.getEvent());
-                        n.setTicket(t);
-                        n.setVendor(o.getVendor());
-                        return n;
-                    });
             int orderQty = o.getItems().stream().mapToInt(OrderItem::getQty).sum();
             int previous = tc.getTotalItemsConsumed();
             tc.setTotalItemsConsumed(previous + orderQty);
-            tierConsumptionRepo.save(tc);
+            tc.incrementVendor(o.getVendor().getId(), orderQty);
         }
+
+        tierConsumptionRepo.save(tc);
     }
 
     private void broadcastOrderUpdate(Order order) {

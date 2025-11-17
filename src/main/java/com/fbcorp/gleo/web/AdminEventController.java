@@ -12,6 +12,7 @@ import com.fbcorp.gleo.repo.UserAccountRepo;
 import com.fbcorp.gleo.service.EventPolicyService;
 import com.fbcorp.gleo.service.AuditLogService;
 import com.fbcorp.gleo.service.EventService;
+import com.fbcorp.gleo.service.AssetStorageService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,18 +24,24 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.io.IOException;
 
 @Controller
 @RequestMapping("/admin/events")
@@ -47,6 +54,7 @@ public class AdminEventController {
     private final AuditLogService auditLogService;
     private final com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService;
     private final EventService eventService;
+    private final AssetStorageService assetStorageService;
 
     @GetMapping("/policies")
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -83,7 +91,8 @@ public class AdminEventController {
                                 EventPolicyService policyService,
                                 AuditLogService auditLogService,
                                 com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService,
-                                EventService eventService){
+                                EventService eventService,
+                                AssetStorageService assetStorageService){
         this.eventRepo = eventRepo;
         this.vendorRepo = vendorRepo;
         this.menuItemRepo = menuItemRepo;
@@ -92,6 +101,7 @@ public class AdminEventController {
         this.auditLogService = auditLogService;
         this.adminPreferenceService = adminPreferenceService;
         this.eventService = eventService;
+        this.assetStorageService = assetStorageService;
     }
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -285,6 +295,30 @@ public class AdminEventController {
                 .collect(Collectors.toMap(TierPolicy::getTierCode, tp -> tp, (a, b) -> a, () -> new EnumMap<>(TierCode.class)));
         model.addAttribute("tierPolicies", tierPolicies);
         model.addAttribute("tiers", TierCode.values());
+        
+        // Build vendor-category structure
+        List<Vendor> vendors = vendorRepo.findByEvent(e);
+        List<Map<String, Object>> vendorCategoryData = new ArrayList<>();
+        
+        for (Vendor vendor : vendors) {
+            List<MenuItem> items = menuItemRepo.findByVendorOrderByNameAsc(vendor);
+            
+            // Get distinct categories for this vendor
+            Set<String> categories = items.stream()
+                .map(item -> item.getCategory() == null || item.getCategory().isBlank() ? "Uncategorized" : item.getCategory())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+            
+            if (!categories.isEmpty()) {
+                Map<String, Object> vendorData = new HashMap<>();
+                vendorData.put("vendorId", vendor.getId());
+                vendorData.put("vendorName", vendor.getName());
+                vendorData.put("categories", new ArrayList<>(categories));
+                vendorCategoryData.add(vendorData);
+            }
+        }
+        
+        model.addAttribute("vendorCategoryData", vendorCategoryData);
+        
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated()) {
             adminPreferenceService.findByUsername(auth.getName()).ifPresent(pref -> {
@@ -299,6 +333,188 @@ public class AdminEventController {
             });
         }
         return "admin/event_policies";
+    }
+
+    @GetMapping("/{eventCode}/vendors")
+    public String manageVendors(@PathVariable String eventCode, Model model) {
+        Event event = policyService.get(eventCode);
+        List<Vendor> vendors = vendorRepo.findByEvent(event);
+        
+        model.addAttribute("event", event);
+        model.addAttribute("vendors", vendors);
+        
+        return "admin/vendor_management";
+    }
+
+    @GetMapping("/{eventCode}/vendors/{vendorId}")
+    public String vendorDetails(@PathVariable String eventCode, 
+                                @PathVariable Long vendorId, 
+                                Model model) {
+        Event event = policyService.get(eventCode);
+        Vendor vendor = vendorRepo.findById(vendorId)
+            .orElseThrow(() -> new IllegalArgumentException("Vendor not found"));
+        
+        if (!vendor.getEvent().getId().equals(event.getId())) {
+            throw new IllegalArgumentException("Vendor does not belong to this event");
+        }
+        
+        List<MenuItem> menuItems = menuItemRepo.findByVendorOrderByNameAsc(vendor);
+        
+        // Group menu items by category
+        Map<String, List<MenuItem>> itemsByCategory = menuItems.stream()
+            .collect(Collectors.groupingBy(
+                item -> item.getCategory() != null && !item.getCategory().isBlank() 
+                    ? item.getCategory() 
+                    : "Uncategorized",
+                java.util.LinkedHashMap::new,
+                Collectors.toList()
+            ));
+        
+        model.addAttribute("event", event);
+        model.addAttribute("vendor", vendor);
+        model.addAttribute("menuItems", menuItems);
+        model.addAttribute("itemsByCategory", itemsByCategory);
+        
+        return "admin/vendor_details";
+    }
+
+    @PostMapping("/{eventCode}/vendors/{vendorId}/menu/add")
+    public String addMenuItem(@PathVariable String eventCode,
+                             @PathVariable Long vendorId,
+                             @RequestParam String name,
+                             @RequestParam String price,
+                             @RequestParam(required = false) String category,
+                             @RequestParam(required = false) Integer maxPerOrder,
+                             @RequestParam(required = false) MultipartFile image,
+                             @RequestParam(required = false, defaultValue = "false") boolean available,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            Event event = policyService.get(eventCode);
+            Vendor vendor = vendorRepo.findById(vendorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendor not found"));
+            
+            if (!vendor.getEvent().getId().equals(event.getId())) {
+                throw new IllegalArgumentException("Vendor does not belong to this event");
+            }
+
+            MenuItem menuItem = new MenuItem();
+            menuItem.setVendor(vendor);
+            menuItem.setName(name.trim());
+            menuItem.setPrice(new BigDecimal(price).setScale(2, RoundingMode.HALF_UP));
+            menuItem.setCategory(category != null && !category.trim().isEmpty() ? category.trim() : null);
+            menuItem.setMaxPerOrder(maxPerOrder);
+            menuItem.setAvailable(available);
+
+            // Handle image upload
+            if (image != null && !image.isEmpty()) {
+                String imagePath = assetStorageService.storeMenuItemImage(image);
+                menuItem.setImagePath(imagePath);
+            }
+
+            menuItemRepo.save(menuItem);
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.VENDOR,
+                "Added menu item '" + name + "' to vendor " + vendor.getName() + " (event=" + eventCode + ")", username);
+
+            redirectAttributes.addFlashAttribute("toastMessage", "Menu item added successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("toastError", "Error adding menu item: " + e.getMessage());
+        }
+
+        return "redirect:/admin/events/" + eventCode + "/vendors/" + vendorId;
+    }
+
+    @PostMapping("/{eventCode}/vendors/{vendorId}/menu/{menuItemId}/edit")
+    public String editMenuItem(@PathVariable String eventCode,
+                              @PathVariable Long vendorId,
+                              @PathVariable Long menuItemId,
+                              @RequestParam String name,
+                              @RequestParam String price,
+                              @RequestParam(required = false) String category,
+                              @RequestParam(required = false) Integer maxPerOrder,
+                              @RequestParam(required = false) MultipartFile image,
+                              @RequestParam(required = false, defaultValue = "false") boolean available,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            Event event = policyService.get(eventCode);
+            Vendor vendor = vendorRepo.findById(vendorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendor not found"));
+            
+            if (!vendor.getEvent().getId().equals(event.getId())) {
+                throw new IllegalArgumentException("Vendor does not belong to this event");
+            }
+
+            MenuItem menuItem = menuItemRepo.findById(menuItemId)
+                .orElseThrow(() -> new IllegalArgumentException("Menu item not found"));
+            
+            if (!menuItem.getVendor().getId().equals(vendorId)) {
+                throw new IllegalArgumentException("Menu item does not belong to this vendor");
+            }
+
+            menuItem.setName(name.trim());
+            menuItem.setPrice(new BigDecimal(price).setScale(2, RoundingMode.HALF_UP));
+            menuItem.setCategory(category != null && !category.trim().isEmpty() ? category.trim() : null);
+            menuItem.setMaxPerOrder(maxPerOrder);
+            menuItem.setAvailable(available);
+
+            // Handle image upload
+            if (image != null && !image.isEmpty()) {
+                String imagePath = assetStorageService.storeMenuItemImage(image);
+                menuItem.setImagePath(imagePath);
+            }
+
+            menuItemRepo.save(menuItem);
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.VENDOR,
+                "Updated menu item '" + name + "' for vendor " + vendor.getName() + " (event=" + eventCode + ")", username);
+
+            redirectAttributes.addFlashAttribute("toastMessage", "Menu item updated successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("toastError", "Error updating menu item: " + e.getMessage());
+        }
+
+        return "redirect:/admin/events/" + eventCode + "/vendors/" + vendorId;
+    }
+
+    @PostMapping("/{eventCode}/vendors/{vendorId}/menu/{menuItemId}/delete")
+    public String deleteMenuItem(@PathVariable String eventCode,
+                                @PathVariable Long vendorId,
+                                @PathVariable Long menuItemId,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            Event event = policyService.get(eventCode);
+            Vendor vendor = vendorRepo.findById(vendorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendor not found"));
+            
+            if (!vendor.getEvent().getId().equals(event.getId())) {
+                throw new IllegalArgumentException("Vendor does not belong to this event");
+            }
+
+            MenuItem menuItem = menuItemRepo.findById(menuItemId)
+                .orElseThrow(() -> new IllegalArgumentException("Menu item not found"));
+            
+            if (!menuItem.getVendor().getId().equals(vendorId)) {
+                throw new IllegalArgumentException("Menu item does not belong to this vendor");
+            }
+
+            String itemName = menuItem.getName();
+            menuItemRepo.delete(menuItem);
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.VENDOR,
+                "Deleted menu item '" + itemName + "' from vendor " + vendor.getName() + " (event=" + eventCode + ")", username);
+
+            redirectAttributes.addFlashAttribute("toastMessage", "Menu item deleted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("toastError", "Error deleting menu item: " + e.getMessage());
+        }
+
+        return "redirect:/admin/events/" + eventCode + "/vendors/" + vendorId;
     }
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -328,15 +544,41 @@ public class AdminEventController {
                                    @RequestParam TierCode tierCode,
                                    @RequestParam String accessMode,
                                    @RequestParam(required = false) Integer maxItemsPerVendor,
+                                   @RequestParam(required = false, defaultValue = "false") boolean oneVendorOnly,
+                                   @RequestParam(required = false, defaultValue = "false") boolean oneItemPerCategory,
+                                   @RequestParam(required = false) Map<String, String> allParams,
                                    RedirectAttributes redirectAttributes){
-        boolean unlimited = "full".equalsIgnoreCase(accessMode);
-        if (!unlimited) {
+        boolean unlimited = "unlimited".equalsIgnoreCase(accessMode);
+        
+        // Extract category limits from form parameters FIRST
+        Map<String, Integer> categoryLimits = new HashMap<>();
+        if (oneItemPerCategory) {
+            for (Map.Entry<String, String> entry : allParams.entrySet()) {
+                String key = entry.getKey();
+                if (key.startsWith("categoryLimit_")) {
+                    String category = key.substring("categoryLimit_".length());
+                    try {
+                        int limit = Integer.parseInt(entry.getValue());
+                        if (limit > 0) {
+                            categoryLimits.put(category, limit);
+                        }
+                    } catch (NumberFormatException e) {
+                        // Skip invalid values
+                    }
+                }
+            }
+        }
+        
+        // Validation: If not unlimited AND no category limits are set, then maxItemsPerVendor is required
+        if (!unlimited && categoryLimits.isEmpty()) {
             if (maxItemsPerVendor == null || maxItemsPerVendor < 1) {
-                redirectAttributes.addFlashAttribute("toastError", "Please provide a positive limit for this tier.");
+                redirectAttributes.addFlashAttribute("toastError", "Please provide a positive limit for this tier or set category limits.");
                 return "redirect:/admin/events/" + eventCode + "/policies";
             }
         }
-        policyService.updateTierPolicy(eventCode, tierCode, unlimited, unlimited ? null : maxItemsPerVendor);
+        
+        policyService.updateTierPolicy(eventCode, tierCode, unlimited, unlimited ? null : maxItemsPerVendor, 
+                                       oneVendorOnly, oneItemPerCategory, categoryLimits);
 
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String username = auth != null ? auth.getName() : "anonymous";

@@ -15,66 +15,248 @@
       align-items: center;
       justify-content: center;
       pointer-events: none;
+      animation: fadeIn 0.3s ease;
+      padding: 16px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
     .ticket-overlay-backdrop {
       position: absolute;
       inset: 0;
-      background: rgba(15, 23, 42, 0.45);
+      background: rgba(15, 23, 42, 0.4);
       backdrop-filter: blur(8px);
       pointer-events: auto;
     }
     .ticket-overlay-card {
       position: relative;
-      width: min(520px, 90vw);
-      border-radius: 28px;
-      border: 1px solid rgba(148,163,184,0.3);
-      background: rgba(255,255,255,0.95);
-      box-shadow: 0 40px 70px rgba(15,23,42,0.25);
-      padding: 32px;
+      width: 100%;
+      max-width: 420px;
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      padding: 32px 24px;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 24px;
       pointer-events: auto;
+      animation: slideUp 0.4s ease;
+    }
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .ticket-header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .ticket-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px rgba(99,102,241,0.25);
+    }
+    .ticket-icon svg {
+      width: 36px;
+      height: 36px;
+      color: white;
     }
     .ticket-overlay-card h2 {
       margin: 0;
-      font-size: 1.6rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+    }
+    .ticket-subtitle {
+      color: #64748b;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      margin: 0;
     }
     .ticket-upload-field {
-      border: 1px dashed rgba(99,102,241,0.5);
-      border-radius: 20px;
-      padding: 18px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 40px 20px;
       text-align: center;
-      background: rgba(99,102,241,0.08);
+      background: #f8fafc;
       cursor: pointer;
-      transition: border-color 0.2s ease;
+      transition: all 0.2s ease;
+      position: relative;
     }
     .ticket-upload-field:hover {
-      border-color: rgba(99,102,241,0.9);
+      border-color: #6366f1;
+      background: #f1f5f9;
+    }
+    .ticket-upload-field:active {
+      transform: scale(0.98);
+    }
+    .ticket-upload-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ticket-upload-icon svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+    #ticket-upload-placeholder {
+      display: block;
+      color: #1e293b;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    .upload-hint {
+      display: block;
+      color: #94a3b8;
+      font-size: 0.875rem;
     }
     .ticket-upload-field input[type="file"] {
       display: none;
     }
     .ticket-upload-preview {
       display: none;
-      margin-top: 12px;
-      max-width: 240px;
-      border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(15,23,42,0.18);
+      margin: 16px auto 0;
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .ticket-overlay-card button {
       border: none;
-      border-radius: 16px;
-      background: linear-gradient(120deg, #6366f1, #8b5cf6);
-      color: #fff;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
       font-weight: 600;
-      padding: 12px 20px;
+      font-size: 1rem;
+      padding: 16px 24px;
       cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+      width: 100%;
     }
     .ticket-overlay-card button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 18px 36px rgba(99,102,241,0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(99,102,241,0.4);
+    }
+    .ticket-overlay-card button:active {
+      transform: translateY(0);
+    }
+    .ticket-footer {
+      text-align: center;
+      padding-top: 4px;
+    }
+    .ticket-footer small {
+      color: #94a3b8;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+    }
+    
+    @media (max-width: 480px) {
+      .ticket-overlay-card {
+        padding: 28px 20px;
+        gap: 20px;
+      }
+      .ticket-icon {
+        width: 56px;
+        height: 56px;
+      }
+      .ticket-icon svg {
+        width: 32px;
+        height: 32px;
+      }
+      .ticket-overlay-card h2 {
+        font-size: 1.375rem;
+      }
+      .ticket-subtitle {
+        font-size: 0.875rem;
+      }
+      .ticket-upload-field {
+        padding: 32px 16px;
+      }
+      .ticket-upload-icon {
+        width: 48px;
+        height: 48px;
+      }
+      .ticket-upload-icon svg {
+        width: 24px;
+        height: 24px;
+      }
+      #ticket-upload-placeholder {
+        font-size: 0.9375rem;
+      }
+      .upload-hint {
+        font-size: 0.8125rem;
+      }
+      .ticket-overlay-card button {
+        padding: 14px 20px;
+        font-size: 0.9375rem;
+      }
+    }
+    
+    /* Vendor locked state styles */
+    .vendor-card--locked {
+      position: relative;
+      opacity: 0.65;
+      pointer-events: none;
+    }
+    .vendor-locked-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(2px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      z-index: 10;
+      border-radius: 16px;
+    }
+    .vendor-locked-icon {
+      font-size: 2.5rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+    .vendor-locked-text {
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin: 0;
+      text-align: center;
+    }
+    .btn-disabled {
+      background: #cbd5e1 !important;
+      cursor: not-allowed !important;
+      opacity: 0.7;
+    }
+    .btn-disabled:hover {
+      transform: none !important;
+      box-shadow: none !important;
     }
   </style>
 </head>
@@ -90,7 +272,8 @@
       </div>
     </div>
     <div class="grid-vendors">
-      <div class="card vendor-card" th:each="vendor : ${vendors}">
+      <div class="card vendor-card" th:each="vendor : ${vendors}"
+           th:classappend="${oneVendorOnlyPolicy and lockedVendorId != null and lockedVendorId != vendor.id ? 'vendor-card--locked' : ''}">
         <div class="vendor-photo vendor-photo--card"
              th:classappend="${vendor.imagePath} == null ? ' vendor-photo--empty' : ''">
           <img th:if="${vendor.imagePath != null}"
@@ -99,6 +282,14 @@
           <span th:if="${vendor.imagePath == null}"
                 th:text="${#strings.isEmpty(vendor.name) ? 'V' : #strings.toUpperCase(#strings.substring(vendor.name,0,1))}">V</span>
         </div>
+        
+        <!-- Locked overlay -->
+        <div class="vendor-locked-overlay" 
+             th:if="${oneVendorOnlyPolicy and lockedVendorId != null and lockedVendorId != vendor.id}">
+          <div class="vendor-locked-icon">🔒</div>
+          <p class="vendor-locked-text">Locked by policy</p>
+        </div>
+        
         <div class="vendor-card-body vendor-card-main"
              th:with="chipString=${vendor.name == 'BRGR' ? 'BURGERS,SANDWICHES,DRINKS' :
                              (vendor.name == 'DESOUKY&amp;SODA' ? 'BURGERS,GRILL,DRINKS' :
@@ -115,7 +306,11 @@
           <p class="vendor-card-subtext">Tap below to manage this vendor's live menu.</p>
         </div>
         <div class="card-actions vendor-card-actions">
-          <a th:href="@{|/e/${event.code}/v/${vendor.id}|}" class="btn btn-primary vendor-card-button">Browse menu</a>
+          <a th:href="@{|/e/${event.code}/v/${vendor.id}|}" 
+             class="btn btn-primary vendor-card-button"
+             th:classappend="${oneVendorOnlyPolicy and lockedVendorId != null and lockedVendorId != vendor.id ? 'btn-disabled' : ''}"
+             th:attr="onclick=${oneVendorOnlyPolicy and lockedVendorId != null and lockedVendorId != vendor.id ? 'return false;' : ''}"
+             th:text="${oneVendorOnlyPolicy and lockedVendorId != null and lockedVendorId != vendor.id ? 'Locked' : 'Browse menu'}">Browse menu</a>
         </div>
       </div>
     </div>
@@ -124,20 +319,34 @@
 <div class="ticket-overlay-root" th:if="${needsTicket}">
   <div class="ticket-overlay-backdrop"></div>
   <div class="ticket-overlay-card">
-    <div>
-      <p class="muted" style="margin:0 0 6px;">Secure your session</p>
-      <h2>Upload your QR ticket</h2>
-      <p class="muted" style="margin:0;">Scan once to unlock all vendors on this device. You’ll see the background content update live.</p>
+    <div class="ticket-header">
+      <div class="ticket-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+        </svg>
+      </div>
+      <h2 th:text="'Welcome to ' + ${event.name}">Welcome to Event</h2>
+      <p class="ticket-subtitle">Scan your ticket to access vendors and track your orders</p>
     </div>
-    <form th:action="${ticketPostUrl}" method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:14px;">
+
+    <form th:action="${ticketPostUrl}" method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:20px;">
       <label class="ticket-upload-field" id="ticket-upload-field">
-        <span id="ticket-upload-placeholder">Tap to upload a photo / screenshot of your QR</span>
+        <div class="ticket-upload-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
+        </div>
+        <span id="ticket-upload-placeholder">Upload QR Ticket</span>
+        <span class="upload-hint">Select photo or screenshot</span>
         <img id="ticket-upload-preview" class="ticket-upload-preview" alt="QR preview">
         <input type="file" name="qrFile" accept="image/*" required>
       </label>
-      <button type="submit">Link ticket & continue</button>
+      <button type="submit">Continue</button>
     </form>
-    <small class="muted">Need a new ticket later? Just upload again and we’ll switch the session.</small>
+    
+    <div class="ticket-footer">
+      <small>Need to switch tickets? Upload a new one anytime</small>
+    </div>
   </div>
 </div>
 <script>
@@ -147,11 +356,16 @@
     const input = field.querySelector('input[type="file"]');
     const placeholder = document.getElementById('ticket-upload-placeholder');
     const preview = document.getElementById('ticket-upload-preview');
+    const uploadIcon = field.querySelector('.ticket-upload-icon');
+    const uploadHint = field.querySelector('.upload-hint');
+    
     input.addEventListener('change', () => {
       const file = input.files && input.files[0];
       if (!file){
         preview.style.display = 'none';
         placeholder.style.display = 'block';
+        if (uploadIcon) uploadIcon.style.display = 'flex';
+        if (uploadHint) uploadHint.style.display = 'block';
         preview.src = '';
         return;
       }
@@ -159,7 +373,9 @@
       reader.onload = e => {
         preview.src = e.target.result;
         preview.style.display = 'block';
-        placeholder.style.display = 'none';
+        placeholder.textContent = 'QR Code Ready';
+        if (uploadIcon) uploadIcon.style.display = 'none';
+        if (uploadHint) uploadHint.style.display = 'none';
       };
       reader.readAsDataURL(file);
     });

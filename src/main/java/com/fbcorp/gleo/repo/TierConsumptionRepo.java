@@ -10,9 +10,9 @@ import java.util.Optional;
 
 public interface TierConsumptionRepo extends JpaRepository<TierConsumption, Long> {
 
-    Optional<TierConsumption> findByEventAndTicketAndVendor(Event event, Ticket ticket, Vendor vendor);
+    Optional<TierConsumption> findByEventAndTicket(Event event, Ticket ticket);
 
-    @Query("SELECT COALESCE(tc.totalItemsConsumed,0) FROM TierConsumption tc WHERE tc.event = :event AND tc.ticket = :ticket AND tc.vendor = :vendor")
+    @Query("SELECT COALESCE(tc.totalItemsConsumed,0) FROM TierConsumption tc WHERE tc.event = :event AND tc.ticket = :ticket AND tc.lockedVendor = :vendor")
     Integer consumedCount(@Param("event") Event event,
                           @Param("ticket") Ticket ticket,
                           @Param("vendor") Vendor vendor);

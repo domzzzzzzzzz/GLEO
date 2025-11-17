@@ -1,8 +1,10 @@
 package com.fbcorp.gleo.web;
 
 import com.fbcorp.gleo.domain.Vendor;
+import com.fbcorp.gleo.domain.Ticket;
 import com.fbcorp.gleo.repo.MenuItemRepo;
 import com.fbcorp.gleo.repo.VendorRepo;
+import com.fbcorp.gleo.repo.TicketRepo;
 import com.fbcorp.gleo.service.CartViewService;
 import com.fbcorp.gleo.service.EventPolicyService;
 import org.springframework.http.HttpStatus;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.Authentication;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -20,19 +23,43 @@ public class VendorController {
     private final MenuItemRepo menuItemRepo;
     private final EventPolicyService policyService;
     private final CartViewService cartViewService;
+    private final TicketRepo ticketRepo;
 
-    public VendorController(VendorRepo vendorRepo, MenuItemRepo menuItemRepo, EventPolicyService policyService, CartViewService cartViewService){
+    public VendorController(VendorRepo vendorRepo, MenuItemRepo menuItemRepo, EventPolicyService policyService, CartViewService cartViewService, TicketRepo ticketRepo){
         this.vendorRepo = vendorRepo;
         this.menuItemRepo = menuItemRepo;
         this.policyService = policyService;
         this.cartViewService = cartViewService;
+        this.ticketRepo = ticketRepo;
     }
 
     @GetMapping("/{vendorId}")
-    public String menu(@PathVariable String eventCode, @PathVariable Long vendorId, Model model, HttpSession session){
+    public String menu(@PathVariable String eventCode, @PathVariable Long vendorId, Model model, HttpSession session, Authentication authentication){
         var event = policyService.get(eventCode);
         Vendor v = vendorRepo.findById(vendorId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!v.getEvent().getId().equals(event.getId())) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        
+        // Require ticket authentication to access vendor menu
+        if (authentication == null || !authentication.isAuthenticated()) {
+            // Redirect to ticket upload page instead of throwing 403
+            return "redirect:/e/" + eventCode + "/ticket?next=/e/" + eventCode + "/v/" + vendorId;
+        }
+        
+        // Verify ticket exists and belongs to this event
+        String username = authentication.getName();
+        Ticket ticket = ticketRepo.findByQrCode(username).orElse(null);
+        if (ticket == null) {
+            return "redirect:/e/" + eventCode + "/ticket?next=/e/" + eventCode + "/v/" + vendorId;
+        }
+        
+        if (!ticket.getEvent().getCode().equals(eventCode)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This ticket is not valid for this event.");
+        }
+        
+        // Add ticket info to model for display/policy enforcement
+        model.addAttribute("ticket", ticket);
+        model.addAttribute("tierCode", ticket.getTierCode());
+        
         model.addAttribute("event", event);
         model.addAttribute("vendor", v);
     var items = menuItemRepo.findByVendorAndAvailableTrue(v);
@@ -67,8 +94,15 @@ public class VendorController {
         Long lockedVendorId = hasCartGroups ? cartSummary.groups().get(0).vendorId() : null;
         model.addAttribute("lockedVendorId", lockedVendorId);
         model.addAttribute("lockedVendorName", hasCartGroups ? cartSummary.groups().get(0).vendorName() : null);
-    // Lock only when multi-vendor is DISABLED and cart already has a different vendor
-    boolean singleVendorLocked = !policyService.multiVendorCart(eventCode) && hasCartGroups && !lockedVendorId.equals(v.getId());
+        
+        // Check if tier policy has "one vendor only" restriction
+        boolean oneVendorOnlyPolicy = policyService.hasOneVendorOnlyPolicy(eventCode, ticket.getTierCode());
+        model.addAttribute("oneVendorOnlyPolicy", oneVendorOnlyPolicy);
+        
+        // Lock only when multi-vendor is DISABLED and cart already has a different vendor
+        // OR when one vendor only policy is active and cart has a different vendor
+        boolean singleVendorLocked = (!policyService.multiVendorCart(eventCode) || oneVendorOnlyPolicy) 
+                                     && hasCartGroups && !lockedVendorId.equals(v.getId());
         model.addAttribute("singleVendorLocked", singleVendorLocked);
         model.addAttribute("cartLineCount", hasCartGroups ? cartSummary.totalQty() : 0);
         return "vendor_menu";

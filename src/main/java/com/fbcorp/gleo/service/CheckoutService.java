@@ -81,7 +81,20 @@ public class CheckoutService {
             }
 
             int qtySum = entry.getValue().stream().mapToInt(CartLine::qty).sum();
-            var policyCheck = cartService.canAddToCart(eventCode, ticket, vendor, qtySum);
+            
+            // Build category items list for validation
+            List<CartService.CategoryItem> categoryItems = new ArrayList<>();
+            for (CartLine line : entry.getValue()) {
+                MenuItem menuItem = menuItemRepo.findById(line.itemId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"));
+                String category = menuItem.getCategory();
+                if (category != null && !category.isBlank()) {
+                    categoryItems.add(new CartService.CategoryItem(category, line.qty()));
+                }
+            }
+
+            // Check category restrictions
+            var policyCheck = cartService.canAddItemsWithCategories(eventCode, ticket, vendor, categoryItems);
             if (!policyCheck.allowed()) {
                 result.rejectedByVendor.put(vendorId, policyCheck.message());
                 continue;

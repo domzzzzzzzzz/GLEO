@@ -102,6 +102,7 @@
   <h1>Link your QR ticket</h1>
   <p>Authenticate once to unlock ordering and track your own orders securely on this device.</p>
   <div th:if="${toastError}" class="toast" th:text="${toastError}">Error</div>
+  <div th:if="${param.error}" class="toast" th:text="${param.error[0]}">Error</div>
   <form class="ticket-form" th:action="@{|/e/${eventCode}/ticket|}" method="post" enctype="multipart/form-data">
     <label class="upload-field" id="qr-upload-field">
       <span id="upload-placeholder">Upload a photo / screenshot of the QR</span>

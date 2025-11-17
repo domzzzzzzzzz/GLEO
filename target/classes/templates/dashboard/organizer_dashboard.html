@@ -209,17 +209,6 @@
               </div>
               <div class="roster-actions">
                 <span class="status-chip" th:classappend="${!vendor.active} ? ' inactive'" th:text="${vendor.active} ? 'Active' : 'Archived'">Active</span>
-                <form th:if="${vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete|}" method="post"
-                      onsubmit="return confirm('Remove this vendor from the event?');">
-                  <button class="btn btn-danger btn-sm" type="submit">Remove</button>
-                </form>
-                <form th:if="${!vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/restore|}" method="post">
-                  <button class="btn btn-outline btn-sm" type="submit">Restore</button>
-                </form>
-                <form th:if="${!vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete-permanent|}" method="post"
-                      onsubmit="return confirm('Permanently delete this vendor and its menu? This cannot be undone.');">
-                  <button class="btn btn-danger btn-sm" type="submit">Delete</button>
-                </form>
               </div>
             </div>
             <div class="roster-media" th:if="${vendor.imagePath}">
@@ -263,175 +252,11 @@
                       </span>
                       </div>
                     </div>
-                    <form th:action="@{/organizer/events/{eventCode}/vendors/{vendorId}/menu/{menuItemId}/delete(eventCode=${event.code},vendorId=${vendor.id},menuItemId=${item.id})}"
-                          method="post" class="menu-item-delete"
-                          onsubmit="return confirm('Delete this menu item?');">
-                      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                      <button type="submit" class="btn-icon" title="Delete item">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                          <path d="M6 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3v1H3V2h3zm1 3.5v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0zm3 0v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0z"/>
-                          <path d="M4.5 4h7a.5.5 0 0 1 .5.5v8A1.5 1.5 0 0 1 10.5 14h-5A1.5 1.5 0 0 1 4 12.5v-8a.5.5 0 0 1 .5-.5z"/>
-                        </svg>
-                        <span class="sr-only">Delete menu item</span>
-                      </button>
-                    </form>
                   </div>
-                  <details class="menu-item-edit">
-                    <summary>Edit item</summary>
-                    <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu/${item.id}/edit|}"
-                          method="post" enctype="multipart/form-data" class="menu-item-edit-form">
-                      <div class="menu-edit-grid">
-                        <div class="input-group">
-                          <label th:for="'menu-edit-name-' + ${item.id}">Item name</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-name-' + ${item.id}"
-                                 type="text"
-                                 name="name"
-                                 th:value="${item.name}"
-                                 required>
-                        </div>
-                        <div class="input-group">
-                          <label th:for="'menu-edit-price-' + ${item.id}">Price (EGP)</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-price-' + ${item.id}"
-                                 type="number"
-                                 name="price"
-                                 min="0"
-                                 step="0.01"
-                                 th:value="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')}"
-                                 required>
-                        </div>
-                        <div class="input-group">
-                          <label th:for="'menu-edit-max-' + ${item.id}">Max per order</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-max-' + ${item.id}"
-                                 type="number"
-                                 name="maxPerOrder"
-                                 min="1"
-                                 placeholder="Optional"
-                                 th:value="${item.maxPerOrder}">
-                        </div>
-                        <div class="input-group">
-                          <label th:for="'menu-edit-category-' + ${item.id}">Category</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-category-' + ${item.id}"
-                                 type="text"
-                                 name="category"
-                                 placeholder="e.g. Burgers, Drinks, Sides"
-                                 th:value="${item.category}">
-                          <small class="muted">Optional: group items on the public menu</small>
-                        </div>
-                        <div class="input-group">
-                          <label th:for="'menu-edit-category-order-' + ${item.id}">Category order</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-category-order-' + ${item.id}"
-                                 type="number"
-                                 name="categoryOrder"
-                                 min="0"
-                                 th:value="${item.categoryOrder}">
-                          <small class="muted">Optional: lower numbers appear first (set same number for items in same category)</small>
-                        </div>
-                        <div class="input-group">
-                          <label th:for="'menu-edit-image-' + ${item.id}">Replace image</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-image-' + ${item.id}"
-                                 type="file"
-                                 name="image"
-                                 accept="image/*">
-                          <small class="muted">PNG or JPG up to 5 MB.</small>
-                        </div>
-                        <div class="input-group" th:if="${item.imagePath}">
-                          <label class="checkbox-inline">
-                            <input type="checkbox" name="removeImage" value="true">
-                            <span>Remove current image</span>
-                          </label>
-                        </div>
-                      </div>
-                      <div class="menu-edit-actions">
-                        <button class="btn btn-primary btn-sm" type="submit">Save item</button>
-                      </div>
-                    </form>
-                  </details>
+
                 </li>
               </ul>
             </div>
-
-            <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu|}"
-                  method="post" enctype="multipart/form-data" class="menu-add-form">
-              <div class="input-group">
-                <label th:for="'item-name-' + ${vendor.id}">Add menu item</label>
-                <input class="field-input" th:id="'item-name-' + ${vendor.id}" type="text" name="name" placeholder="Item name" required>
-              </div>
-              <div class="menu-add-row">
-                <div class="input-group">
-                  <label th:for="'item-price-' + ${vendor.id}">Price (EGP)</label>
-                  <input class="field-input" th:id="'item-price-' + ${vendor.id}" type="number" name="price" min="0" step="0.01" placeholder="0.00" required>
-                </div>
-                <div class="input-group">
-                  <label th:for="'item-max-' + ${vendor.id}">Max per order</label>
-                  <input class="field-input" th:id="'item-max-' + ${vendor.id}" type="number" name="maxPerOrder" min="1" placeholder="Optional">
-                </div>
-                <div class="input-group">
-                  <label th:for="'item-image-' + ${vendor.id}">Image</label>
-                  <input class="field-input" th:id="'item-image-' + ${vendor.id}" type="file" name="image" accept="image/*">
-                  <small class="muted">PNG or JPG up to 5 MB. Optional, but highly recommended for a professional menu.</small>
-                </div>
-                <div class="input-group">
-                  <label th:for="'item-category-' + ${vendor.id}">Category</label>
-                  <input class="field-input" th:id="'item-category-' + ${vendor.id}" type="text" name="category" placeholder="e.g. Burgers, Drinks, Sides">
-                  <small class="muted">Optional: type a new category or reuse an existing one.</small>
-                </div>
-                <div class="input-group">
-                  <label th:for="'item-category-order-' + ${vendor.id}">Category order</label>
-                  <input class="field-input" th:id="'item-category-order-' + ${vendor.id}" type="number" name="categoryOrder" placeholder="0" min="0">
-                  <small class="muted">Optional: lower numbers appear first (e.g. 1 = Burgers, 2 = Fries, 3 = Drinks)</small>
-                </div>
-              </div>
-              <div class="menu-add-actions">
-                <button class="btn btn-outline" type="submit">Add menu item</button>
-              </div>
-            </form>
-
-            <details class="roster-edit">
-              <summary>Edit vendor</summary>
-              <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/edit|}" method="post" enctype="multipart/form-data" class="menu-add-form">
-                <div class="input-group">
-                  <label th:for="'edit-name-' + ${vendor.id}">Display name</label>
-                  <input class="field-input" th:id="'edit-name-' + ${vendor.id}" type="text" name="name" th:value="${vendor.name}" required>
-                </div>
-                <div class="input-group">
-                  <label th:for="'edit-pin-' + ${vendor.id}">Pickup PIN</label>
-                  <input class="field-input" th:id="'edit-pin-' + ${vendor.id}" type="text" name="pin" placeholder="Optional" th:value="${vendor.pinPlain}">
-                </div>
-                <div class="input-group">
-                  <label th:for="'edit-image-' + ${vendor.id}">New image</label>
-                  <div class="dropzone"
-                       th:attr="id=${'dropzone-edit-' + vendor.id}"
-                       data-dropzone data-max-size="5242880"
-                       th:classappend="${vendor.imagePath} != null ? ' dropzone--has-image' : ''">
-                    <span class="dropzone__prompt" data-dropzone-prompt>Drag & drop, or click to replace</span>
-                    <img data-dropzone-preview
-                         alt="Vendor preview"
-                         th:src="${vendor.imagePath != null ? vendor.imagePath : ''}"
-                         th:style="${vendor.imagePath == null} ? 'display:none;' : ''"
-                         th:attr="data-initial-src=${vendor.imagePath != null ? vendor.imagePath : ''}">
-                    <div class="dropzone__error" data-dropzone-error></div>
-                    <input class="field-input" th:id="'edit-image-' + ${vendor.id}" type="file" name="image" accept="image/*">
-                  </div>
-                  <small class="muted">Upload to replace the current logo.</small>
-                </div>
-                <div class="input-group" th:if="${vendor.imagePath}">
-                  <label class="checkbox-inline">
-                    <input type="checkbox" name="removeImage" value="true"
-                           th:attr="data-dropzone-target=${'dropzone-edit-' + vendor.id}">
-                    <span>Remove current image</span>
-                  </label>
-                </div>
-                <div class="menu-add-actions">
-                  <button class="btn btn-primary" type="submit">Save changes</button>
-                </div>
-              </form>
-            </details>
           </article>
         </div>
       </div>
@@ -463,17 +288,6 @@
               </div>
               <div class="roster-actions">
                 <span class="status-chip" th:classappend="${!vendor.active} ? ' inactive'" th:text="${vendor.active} ? 'Active' : 'Archived'">Archived</span>
-                <form th:if="${vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete|}" method="post"
-                      onsubmit="return confirm('Remove this vendor from the event?');">
-                  <button class="btn btn-danger btn-sm" type="submit">Remove</button>
-                </form>
-                <form th:if="${!vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/restore|}" method="post">
-                  <button class="btn btn-outline btn-sm" type="submit">Restore</button>
-                </form>
-                <form th:if="${!vendor.active}" th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/delete-permanent|}" method="post"
-                      onsubmit="return confirm('Permanently delete this vendor and its menu? This cannot be undone.');">
-                  <button class="btn btn-danger btn-sm" type="submit">Delete</button>
-                </form>
               </div>
             </div>
             <div class="roster-media" th:if="${vendor.imagePath}">
@@ -517,139 +331,10 @@
                       </span>
                       </div>
                     </div>
-                    <form th:action="@{/organizer/events/{eventCode}/vendors/{vendorId}/menu/{menuItemId}/delete(eventCode=${event.code},vendorId=${vendor.id},menuItemId=${item.id})}"
-                          method="post" class="menu-item-delete"
-                          onsubmit="return confirm('Delete this menu item?');">
-                      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                      <button type="submit" class="btn-icon" title="Delete item">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                          <path d="M6 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3v1H3V2h3zm1 3.5v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0zm3 0v6a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0z"/>
-                          <path d="M4.5 4h7a.5.5 0 0 1 .5.5v8A1.5 1.5 0 0 1 10.5 14h-5A1.5 1.5 0 0 1 4 12.5v-8a.5.5 0 0 1 .5-.5z"/>
-                        </svg>
-                        <span class="sr-only">Delete menu item</span>
-                      </button>
-                    </form>
                   </div>
-                  <details class="menu-item-edit">
-                    <summary>Edit item</summary>
-                    <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu/${item.id}/edit|}"
-                          method="post" enctype="multipart/form-data" class="menu-item-edit-form">
-                      <div class="menu-edit-grid">
-                        <div class="input-group">
-                          <label th:for="'menu-edit-name-' + ${item.id}">Item name</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-name-' + ${item.id}"
-                                 type="text"
-                                 name="name"
-                                 th:value="${item.name}"
-                                 required>
-                        </div>
-                        <div class="input-group">
-                          <label th:for="'menu-edit-price-' + ${item.id}">Price (EGP)</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-price-' + ${item.id}"
-                                 type="number"
-                                 name="price"
-                                 min="0"
-                                 step="0.01"
-                                 th:value="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')}"
-                                 required>
-                        </div>
-                        <div class="input-group">
-                          <label th:for="'menu-edit-max-' + ${item.id}">Max per order</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-max-' + ${item.id}"
-                                 type="number"
-                                 name="maxPerOrder"
-                                 min="1"
-                                 placeholder="Optional"
-                                 th:value="${item.maxPerOrder}">
-                        </div>
-                        <div class="input-group">
-                          <label th:for="'menu-edit-image-' + ${item.id}">Replace image</label>
-                          <input class="field-input"
-                                 th:id="'menu-edit-image-' + ${item.id}"
-                                 type="file"
-                                 name="image"
-                                 accept="image/*">
-                          <small class="muted">PNG or JPG up to 5 MB.</small>
-                        </div>
-                        <div class="input-group" th:if="${item.imagePath}">
-                          <label class="checkbox-inline">
-                            <input type="checkbox" name="removeImage" value="true">
-                            <span>Remove current image</span>
-                          </label>
-                        </div>
-                      </div>
-                      <div class="menu-edit-actions">
-                        <button class="btn btn-primary btn-sm" type="submit">Save item</button>
-                      </div>
-                    </form>
-                  </details>
                 </li>
               </ul>
             </div>
-
-            <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/menu|}" method="post" class="menu-add-form">
-              <div class="input-group">
-                <label th:for="'item-name-' + ${vendor.id}">Add menu item</label>
-                <input class="field-input" th:id="'item-name-' + ${vendor.id}" type="text" name="name" placeholder="Item name" required>
-              </div>
-              <div class="menu-add-row">
-                <div class="input-group">
-                  <label th:for="'item-price-' + ${vendor.id}">Price (EGP)</label>
-                  <input class="field-input" th:id="'item-price-' + ${vendor.id}" type="number" name="price" min="0" step="0.01" placeholder="0.00" required>
-                </div>
-                <div class="input-group">
-                  <label th:for="'item-max-' + ${vendor.id}">Max per order</label>
-                  <input class="field-input" th:id="'item-max-' + ${vendor.id}" type="number" name="maxPerOrder" min="1" placeholder="Optional">
-                </div>
-              </div>
-              <div class="menu-add-actions">
-                <button class="btn btn-outline" type="submit">Add menu item</button>
-              </div>
-            </form>
-
-            <details class="roster-edit">
-              <summary>Edit vendor</summary>
-              <form th:action="@{|/organizer/events/${event.code}/vendors/${vendor.id}/edit|}" method="post" enctype="multipart/form-data" class="menu-add-form">
-                <div class="input-group">
-                  <label th:for="'edit-name-' + ${vendor.id}">Display name</label>
-                  <input class="field-input" th:id="'edit-name-' + ${vendor.id}" type="text" name="name" th:value="${vendor.name}" required>
-                </div>
-                <div class="input-group">
-                  <label th:for="'edit-pin-' + ${vendor.id}">Pickup PIN</label>
-                  <input class="field-input" th:id="'edit-pin-' + ${vendor.id}" type="text" name="pin" placeholder="Optional" th:value="${vendor.pinPlain}">
-                </div>
-                <div class="input-group">
-                  <label th:for="'edit-image-' + ${vendor.id}">New image</label>
-                  <div class="dropzone"
-                       th:attr="id=${'dropzone-edit-' + vendor.id}"
-                       data-dropzone data-max-size="5242880"
-                       th:classappend="${vendor.imagePath} != null ? ' dropzone--has-image' : ''">
-                    <span class="dropzone__prompt" data-dropzone-prompt>Drag & drop, or click to replace</span>
-                    <img data-dropzone-preview
-                         alt="Vendor preview"
-                         th:src="${vendor.imagePath != null ? vendor.imagePath : ''}"
-                         th:style="${vendor.imagePath == null} ? 'display:none;' : ''"
-                         th:attr="data-initial-src=${vendor.imagePath != null ? vendor.imagePath : ''}">
-                    <div class="dropzone__error" data-dropzone-error></div>
-                    <input class="field-input" th:id="'edit-image-' + ${vendor.id}" type="file" name="image" accept="image/*">
-                  </div>
-                  <small class="muted">Upload to replace the current logo.</small>
-                </div>
-                <div class="input-group" th:if="${vendor.imagePath}">
-                  <label class="checkbox-inline">
-                    <input type="checkbox" name="removeImage" value="true"
-                           th:attr="data-dropzone-target=${'dropzone-edit-' + vendor.id}">
-                    <span>Remove current image</span>
-                  </label>
-                </div>
-                <div class="menu-add-actions">
-                  <button class="btn btn-primary" type="submit">Save changes</button>
-                </div>
-              </form>
-            </details>
           </article>
         </div>
       </div>
@@ -657,32 +342,6 @@
     </div>
 
     <aside class="organizer-sidebar">
-      <div class="card form-card">
-        <h3>Onboard vendors</h3>
-        <p class="muted">Add new trucks with optional pickup PINs and hero imagery to help ushers recognise them.</p>
-        <form th:action="@{|/organizer/events/${event.code}/vendors|}" method="post" enctype="multipart/form-data" class="form-grid">
-          <div class="input-group">
-            <label for="vendor-name">Display name</label>
-            <input id="vendor-name" class="field-input" type="text" name="name" placeholder="e.g. BRGR" required>
-          </div>
-          <div class="input-group">
-            <label for="vendor-pin">Pickup PIN</label>
-            <input id="vendor-pin" class="field-input" type="text" name="pin" placeholder="Optional 4-digit pin">
-          </div>
-          <div class="input-group">
-            <label for="vendor-image">Vendor image</label>
-            <div class="dropzone" id="dropzone-new-vendor" data-dropzone data-max-size="5242880">
-              <span class="dropzone__prompt" data-dropzone-prompt>Drag & drop an image, or click to browse</span>
-              <img data-dropzone-preview data-initial-src="" src="" alt="Vendor preview" style="display:none;">
-              <div class="dropzone__error" data-dropzone-error></div>
-              <input id="vendor-image" class="field-input" type="file" name="image" accept="image/*">
-            </div>
-            <small class="muted">PNG or JPG up to 5 MB.</small>
-          </div>
-          <button class="btn btn-primary" type="submit">Add vendor</button>
-        </form>
-      </div>
-
       <div class="card form-card">
         <h3>Import tickets</h3>
         <p class="muted">Bulk-register guests by uploading a CSV or Excel sheet.</p>

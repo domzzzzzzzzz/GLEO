@@ -14,10 +14,22 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   thymeleaf:
     cache: false
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/resources/templates
+    livereload:
+      enabled: true
   servlet:
     multipart:
       max-file-size: 8MB
       max-request-size: 8MB
+    session:
+      timeout: 30d
+      cookie:
+        max-age: 30d
+        http-only: true
+        secure: false
 
 server:
   port: 8080

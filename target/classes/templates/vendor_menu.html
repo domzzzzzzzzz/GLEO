@@ -25,12 +25,14 @@
   <div class="vendor-lock-banner" 
        th:if="${singleVendorLocked}">
     <div class="vendor-lock-banner__content">
-      <strong>Single-vendor cart active</strong>
-      <p th:text="'Your cart already contains items from ' + ${lockedVendorName} + '. Clear your cart to order from this vendor.'">
+      <strong th:text="${oneVendorOnlyPolicy ? 'Single-vendor policy active' : 'Single-vendor cart active'}">Single-vendor restriction</strong>
+      <p th:text="${oneVendorOnlyPolicy ? 
+                    'Your ticket tier only allows ordering from one vendor. You already have items from ' + ${lockedVendorName} + '. Clear your cart to order from this vendor.' :
+                    'Your cart already contains items from ' + ${lockedVendorName} + '. Clear your cart to order from this vendor.'}">
         Your cart already contains items from another vendor. Clear your cart to order from this vendor.
       </p>
       <form th:action="@{|/e/${event.code}/cart/clear|}" method="post">
-        <button type="submit" class="btn btn-outline btn-sm">Clear Cart</button>
+        <button type="submit" class="btn btn-outline btn-sm">Clear Cart & Start Fresh</button>
       </form>
     </div>
   </div>
@@ -113,6 +115,17 @@
       window.setupCartPanel();
     }
     
+    // Show flash messages as toast notifications
+    const successMessage = /*[[${successMessage}]]*/ null;
+    const errorMessage = /*[[${errorMessage}]]*/ null;
+    
+    if (successMessage) {
+      showToast(successMessage, 'success');
+    }
+    if (errorMessage) {
+      showToast(errorMessage, 'error');
+    }
+    
     // Set up vendor status polling
     const statusEl = document.getElementById('vendor-status');
     if (statusEl) {
@@ -192,17 +205,152 @@
       }
     }
     
-    // HTMX event listener for cart panel updates
-    document.addEventListener('htmx:afterSwap', function (event) {
-      if (event.detail && event.detail.target && event.detail.target.id === 'cart-panel') {
-        if (window.setupCartPanel) {
-          window.setupCartPanel();
-        }
+    // Professional Toast notification function
+    function showToast(message, type) {
+      const toast = document.createElement('div');
+      toast.className = 'professional-toast';
+      
+      // Create icon
+      const icon = document.createElement('div');
+      icon.className = 'toast-icon';
+      
+      if (type === 'success') {
+        icon.innerHTML = `
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2"/>
+            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `;
+        toast.style.cssText = `
+          position: fixed;
+          top: 24px;
+          right: 24px;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          padding: 16px 20px;
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 15px;
+          font-weight: 500;
+          z-index: 10000;
+          max-width: 420px;
+          min-width: 280px;
+          animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+          backdrop-filter: blur(10px);
+        `;
+      } else if (type === 'error') {
+        icon.innerHTML = `
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2"/>
+            <path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        `;
+        toast.style.cssText = `
+          position: fixed;
+          top: 24px;
+          right: 24px;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          padding: 16px 20px;
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(239, 68, 68, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 15px;
+          font-weight: 500;
+          z-index: 10000;
+          max-width: 420px;
+          min-width: 280px;
+          animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+          backdrop-filter: blur(10px);
+        `;
       }
-    });
+      
+      // Create message container
+      const messageEl = document.createElement('div');
+      messageEl.className = 'toast-message';
+      messageEl.textContent = message;
+      messageEl.style.cssText = `
+        flex: 1;
+        line-height: 1.5;
+      `;
+      
+      // Create close button
+      const closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '×';
+      closeBtn.style.cssText = `
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+      `;
+      closeBtn.onmouseover = () => closeBtn.style.opacity = '1';
+      closeBtn.onmouseout = () => closeBtn.style.opacity = '0.7';
+      closeBtn.onclick = () => {
+        toast.style.animation = 'toastSlideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+      };
+      
+      toast.appendChild(icon);
+      toast.appendChild(messageEl);
+      toast.appendChild(closeBtn);
+      document.body.appendChild(toast);
+      
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.style.animation = 'toastSlideOut 0.3s ease-out';
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 5000);
+    }
   </script>
 </body>
 <style>
+  @keyframes toastSlideIn {
+    from {
+      transform: translateX(450px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes toastSlideOut {
+    from {
+      transform: translateX(0) scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(450px) scale(0.9);
+      opacity: 0;
+    }
+  }
+  
+  .professional-toast:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+  }
+  
+  .toast-icon svg {
+    display: block;
+  }
+  
   .toast-modern {
     position: fixed;
     left: 50%;

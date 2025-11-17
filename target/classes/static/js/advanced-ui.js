@@ -1,4 +1,4 @@
-// Advanced UI Module
+// Advanced UI Module 
 const AdvancedUI = {
     config: {
         animationDuration: 300,
@@ -17,7 +17,7 @@ const AdvancedUI = {
     init() {
         this.initializeComponents();
         this.setupEventListeners();
-        this.initializeCharts();
+        this.initializeCharts();        updateBulkActions()
         this.initializeAnimations();
     },
 

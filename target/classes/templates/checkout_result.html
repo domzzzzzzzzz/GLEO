@@ -2,214 +2,345 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Order confirmation · GLEO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Order Confirmation · GLEO</title>
   <link href="/css/tailwind.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
-      font-family: "Inter", "Segoe UI", -apple-system, sans-serif;
-      background: linear-gradient(180deg, #f6f7fb 0%, #eef2ff 60%, #f9fafc 100%);
-      color: #0f172a;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #1e293b;
       min-height: 100vh;
-      padding: 32px 16px 56px;
+      padding: 16px;
+      -webkit-font-smoothing: antialiased;
     }
     .confirmation-shell {
-      max-width: 960px;
+      max-width: 480px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 24px;
-    }
-    .confirmation-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
       gap: 16px;
     }
+    
+    /* Header Section */
+    .confirmation-header {
+      background: rgba(255,255,255,0.98);
+      border-radius: 20px;
+      padding: 24px 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      animation: scaleIn 0.3s ease-out;
+    }
+    @keyframes scaleIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
     .confirmation-header h1 {
-      margin: 4px 0;
-      font-size: 2rem;
-      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.03em;
     }
     .confirmation-header p {
       margin: 0;
-      color: #94a3b8;
+      color: #64748b;
       font-size: 0.95rem;
+      line-height: 1.5;
     }
-    .ghost-link {
-      border: 1px solid rgba(148,163,184,0.5);
-      color: #0f172a;
-      padding: 10px 18px;
-      border-radius: 999px;
-      text-decoration: none;
+    
+    /* Back Button */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 24px;
+      margin-top: 16px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
       font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(102,126,234,0.4);
       transition: all 0.2s ease;
+      border: none;
     }
-    .ghost-link:hover {
-      border-color: rgba(79,70,229,0.5);
-      color: #4f46e5;
+    .back-btn:active {
+      transform: scale(0.98);
     }
-  .summary-grid {
+    
+    /* Summary Cards */
+    .summary-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
     .summary-card {
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.98);
       border-radius: 16px;
-      border: 1px solid rgba(148,163,184,0.2);
-      padding: 16px;
-      box-shadow: 0 20px 40px rgba(15,23,42,0.08);
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-    .summary-card span {
-      display:block;
-      font-size:0.85rem;
-      color:#94a3b8;
+    .summary-card .label {
+      display: block;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: 8px;
     }
-    .summary-card strong {
-      display:block;
-      font-size:1.8rem;
-      margin:4px 0;
-  }
-  .orders-card {
-      padding: 24px;
-      border-radius: 24px;
-      background: linear-gradient(120deg, rgba(255,255,255,0.92), rgba(244,246,255,0.95));
-      border: 1px solid rgba(148,163,184,0.18);
-      box-shadow: 0 35px 60px rgba(15,23,42,0.12);
+    .summary-card .value {
+      display: block;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .summary-card .value.green { color: #10b981; }
+    .summary-card .value.red { color: #ef4444; }
+    .summary-card .desc {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+    
+    /* Orders Section */
+    .orders-card {
+      background: rgba(255,255,255,0.98);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     }
     .orders-card h2 {
-      margin: 0 0 18px;
-      font-size: 1.3rem;
+      margin: 0 0 16px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
     }
     .order-row {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:16px;
-      padding:16px 18px;
-      border-radius:16px;
-      border:1px solid rgba(148,163,184,0.25);
-      background:#fff;
-      margin-bottom:12px;
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid #e2e8f0;
     }
-    .order-row:last-child { margin-bottom:0; }
-    .order-info strong {
-      display:block;
-      font-size:1rem;
-      margin-bottom:4px;
+    .order-row:last-child { margin-bottom: 0; }
+    
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
     }
-    .order-info span {
-      display:block;
-      font-size:0.9rem;
-      color:#94a3b8;
-    }
-    .order-info small {
-      font-size:0.85rem;
-      color:#475569;
+    .order-number {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #667eea;
+      text-decoration: none;
     }
     .status-chip {
-      padding:8px 16px;
-      border-radius:999px;
-      font-weight:600;
-      font-size:0.85rem;
-      background:rgba(99,102,241,0.1);
-      color:#4338ca;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
-    .empty-state-pro {
-      text-align:center;
-      padding:40px 20px;
-      border:1px dashed rgba(148,163,184,0.4);
-      border-radius:18px;
-      background:rgba(255,255,255,0.8);
+    .status-chip.new {
+      background: #dbeafe;
+      color: #1e40af;
     }
-    .empty-state-pro h3 { margin:0 0 8px; }
-  .rejected-card {
-      background:#fff;
-      border-radius:20px;
-      border:1px solid rgba(248,113,113,0.4);
-      padding:20px;
-      box-shadow:0 25px 45px rgba(15,23,42,0.08);
+    .status-chip.completed {
+      background: #d1fae5;
+      color: #065f46;
     }
-    .rejected-card h3 { margin:0 0 12px; }
-    .reject-row {
-      display:flex;
-      justify-content:space-between;
-      border-top:1px solid rgba(148,163,184,0.2);
-      padding:12px 0;
-      font-size:0.95rem;
+    
+    .order-vendor {
+      font-size: 0.95rem;
+      color: #475569;
+      margin-bottom: 8px;
+      font-weight: 500;
     }
-    .reject-row:first-child { border-top:none; padding-top:0; }
-    @media (max-width:640px) {
-      .order-row {
-        flex-direction:column;
-        align-items:flex-start;
-      }
-      .status-chip {
-        align-self:flex-start;
+    .order-pickup {
+      font-size: 0.85rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-  }
+    .pickup-status {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .pickup-status.verified { color: #10b981; }
+    .pickup-status.pending { color: #f59e0b; }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 32px 20px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      background: #f8fafc;
+    }
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+    .empty-state h3 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      color: #475569;
+    }
+    .empty-state p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+    
+    /* Rejected Section */
+    .rejected-card {
+      background: rgba(255,255,255,0.98);
+      border-radius: 20px;
+      padding: 20px;
+      border: 2px solid #fee2e2;
+      box-shadow: 0 8px 32px rgba(239,68,68,0.1);
+    }
+    .rejected-card h3 {
+      margin: 0 0 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #dc2626;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .reject-item {
+      background: #fef2f2;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      border-left: 4px solid #ef4444;
+    }
+    .reject-item:last-child { margin-bottom: 0; }
+    .reject-vendor {
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 4px;
+      font-size: 0.95rem;
+    }
+    .reject-reason {
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+    
+    /* Mobile Optimizations */
+    @media (max-width: 480px) {
+      body { padding: 12px; }
+      .confirmation-shell { gap: 12px; }
+      .confirmation-header { padding: 20px 16px; }
+      .confirmation-header h1 { font-size: 1.5rem; }
+      .success-icon { width: 56px; height: 56px; font-size: 28px; }
+      .summary-grid { gap: 10px; }
+      .summary-card { padding: 16px 12px; }
+      .summary-card .value { font-size: 2rem; }
+      .orders-card, .rejected-card { padding: 16px; }
+      .order-row { padding: 14px; }
+    }
   </style>
 </head>
 <body>
 <div class="confirmation-shell">
+  <!-- Header with Success Icon -->
   <header class="confirmation-header">
-    <div>
-      <p>Order confirmation</p>
-      <h1>Orders dispatched</h1>
-      <p>
-        <span th:text="${createdCount} + ' order(s) dispatched'">0 orders dispatched</span>
-        <span th:if="${rejectedCount > 0}" th:text="' · ' + ${rejectedCount} + ' vendor(s) rejected'"> · 0 rejected</span>
-      </p>
-    </div>
-    <a th:href="@{|/e/${#lists.isEmpty(orders) ? eventCode : orders[0].event.code}|}" class="ghost-link">
-      &larr; Back to vendors
+    <div class="success-icon">✓</div>
+    <h1>Orders Dispatched!</h1>
+    <p>
+      <span th:text="${createdCount} + ' order(s) sent successfully'">0 orders dispatched</span>
+      <span th:if="${rejectedCount > 0}" th:text="' · ' + ${rejectedCount} + ' rejected'"> · 0 rejected</span>
+    </p>
+    <a th:href="@{|/e/${#lists.isEmpty(orders) ? eventCode : orders[0].event.code}|}" class="back-btn">
+      ← Back to Vendors
     </a>
   </header>
 
+  <!-- Summary Cards -->
   <section class="summary-grid">
     <div class="summary-card">
-      <span>Dispatched</span>
-      <strong th:text="${createdCount}">0</strong>
-      <small>orders sent to vendors</small>
+      <span class="label">Dispatched</span>
+      <span class="value green" th:text="${createdCount}">0</span>
+      <span class="desc">orders sent</span>
     </div>
     <div class="summary-card">
-      <span>Rejected</span>
-      <strong th:text="${rejectedCount}">0</strong>
-      <small>vendor groups declined</small>
+      <span class="label">Rejected</span>
+      <span class="value red" th:text="${rejectedCount}">0</span>
+      <span class="desc">declined</span>
     </div>
   </section>
 
+  <!-- Orders List -->
   <section class="orders-card">
-    <h2>Orders dispatched</h2>
-    <div th:if="${#lists.isEmpty(orders)}" class="empty-state-pro">
-      <h3>No orders created</h3>
-      <p class="muted">All vendor groups were rejected. Review the reasons below.</p>
+    <h2>Your Orders</h2>
+    
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(orders)}" class="empty-state">
+      <div class="icon">📦</div>
+      <h3>No Orders Created</h3>
+      <p>All vendor groups were rejected</p>
     </div>
+    
+    <!-- Orders List -->
     <div th:if="${!#lists.isEmpty(orders)}">
       <div class="order-row" th:each="order : ${orders}">
-        <div class="order-info">
-          <strong>
-            Order
-            <a th:href="@{|/e/${order.event.code}/orders/${order.id}|}" th:text="'#' + ${order.vendorOrderNumber}">#1</a>
-          </strong>
-          <span th:text="${order.vendor.name}">Vendor name</span>
-          <small>Pickup confirmation:
-            <strong th:text="${order.confirmedByGuest} ? 'Verified' : 'Pending verification'">Pending</strong>
-          </small>
+        <div class="order-header">
+          <a class="order-number" th:href="@{|/e/${order.event.code}/orders/${order.id}|}" 
+             th:text="'Order #' + ${order.vendorOrderNumber}">#1</a>
+          <span class="status-chip" 
+                th:classappend="${order.status == 'COMPLETED'} ? 'completed' : 'new'"
+                th:text="${order.status}">NEW</span>
         </div>
-        <span class="status-chip" th:text="${order.status}">COMPLETED</span>
+        <div class="order-vendor" th:text="${order.vendor.name}">Vendor Name</div>
+        <div class="order-pickup">
+          <span>Pickup:</span>
+          <span class="pickup-status" 
+                th:classappend="${order.confirmedByGuest} ? 'verified' : 'pending'"
+                th:text="${order.confirmedByGuest} ? '✓ Verified' : '⏳ Pending'">
+            Pending
+          </span>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- Rejected Section -->
   <section class="rejected-card" th:if="${!#maps.isEmpty(rejected)}">
-    <h3>Rejected vendor groups</h3>
-    <div class="reject-row" th:each="entry : ${rejected.entrySet()}">
-      <strong th:text="'Vendor ID ' + ${entry.key}">Vendor</strong>
-      <span th:text="${entry.value}">Reason</span>
+    <h3>⚠️ Rejected Orders</h3>
+    <div class="reject-item" th:each="entry : ${rejected.entrySet()}">
+      <div class="reject-vendor" th:text="'Vendor #' + ${entry.key}">Vendor</div>
+      <div class="reject-reason" th:text="${entry.value}">Reason</div>
     </div>
   </section>
 </div>

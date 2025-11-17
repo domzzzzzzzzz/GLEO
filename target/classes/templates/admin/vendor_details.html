@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${vendor.name} + ' - Menu Management'">Vendor Menu</title>
+  <link rel="stylesheet" th:href="@{/css/modern.css}">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --card-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+      --card-hover-shadow: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .vendor-info {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex: 1;
+    }
+
+    .vendor-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .vendor-details h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2rem;
+      color: #1a202c;
+    }
+
+    .vendor-meta {
+      display: flex;
+      gap: 1.5rem;
+      color: #718096;
+      font-size: 0.95rem;
+    }
+
+    .vendor-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-badge.inactive {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 0.95rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+
+    .btn-secondary:hover {
+      background: #f7fafc;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 2rem;
+    }
+
+    .menu-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--card-shadow);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #1a202c;
+    }
+
+    .menu-list {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .menu-item-card {
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      gap: 1.25rem;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .menu-item-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    }
+
+    .menu-item-image {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .menu-item-image-placeholder {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a0aec0;
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+
+    .menu-item-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .menu-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+    }
+
+    .menu-item-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1a202c;
+      margin: 0;
+    }
+
+    .menu-item-price {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .menu-item-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.875rem;
+      color: #718096;
+    }
+
+    .category-tag {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background: #e6fffa;
+      color: #234e52;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .category-group {
+      margin-bottom: 2.5rem;
+    }
+    
+    .category-group:last-child {
+      margin-bottom: 0;
+    }
+    
+    .category-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.875rem;
+      border-bottom: 3px solid #f1f5f9;
+    }
+    
+    .category-group-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+    
+    .category-group-title::before {
+      content: '🏷️';
+      font-size: 1.5rem;
+    }
+    
+    .category-count {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #667eea;
+      background: linear-gradient(135deg, #f0f4ff, #e9ecff);
+      padding: 0.375rem 0.875rem;
+      border-radius: 20px;
+      border: 2px solid #dbe4ff;
+    }
+
+    .menu-item-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .btn-icon {
+      padding: 0.5rem;
+      border: none;
+      background: transparent;
+      color: #718096;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: #edf2f7;
+      color: #667eea;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .add-menu-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--card-shadow);
+    }
+
+    .add-menu-card h3 {
+      margin: 0 0 1.5rem 0;
+      font-size: 1.25rem;
+      color: #1a202c;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #4a5568;
+      font-size: 0.875rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .category-input:focus {
+      border-color: #764ba2;
+      box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+    }
+    
+    .category-input::placeholder {
+      color: #a0aec0;
+      font-weight: 400;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input-wrapper input[type=file] {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      border: 2px dashed #cbd5e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #718096;
+      font-size: 0.875rem;
+    }
+
+    .file-input-label:hover {
+      border-color: #667eea;
+      color: #667eea;
+      background: #f7fafc;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #a0aec0;
+    }
+
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    @media (max-width: 1024px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        order: -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="vendor-info">
+        <img th:if="${vendor.imagePath}" 
+             th:src="${vendor.imagePath}" 
+             th:alt="${vendor.name}" 
+             class="vendor-logo">
+        <div th:unless="${vendor.imagePath}" class="vendor-logo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: bold;">
+          <span th:text="${#strings.substring(vendor.name, 0, 1)}">V</span>
+        </div>
+        
+        <div class="vendor-details">
+          <h1 th:text="${vendor.name}">Vendor Name</h1>
+          <div class="vendor-meta">
+            <span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM4.5 7.5a.5.5 0 0 1 0-1h1a.5.5 0 0 1 0 1h-1zm5.5 0a.5.5 0 0 1 0-1h1a.5.5 0 0 1 0 1h-1z"/>
+              </svg>
+              PIN: <strong th:text="${vendor.pinPlain}">1234</strong>
+            </span>
+            <span class="status-badge" th:classappend="${vendor.active} ? '' : 'inactive'" 
+                  th:text="${vendor.active} ? 'Active' : 'Archived'">Active</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <a th:href="@{/admin/events/{code}/vendors(code=${event.code})}" class="btn btn-secondary">
+          ← Back to Vendors
+        </a>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="content-grid">
+      <!-- Menu Items List -->
+      <div class="menu-section">
+        <div class="section-header">
+          <h2>Menu Items</h2>
+          <span style="color: #718096; font-size: 0.95rem;" th:text="${menuItems != null ? menuItems.size() : 0} + ' items'">0 items</span>
+        </div>
+
+        <!-- Grouped by Category -->
+        <div th:if="${itemsByCategory != null && !itemsByCategory.isEmpty()}">
+          <div th:each="categoryEntry : ${itemsByCategory}" class="category-group">
+            <div class="category-group-header">
+              <h3 class="category-group-title" th:text="${categoryEntry.key}">Category Name</h3>
+              <span class="category-count" th:text="${categoryEntry.value.size()} + ' items'">0 items</span>
+            </div>
+            
+            <div class="menu-list">
+              <div class="menu-item-card" th:each="item : ${categoryEntry.value}">
+                <img th:if="${item.imagePath}" 
+                     th:src="${item.imagePath}" 
+                     th:alt="${item.name}" 
+                     class="menu-item-image">
+                <div th:unless="${item.imagePath}" class="menu-item-image-placeholder">
+                  <svg width="32" height="32" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm5.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                  </svg>
+                </div>
+
+                <div class="menu-item-content">
+                  <div class="menu-item-header">
+                    <h3 class="menu-item-name" th:text="${item.name}">Item Name</h3>
+                    <span class="menu-item-price" th:text="${#numbers.formatDecimal(item.price, 1, 'DEFAULT', 2, 'DEFAULT')} + ' EGP'">0.00 EGP</span>
+                  </div>
+
+                  <div class="menu-item-meta">
+                    <span th:if="${item.maxPerOrder}">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: text-bottom;">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"/>
+                      </svg>
+                      Max: <span th:text="${item.maxPerOrder}">10</span> per order
+                    </span>
+                    <span th:classappend="${item.available} ? '' : 'text-danger'">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: text-bottom;">
+                        <path th:if="${item.available}" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                        <path th:unless="${item.available}" d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                      </svg>
+                      <span th:text="${item.available} ? 'Available' : 'Unavailable'">Available</span>
+                    </span>
+                  </div>
+
+                  <div class="menu-item-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="editMenuItem(this)" 
+                            th:attr="data-id=${item.id}, data-name=${item.name}, data-price=${item.price}, data-category=${item.category}, data-max=${item.maxPerOrder}, data-available=${item.available}">
+                      Edit
+                    </button>
+                    <form th:action="@{/admin/events/{code}/vendors/{vid}/menu/{mid}/delete(code=${event.code}, vid=${vendor.id}, mid=${item.id})}" 
+                          method="post" style="display: inline;">
+                      <button type="submit" class="btn-icon" onclick="return confirm('Delete this menu item?');" title="Delete">
+                        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                          <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" th:if="${menuItems == null || menuItems.isEmpty()}">
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M3 2.5a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0v.006c0 .07 0 .27-.038.494H15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 14.5V7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2.038A2.968 2.968 0 0 1 3 2.506V2.5zm1.068.5H7v-.5a1.5 1.5 0 1 0-3 0c0 .085.002.274.045.43a.522.522 0 0 0 .023.07zM9 3h2.932a.56.56 0 0 0 .023-.07c.043-.156.045-.345.045-.43a1.5 1.5 0 0 0-3 0V3zM1 4v2h6V4H1zm8 0v2h6V4H9zm5 3H9v8h4.5a.5.5 0 0 0 .5-.5V7zm-7 8V7H2v7.5a.5.5 0 0 0 .5.5H7z"/>
+          </svg>
+          <p>No menu items yet</p>
+          <small>Add your first menu item using the form</small>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <!-- Add Menu Item Form -->
+        <div class="add-menu-card">
+          <h3>Add Menu Item</h3>
+          <form th:action="@{/admin/events/{code}/vendors/{vid}/menu/add(code=${event.code}, vid=${vendor.id})}" 
+                method="post" enctype="multipart/form-data">
+            
+            <div class="form-group">
+              <label for="name">Item Name *</label>
+              <input type="text" id="name" name="name" class="form-control" required placeholder="e.g. Cheeseburger">
+            </div>
+
+            <div class="form-group">
+              <label for="price">Price (EGP) *</label>
+              <input type="number" id="price" name="price" class="form-control" step="0.01" min="0" required placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+              <label for="category" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #2d3748; margin-bottom: 0.75rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+                Category
+              </label>
+              <div style="position: relative;">
+                <input type="text" id="category" name="category" class="form-control category-input" 
+                       placeholder="e.g. Burgers, Drinks, Sides, Desserts"
+                       list="category-suggestions"
+                       style="padding-left: 2.75rem; font-weight: 500;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0aec0" stroke-width="2" 
+                     style="position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none;">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+                <datalist id="category-suggestions">
+                  <option value="Burgers">🍔 Burgers</option>
+                  <option value="Sides">🍟 Sides</option>
+                  <option value="Drinks">🥤 Drinks</option>
+                  <option value="Soft Drinks">🥤 Soft Drinks</option>
+                  <option value="Desserts">🍰 Desserts</option>
+                  <option value="Appetizers">🥗 Appetizers</option>
+                  <option value="Main Course">🍽️ Main Course</option>
+                  <option value="Sandwiches">🥪 Sandwiches</option>
+                  <option value="Pizza">🍕 Pizza</option>
+                  <option value="Salads">🥗 Salads</option>
+                </datalist>
+              </div>
+              <small style="color: #718096; font-size: 0.8rem; display: block; margin-top: 0.5rem; line-height: 1.4;">
+                💡 Categories help organize items and enable tier-based restrictions
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="maxPerOrder">Max Per Order</label>
+              <input type="number" id="maxPerOrder" name="maxPerOrder" class="form-control" min="1" placeholder="Optional">
+            </div>
+
+            <div class="form-group">
+              <label>Item Image</label>
+              <div class="file-input-wrapper">
+                <input type="file" id="image" name="image" accept="image/*">
+                <label for="image" class="file-input-label">
+                  <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                    <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                  </svg>
+                  Choose image (optional)
+                </label>
+              </div>
+              <small style="color: #718096; font-size: 0.8rem; display: block; margin-top: 0.5rem;">PNG, JPG up to 5MB</small>
+            </div>
+
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="available" value="true" checked>
+                <span>Available for orders</span>
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              Add Menu Item
+            </button>
+          </form>
+        </div>
+
+        <!-- Edit Form (Hidden by default) -->
+        <div class="add-menu-card" id="editForm" style="display: none;">
+          <h3>Edit Menu Item</h3>
+          <form id="editFormElement" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="itemId" id="edit_itemId">
+            
+            <div class="form-group">
+              <label for="edit_name">Item Name *</label>
+              <input type="text" id="edit_name" name="name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+              <label for="edit_price">Price (EGP) *</label>
+              <input type="number" id="edit_price" name="price" class="form-control" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label for="edit_category" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #2d3748; margin-bottom: 0.75rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+                Category
+              </label>
+              <div style="position: relative;">
+                <input type="text" id="edit_category" name="category" class="form-control category-input"
+                       placeholder="e.g. Burgers, Drinks, Sides, Desserts"
+                       list="category-suggestions-edit"
+                       style="padding-left: 2.75rem; font-weight: 500;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a0aec0" stroke-width="2" 
+                     style="position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none;">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+                <datalist id="category-suggestions-edit">
+                  <option value="Burgers">🍔 Burgers</option>
+                  <option value="Sides">🍟 Sides</option>
+                  <option value="Drinks">🥤 Drinks</option>
+                  <option value="Soft Drinks">🥤 Soft Drinks</option>
+                  <option value="Desserts">🍰 Desserts</option>
+                  <option value="Appetizers">🥗 Appetizers</option>
+                  <option value="Main Course">🍽️ Main Course</option>
+                  <option value="Sandwiches">🥪 Sandwiches</option>
+                  <option value="Pizza">🍕 Pizza</option>
+                  <option value="Salads">🥗 Salads</option>
+                </datalist>
+              </div>
+              <small style="color: #718096; font-size: 0.8rem; display: block; margin-top: 0.5rem; line-height: 1.4;">
+                💡 Categories help organize items and enable tier-based restrictions
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="edit_maxPerOrder">Max Per Order</label>
+              <input type="number" id="edit_maxPerOrder" name="maxPerOrder" class="form-control" min="1">
+            </div>
+
+            <div class="form-group">
+              <label>Replace Image</label>
+              <div class="file-input-wrapper">
+                <input type="file" id="edit_image" name="image" accept="image/*">
+                <label for="edit_image" class="file-input-label">
+                  <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                    <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                  </svg>
+                  Choose new image
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="available" id="edit_available" value="true">
+                <span>Available for orders</span>
+              </label>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem;">
+              <button type="submit" class="btn btn-primary" style="flex: 1;">
+                Save Changes
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // File input display name
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+      input.addEventListener('change', function() {
+        const label = this.nextElementSibling;
+        if (this.files.length > 0) {
+          label.textContent = this.files[0].name;
+        }
+      });
+    });
+
+    // Edit menu item
+    function editMenuItem(btn) {
+      const id = btn.getAttribute('data-id');
+      const name = btn.getAttribute('data-name');
+      const price = btn.getAttribute('data-price');
+      const category = btn.getAttribute('data-category');
+      const maxOrder = btn.getAttribute('data-max');
+      const available = btn.getAttribute('data-available') === 'true';
+
+      document.getElementById('edit_itemId').value = id;
+      document.getElementById('edit_name').value = name;
+      document.getElementById('edit_price').value = price;
+      document.getElementById('edit_category').value = category || '';
+      document.getElementById('edit_maxPerOrder').value = maxOrder || '';
+      document.getElementById('edit_available').checked = available;
+
+      const eventCode = new URL(window.location.href).pathname.split('/')[3];
+      const vendorId = new URL(window.location.href).pathname.split('/')[5];
+      document.getElementById('editFormElement').action = `/admin/events/${eventCode}/vendors/${vendorId}/menu/${id}/edit`;
+
+      document.getElementById('editForm').style.display = 'block';
+      document.getElementById('editForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function cancelEdit() {
+      document.getElementById('editForm').style.display = 'none';
+      document.getElementById('editFormElement').reset();
+    }
+  </script>
+</body>
+</html>

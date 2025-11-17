@@ -53,17 +53,16 @@ public class DataLoader implements CommandLineRunner {
         ensureTierPolicy(event, TierCode.VIP, true, null);
         ensureTierPolicy(event, TierCode.REG, false, 1);
 
-        ensureMenuItem(v1, "Smash BRGR");
-        ensureMenuItem(v1, "Truffle Fries");
-        ensureMenuItem(v1, "Loaded Chicken Strips");
+        ensureMenuItem(v1, "Smash BRGR", "Burgers");
+        ensureMenuItem(v1, "Truffle Fries", "Sides");
 
-        ensureMenuItem(v2, "Desouky Street Pizza");
-        ensureMenuItem(v2, "Creamy Macarona Bechamel");
-        ensureMenuItem(v2, "Desouky Liver Sandwich");
+        ensureMenuItem(v2, "Desouky Street Pizza", "Burgers");
+        ensureMenuItem(v2, "Creamy Macarona Bechamel", "Sides");
+        ensureMenuItem(v2, "Desouky Liver Sandwich", "Burgers");
 
-        ensureMenuItem(v3, "Signature Cappuccino");
-        ensureMenuItem(v3, "Cold Brew Tonic");
-        ensureMenuItem(v3, "Hazelnut Latte");
+        ensureMenuItem(v3, "Signature Cappuccino", "Drinks");
+        ensureMenuItem(v3, "Cold Brew Tonic", "Drinks");
+        ensureMenuItem(v3, "Hazelnut Latte", "Drinks");
 
         ensureTicket(event, "VIP-001", TierCode.VIP, "VIP Guest", "01000000001", "S-VIP-1");
         ensureTicket(event, "REG-001", TierCode.REG, "REG Guest", "01000000002", "S-REG-1");
@@ -143,24 +142,26 @@ public class DataLoader implements CommandLineRunner {
         return vendorRepo.save(vendor);
     }
 
-    private void ensureMenuItem(Vendor vendor, String name) {
+    private void ensureMenuItem(Vendor vendor, String name, String category) {
         var existingItems = menuItemRepo.findByVendorAndNameIgnoreCase(vendor, name);
         if (existingItems.isEmpty()) {
             MenuItem item = new MenuItem();
             item.setVendor(vendor);
             item.setName(name);
+            item.setCategory(category);
             item.setPrice(BigDecimal.ZERO);
             item.setAvailable(true);
             menuItemRepo.save(item);
             return;
         }
         MenuItem primary = existingItems.get(0);
-        updateMenuItem(primary, vendor, name);
+        updateMenuItem(primary, vendor, name, category);
     }
 
-    private MenuItem updateMenuItem(MenuItem item, Vendor vendor, String name) {
+    private MenuItem updateMenuItem(MenuItem item, Vendor vendor, String name, String category) {
         item.setVendor(vendor);
         item.setName(name);
+        item.setCategory(category);
         if (item.getPrice() == null) {
             item.setPrice(BigDecimal.ZERO);
         }
@@ -177,6 +178,12 @@ public class DataLoader implements CommandLineRunner {
         });
         policy.setUnlimited(unlimited);
         policy.setMaxItemsPerVendor(unlimited ? null : maxItemsPerVendor);
+        
+        // Lock REG tier to ONE vendor only
+        if (tierCode == TierCode.REG) {
+            policy.setOneVendorOnly(true);
+        }
+        
         tierPolicyRepo.save(policy);
     }
 
@@ -187,12 +194,16 @@ public class DataLoader implements CommandLineRunner {
             t.setActive(true);
             return t;
         });
+        
+        // Only update basic fields, preserve boundDeviceHash if already set
         ticket.setEvent(event);
         ticket.setTierCode(tierCode);
         ticket.setHolderName(holderName);
         ticket.setHolderPhone(holderPhone);
         ticket.setSerial(serial);
         ticket.setActive(true);
+        // DO NOT reset boundDeviceHash - it should persist across restarts
+        
         ticketRepo.save(ticket);
     }
 
@@ -200,9 +211,10 @@ public class DataLoader implements CommandLineRunner {
         UserAccount user = userAccountRepo.findByUsername(username).orElseGet(() -> {
             UserAccount u = new UserAccount();
             u.setUsername(username);
+            u.setPassword(passwordEncoder.encode(rawPassword));
             return u;
         });
-        user.setPassword(passwordEncoder.encode(rawPassword));
+        // Don't re-encode password on every startup - only set if user is new
         return user;
     }
 

@@ -73,6 +73,17 @@ public class OrganizerEventController {
         this.userAccountRepo = userAccountRepo;
     }
 
+    @GetMapping("/{eventCode}")
+    public String manageVendors(@PathVariable String eventCode, org.springframework.ui.Model model) {
+        Event event = policyService.get(eventCode);
+        List<Vendor> vendors = vendorRepo.findByEvent(event);
+        
+        model.addAttribute("event", event);
+        model.addAttribute("vendors", vendors);
+        
+        return "dashboard/vendor_management";
+    }
+
     @PostMapping("/{eventCode}/vendors")
     public String addVendor(@PathVariable String eventCode,
                             @RequestParam String name,

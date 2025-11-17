@@ -27,8 +27,8 @@ public class TicketService {
             return Optional.empty();
         }
         String normalized = sanitizeDeviceHash(deviceHash);
-        return ticketRepo.findByEvent_CodeAndBoundDeviceHash(eventCode, deviceHash)
-                .or(() -> ticketRepo.findByEvent_CodeAndBoundDeviceHash(eventCode, normalized));
+        return ticketRepo.findFirstByEvent_CodeAndBoundDeviceHash(eventCode, deviceHash)
+                .or(() -> ticketRepo.findFirstByEvent_CodeAndBoundDeviceHash(eventCode, normalized));
     }
 
     public Optional<Ticket> findTicketByIdAndEvent(Long ticketId, String eventCode) {
@@ -87,5 +87,15 @@ public class TicketService {
             normalized = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         }
         return normalized;
+    }
+    
+    /**
+     * Get ticket by QR code for authentication lookup
+     */
+    public Optional<Ticket> getTicketByQrCode(String qrCode) {
+        if (qrCode == null || qrCode.isBlank()) {
+            return Optional.empty();
+        }
+        return ticketRepo.findByQrCode(qrCode.trim());
     }
 }
