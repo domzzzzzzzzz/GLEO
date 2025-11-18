@@ -17,7 +17,10 @@ const AdvancedUI = {
     init() {
         this.initializeComponents();
         this.setupEventListeners();
-        this.initializeCharts();        updateBulkActions()
+        this.initializeCharts();
+        if (typeof updateBulkActions === 'function') {
+            updateBulkActions();
+        }
         this.initializeAnimations();
     },
 

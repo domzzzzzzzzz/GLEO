@@ -47,9 +47,14 @@
       </svg>
       <span th:text="${successMessage}">Item added to cart!</span>
     </div>
+    <div th:if="${errorMessage}" class="toast-modern toast-error animate-in">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="10" fill="#ef4444"/>
+        <path d="M10 6v4m0 4h.01" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <span th:text="${errorMessage}">Policy blocked this action.</span>
+    </div>
   </div>
-
-  <div id="toast-region"></div>
 
   <div class="vendor-photo vendor-photo--hero"
        th:classappend="${vendor.imagePath} == null ? ' vendor-photo--empty' : ''">
@@ -370,6 +375,10 @@
     min-width: 220px;
     max-width: 90vw;
     animation: toastIn 0.35s cubic-bezier(0.4,0,0.2,1), toastOut 0.45s cubic-bezier(0.4,0,0.2,1) 2.5s forwards;
+  }
+  .toast-modern.toast-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 8px 32px rgba(239,68,68,0.25);
   }
   .toast-modern svg {
     flex-shrink: 0;

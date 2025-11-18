@@ -6,8 +6,10 @@ import com.fbcorp.gleo.domain.TierCode;
 import com.fbcorp.gleo.repo.TicketRepo;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -97,5 +99,45 @@ public class TicketService {
             return Optional.empty();
         }
         return ticketRepo.findByQrCode(qrCode.trim());
+    }
+
+    public record QrValidationResult(boolean valid, String reason) {}
+
+    /**
+     * Validate a QR code for entry without binding it to a session yet.
+     * @param eventCode Event code context
+     * @param qrCode Raw QR payload
+     * @param markUsed Whether to mark the ticket as checked-in when valid
+     * @return validation result with failure reason (if any)
+     */
+    public QrValidationResult validateQrCodeForEntry(String eventCode, String qrCode, boolean markUsed) {
+        if (!StringUtils.hasText(qrCode)) {
+            return new QrValidationResult(false, "QR code is missing.");
+        }
+
+        Event event = policyService.get(eventCode);
+        Optional<Ticket> ticketOpt = ticketRepo.findByQrCode(qrCode.trim());
+        if (ticketOpt.isEmpty()) {
+            return new QrValidationResult(false, "Ticket not found.");
+        }
+
+        Ticket ticket = ticketOpt.get();
+        if (!ticket.getEvent().getId().equals(event.getId())) {
+            return new QrValidationResult(false, "Ticket not valid for this event.");
+        }
+        if (!ticket.isActive()) {
+            return new QrValidationResult(false, "Ticket is inactive.");
+        }
+        if (ticket.isCheckedIn()) {
+            return new QrValidationResult(false, "Ticket already used.");
+        }
+
+        if (markUsed) {
+            ticket.setCheckedIn(true);
+            ticket.setCheckedInAt(LocalDateTime.now());
+            ticketRepo.save(ticket);
+        }
+
+        return new QrValidationResult(true, null);
     }
 }

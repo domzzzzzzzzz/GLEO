@@ -548,7 +548,8 @@ public class AdminEventController {
                                    @RequestParam(required = false, defaultValue = "false") boolean oneItemPerCategory,
                                    @RequestParam(required = false) Map<String, String> allParams,
                                    RedirectAttributes redirectAttributes){
-        boolean unlimited = "unlimited".equalsIgnoreCase(accessMode);
+        String normalizedMode = accessMode == null ? "unlimited" : accessMode.trim().toLowerCase();
+        boolean unlimited = "unlimited".equals(normalizedMode);
         
         // Extract category limits from form parameters FIRST
         Map<String, Integer> categoryLimits = new HashMap<>();
@@ -569,6 +570,12 @@ public class AdminEventController {
             }
         }
         
+        if (unlimited) {
+            oneVendorOnly = false;
+            oneItemPerCategory = false;
+            categoryLimits.clear();
+        }
+
         // Validation: If not unlimited AND no category limits are set, then maxItemsPerVendor is required
         if (!unlimited && categoryLimits.isEmpty()) {
             if (maxItemsPerVendor == null || maxItemsPerVendor < 1) {

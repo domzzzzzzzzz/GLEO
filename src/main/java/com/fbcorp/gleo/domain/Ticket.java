@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity @Getter @Setter
 @Table(name="tickets")
 public class Ticket {
@@ -25,6 +27,12 @@ public class Ticket {
 
     private String boundDeviceHash; // nullable; first device bind
     private boolean active = true;
+
+    @Column(name = "checked_in", nullable = false)
+    private boolean checkedIn = false;
+
+    @Column(name = "checked_in_at")
+    private LocalDateTime checkedInAt;
 
     public boolean isRegular(){
         return tierCode == TierCode.REG;

@@ -1,13 +1,14 @@
 package com.fbcorp.gleo.config;
 
 import com.fbcorp.gleo.service.security.CustomUserDetailsService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -74,6 +75,16 @@ public class SecurityConfig {
             .logoutSuccessUrl("/login")
             .deleteCookies("JSESSIONID", "remember-me")
             .permitAll()
+        )
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint((request, response, authException) -> response.sendRedirect("/login"))
+            .accessDeniedHandler((request, response, accessDeniedException) -> {
+                HttpSession session = request.getSession(false);
+                if (session != null) {
+                    session.invalidate();
+                }
+                response.sendRedirect("/login?denied");
+            })
         )
                 .authenticationProvider(authenticationProvider())
                 // Remove httpBasic to prevent browser sign-in popup for guests

@@ -3,6 +3,7 @@ package com.fbcorp.gleo.web;
 import com.fbcorp.gleo.domain.Event;
 import com.fbcorp.gleo.domain.Ticket;
 import com.fbcorp.gleo.domain.TierCode;
+import com.fbcorp.gleo.repo.OrderRepo;
 import com.fbcorp.gleo.repo.TicketRepo;
 import com.fbcorp.gleo.service.EventPolicyService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,11 +22,14 @@ public class AdminTicketController {
 
     private final EventPolicyService policyService;
     private final TicketRepo ticketRepo;
+    private final OrderRepo orderRepo;
 
     public AdminTicketController(EventPolicyService policyService,
-                                 TicketRepo ticketRepo) {
+                                 TicketRepo ticketRepo,
+                                 OrderRepo orderRepo) {
         this.policyService = policyService;
         this.ticketRepo = ticketRepo;
+        this.orderRepo = orderRepo;
     }
 
     @GetMapping
@@ -104,7 +108,19 @@ public class AdminTicketController {
     public String deleteTicket(@PathVariable String eventCode,
                                @PathVariable Long ticketId,
                                RedirectAttributes redirectAttributes) {
-        ticketRepo.deleteById(ticketId);
+        Ticket ticket = ticketRepo.findById(ticketId).orElse(null);
+        if (ticket == null) {
+            redirectAttributes.addFlashAttribute("toastError", "Ticket not found.");
+            return "redirect:/admin/events/" + eventCode + "/tickets";
+        }
+
+        if (orderRepo.existsByTicket_Id(ticketId)) {
+            redirectAttributes.addFlashAttribute("toastError",
+                    "Cannot delete ticket. There are existing orders linked to this QR.");
+            return "redirect:/admin/events/" + eventCode + "/tickets";
+        }
+
+        ticketRepo.delete(ticket);
         redirectAttributes.addFlashAttribute("toastMessage", "Ticket deleted successfully");
         return "redirect:/admin/events/" + eventCode + "/tickets";
     }

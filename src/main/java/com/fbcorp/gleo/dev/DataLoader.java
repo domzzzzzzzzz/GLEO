@@ -2,6 +2,7 @@ package com.fbcorp.gleo.dev;
 
 import com.fbcorp.gleo.domain.*;
 import com.fbcorp.gleo.repo.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -19,12 +20,14 @@ public class DataLoader implements CommandLineRunner {
     private final RoleRepo roleRepo;
     private final UserAccountRepo userAccountRepo;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final boolean seedDemoTickets;
 
     public DataLoader(EventRepo eventRepo, VendorRepo vendorRepo,
                       MenuItemRepo menuItemRepo, TicketRepo ticketRepo,
                       TierPolicyRepo tierPolicyRepo,
                       RoleRepo roleRepo, UserAccountRepo userAccountRepo,
-                      org.springframework.security.crypto.password.PasswordEncoder passwordEncoder){
+                      org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+                      @Value("${gleo.seed-demo-tickets:false}") boolean seedDemoTickets){
         this.eventRepo = eventRepo;
         this.vendorRepo = vendorRepo;
         this.menuItemRepo = menuItemRepo;
@@ -33,6 +36,7 @@ public class DataLoader implements CommandLineRunner {
         this.roleRepo = roleRepo;
         this.userAccountRepo = userAccountRepo;
         this.passwordEncoder = passwordEncoder;
+        this.seedDemoTickets = seedDemoTickets;
     }
 
     @Override
@@ -64,8 +68,10 @@ public class DataLoader implements CommandLineRunner {
         ensureMenuItem(v3, "Cold Brew Tonic", "Drinks");
         ensureMenuItem(v3, "Hazelnut Latte", "Drinks");
 
-        ensureTicket(event, "VIP-001", TierCode.VIP, "VIP Guest", "01000000001", "S-VIP-1");
-        ensureTicket(event, "REG-001", TierCode.REG, "REG Guest", "01000000002", "S-REG-1");
+        if (seedDemoTickets) {
+            ensureTicket(event, "VIP-001", TierCode.VIP, "VIP Guest", "01000000001", "S-VIP-1");
+            ensureTicket(event, "REG-001", TierCode.REG, "REG Guest", "01000000002", "S-REG-1");
+        }
 
         Role adminRole = ensureRole("ADMIN");
         Role organizerRole = ensureRole("ORGANIZER");
@@ -170,21 +176,23 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private void ensureTierPolicy(Event event, TierCode tierCode, boolean unlimited, Integer maxItemsPerVendor) {
-        TierPolicy policy = tierPolicyRepo.findByEventAndTierCode(event, tierCode).orElseGet(() -> {
-            TierPolicy tp = new TierPolicy();
-            tp.setEvent(event);
-            tp.setTierCode(tierCode);
-            return tp;
+        tierPolicyRepo.findByEventAndTierCode(event, tierCode).ifPresentOrElse(existing -> {
+            // Keep whatever restrictions the organizer configured previously; only ensure it belongs to this event.
+            if (!event.equals(existing.getEvent())) {
+                existing.setEvent(event);
+                tierPolicyRepo.save(existing);
+            }
+        }, () -> {
+            TierPolicy policy = new TierPolicy();
+            policy.setEvent(event);
+            policy.setTierCode(tierCode);
+            policy.setUnlimited(unlimited);
+            policy.setMaxItemsPerVendor(unlimited ? null : maxItemsPerVendor);
+            if (tierCode == TierCode.REG) {
+                policy.setOneVendorOnly(true);
+            }
+            tierPolicyRepo.save(policy);
         });
-        policy.setUnlimited(unlimited);
-        policy.setMaxItemsPerVendor(unlimited ? null : maxItemsPerVendor);
-        
-        // Lock REG tier to ONE vendor only
-        if (tierCode == TierCode.REG) {
-            policy.setOneVendorOnly(true);
-        }
-        
-        tierPolicyRepo.save(policy);
     }
 
     private void ensureTicket(Event event, String qrCode, TierCode tierCode, String holderName, String holderPhone, String serial) {
