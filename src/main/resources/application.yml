@@ -30,10 +30,15 @@ spring:
         max-age: 30d
         http-only: true
         secure: false
+  mvc:
+    throw-exception-if-no-handler-found: true
 
 server:
   port: 8080
   address: 0.0.0.0
+  error:
+    whitelabel:
+      enabled: false
 
 logging:
   level:

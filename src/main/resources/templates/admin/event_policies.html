@@ -136,6 +136,138 @@
       border-radius: 10px;
       padding: 6px 8px;
     }
+    .promo-card {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .promo-manager {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .promo-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .promo-form .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .promo-form input,
+    .promo-form select,
+    .promo-form textarea {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      background: #f8fafc;
+    }
+    .promo-form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+    }
+    .promo-form button {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 22px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(99,102,241,0.25);
+    }
+    .promo-form button:hover {
+      opacity: 0.95;
+    }
+    .promo-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .promo-table th,
+    .promo-table td {
+      padding: 12px 8px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    .promo-table th {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #94a3b8;
+    }
+    .promo-code-label {
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+    }
+    .promo-discount {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .promo-desc {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .status-chip.active {
+      background: rgba(16,185,129,0.2);
+      color: #047857;
+    }
+    .status-chip.inactive {
+      background: rgba(248,113,113,0.2);
+      color: #b91c1c;
+    }
+    .promo-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .promo-actions form {
+      margin: 0;
+    }
+    .promo-actions button {
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid transparent;
+      background: #f1f5f9;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .promo-actions button.toggle {
+      border-color: #c7d2fe;
+      color: #4338ca;
+      background: white;
+    }
+    .promo-actions button.toggle:hover {
+      background: rgba(99,102,241,0.08);
+    }
+    .promo-actions button.danger {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+    @media (max-width: 640px) {
+      .promo-form {
+        grid-template-columns: 1fr;
+      }
+      .promo-actions {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
@@ -179,6 +311,94 @@
         <button class="btn btn-primary" type="submit">Save checkout rules</button>
       </div>
     </form>
+  </div>
+
+  <div class="card promo-card">
+    <div>
+      <h3 style="margin:0;">Promo codes</h3>
+      <p class="muted">Generate discount codes that guests can redeem in the cart.</p>
+    </div>
+    <div class="promo-manager">
+      <form th:action="@{|/admin/events/${event.code}/promo-codes|}" method="post" class="promo-form">
+        <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <div class="input-group">
+          <label for="promo-code-input">Code</label>
+          <input id="promo-code-input" name="code" type="text" placeholder="SAVE10" maxlength="32" required>
+        </div>
+        <div class="input-group">
+          <label for="promo-type">Discount type</label>
+          <select id="promo-type" name="discountType">
+            <option value="AMOUNT">Flat amount</option>
+            <option value="PERCENTAGE">Percentage</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="promo-value">Value</label>
+          <input id="promo-value" name="discountValue" type="number" min="0" step="0.01" placeholder="10" required>
+          <small class="muted">Use currency units for flat discounts or 0-100 for %.</small>
+        </div>
+        <div class="input-group">
+          <label for="promo-description">Notes (optional)</label>
+          <textarea id="promo-description" name="description" rows="1" placeholder="e.g. Influencer drop"></textarea>
+        </div>
+        <div class="input-group" style="flex-direction:row;align-items:center;gap:8px;margin-top:6px;">
+          <input type="checkbox" id="promo-active" name="active" checked>
+          <label for="promo-active" style="margin:0;">Start active</label>
+        </div>
+        <div class="promo-form-actions">
+          <button type="submit">Add promo code</button>
+        </div>
+      </form>
+      <div>
+        <table class="promo-table" th:if="${promoCodes != null and !promoCodes.isEmpty()}">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Discount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="promo : ${promoCodes}">
+              <td>
+                <div class="promo-code-label" th:text="${promo.code}">SAVE10</div>
+                <div class="promo-desc" th:if="${promo.description}" th:text="${promo.description}">Influencer drop</div>
+              </td>
+              <td>
+                <div class="promo-discount"
+                     th:text="${promo.discountType == T(com.fbcorp.gleo.domain.PromoCode$DiscountType).PERCENTAGE ? #numbers.formatDecimal(promo.discountValue, 1, 'DEFAULT', 2, 'DEFAULT') + '% discount' :
+                               #numbers.formatDecimal(promo.discountValue, 1, 'DEFAULT', 2, 'DEFAULT') + ' flat off'}">
+                  10% discount
+                </div>
+                <small class="muted"
+                       th:text="${promo.discountType == T(com.fbcorp.gleo.domain.PromoCode$DiscountType).PERCENTAGE ? 'Percentage' : 'Flat amount'}">
+                  Percentage
+                </small>
+              </td>
+              <td>
+                <span class="status-chip" th:classappend="${promo.active} ? ' active' : ' inactive'"
+                      th:text="${promo.active ? 'Active' : 'Disabled'}">Active</span>
+              </td>
+              <td class="promo-actions">
+                <form th:action="@{|/admin/events/${event.code}/promo-codes/${promo.id}/toggle|}" method="post">
+                  <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                  <button type="submit" class="toggle" th:text="${promo.active ? 'Disable' : 'Enable'}">Disable</button>
+                </form>
+                <form th:action="@{|/admin/events/${event.code}/promo-codes/${promo.id}/delete|}" method="post"
+                      onsubmit="return confirm('Delete this promo code?');">
+                  <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                  <button type="submit" class="danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div th:if="${promoCodes == null || promoCodes.isEmpty()}" class="muted" style="padding:12px 0;">
+          No promo codes yet. Add one using the form above.
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="tier-card" th:each="tier : ${tiers}" th:with="policy=${tierPolicies.get(tier)}">

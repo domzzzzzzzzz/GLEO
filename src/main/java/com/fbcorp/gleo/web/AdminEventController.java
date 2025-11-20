@@ -5,10 +5,12 @@ import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.domain.MenuItem;
 import com.fbcorp.gleo.domain.TierCode;
 import com.fbcorp.gleo.domain.TierPolicy;
+import com.fbcorp.gleo.domain.PromoCode;
 import com.fbcorp.gleo.repo.EventRepo;
 import com.fbcorp.gleo.repo.VendorRepo;
 import com.fbcorp.gleo.repo.MenuItemRepo;
 import com.fbcorp.gleo.repo.UserAccountRepo;
+import com.fbcorp.gleo.repo.PromoCodeRepo;
 import com.fbcorp.gleo.service.EventPolicyService;
 import com.fbcorp.gleo.service.AuditLogService;
 import com.fbcorp.gleo.service.EventService;
@@ -42,6 +44,9 @@ import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/admin/events")
@@ -55,6 +60,7 @@ public class AdminEventController {
     private final com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService;
     private final EventService eventService;
     private final AssetStorageService assetStorageService;
+    private final PromoCodeRepo promoCodeRepo;
 
     @GetMapping("/policies")
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -92,7 +98,8 @@ public class AdminEventController {
                                 AuditLogService auditLogService,
                                 com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService,
                                 EventService eventService,
-                                AssetStorageService assetStorageService){
+                                AssetStorageService assetStorageService,
+                                PromoCodeRepo promoCodeRepo){
         this.eventRepo = eventRepo;
         this.vendorRepo = vendorRepo;
         this.menuItemRepo = menuItemRepo;
@@ -102,6 +109,7 @@ public class AdminEventController {
         this.adminPreferenceService = adminPreferenceService;
         this.eventService = eventService;
         this.assetStorageService = assetStorageService;
+        this.promoCodeRepo = promoCodeRepo;
     }
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -287,6 +295,23 @@ public class AdminEventController {
         }
     }
 
+    private BigDecimal normalizeDiscountValue(PromoCode.DiscountType type, BigDecimal value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Discount value is required.");
+        }
+        BigDecimal normalized = value.setScale(2, RoundingMode.HALF_UP);
+        if (type == PromoCode.DiscountType.PERCENTAGE) {
+            if (normalized.compareTo(BigDecimal.ZERO) <= 0 || normalized.compareTo(BigDecimal.valueOf(100)) > 0) {
+                throw new IllegalArgumentException("Percentage discount must be between 0 and 100.");
+            }
+            return normalized;
+        }
+        if (normalized.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Flat discount must be greater than zero.");
+        }
+        return normalized;
+    }
+
     @GetMapping("/{eventCode}/policies")
     public String policies(@PathVariable String eventCode, Model model){
         var e = policyService.get(eventCode);
@@ -318,6 +343,7 @@ public class AdminEventController {
         }
         
         model.addAttribute("vendorCategoryData", vendorCategoryData);
+        model.addAttribute("promoCodes", promoCodeRepo.findByEventOrderByCodeAsc(e));
         
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated()) {
@@ -359,23 +385,113 @@ public class AdminEventController {
         }
         
         List<MenuItem> menuItems = menuItemRepo.findByVendorOrderByNameAsc(vendor);
-        
-        // Group menu items by category
-        Map<String, List<MenuItem>> itemsByCategory = menuItems.stream()
-            .collect(Collectors.groupingBy(
-                item -> item.getCategory() != null && !item.getCategory().isBlank() 
-                    ? item.getCategory() 
-                    : "Uncategorized",
-                java.util.LinkedHashMap::new,
-                Collectors.toList()
-            ));
-        
+        menuItems.sort(Comparator
+                .comparing((MenuItem m) -> m.getCategoryOrder() == null ? Integer.MAX_VALUE : m.getCategoryOrder())
+                .thenComparing(m -> m.getItemOrder() == null ? Integer.MAX_VALUE : m.getItemOrder())
+                .thenComparing(m -> m.getName() == null ? "" : m.getName(), String.CASE_INSENSITIVE_ORDER));
+
+        Map<String, CategoryGroup> grouped = new LinkedHashMap<>();
+        for (MenuItem item : menuItems) {
+            String value = normalizeCategoryValue(item.getCategory());
+            String key = value == null ? "__UNCATEGORIZED__" : value;
+            grouped.computeIfAbsent(key,
+                    k -> new CategoryGroup(value, value == null ? "Uncategorized" : value, new ArrayList<>()))
+                    .items().add(item);
+        }
+
         model.addAttribute("event", event);
         model.addAttribute("vendor", vendor);
         model.addAttribute("menuItems", menuItems);
-        model.addAttribute("itemsByCategory", itemsByCategory);
+        model.addAttribute("categoryGroups", grouped.values());
         
         return "admin/vendor_details";
+    }
+
+    @PostMapping("/{eventCode}/vendors/{vendorId}/edit")
+    public String editVendor(@PathVariable String eventCode,
+                             @PathVariable Long vendorId,
+                             @RequestParam String name,
+                             @RequestParam(required = false) String pin,
+                             @RequestParam(value = "image", required = false) MultipartFile newImage,
+                             @RequestParam(value = "removeImage", defaultValue = "false") boolean removeImage,
+                             RedirectAttributes redirectAttributes) {
+        Event event = policyService.get(eventCode);
+        Vendor vendor = vendorRepo.findById(vendorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendor not found"));
+        if (!vendor.getEvent().getId().equals(event.getId())) {
+            throw new IllegalArgumentException("Vendor does not belong to this event");
+        }
+
+        String trimmedName = name != null ? name.trim() : "";
+        if (!StringUtils.hasText(trimmedName)) {
+            redirectAttributes.addFlashAttribute("toastError", "Vendor name is required.");
+            return "redirect:/admin/events/" + eventCode + "/vendors";
+        }
+
+        List<String> changeNotes = new ArrayList<>();
+        if (!Objects.equals(vendor.getName(), trimmedName)) {
+            vendor.setName(trimmedName);
+            changeNotes.add("updated name");
+        }
+
+        String normalizedPin = pin != null && !pin.isBlank() ? pin.trim() : null;
+        if (!Objects.equals(vendor.getPinPlain(), normalizedPin)) {
+            vendor.setPinPlain(normalizedPin);
+            changeNotes.add(normalizedPin == null ? "cleared PIN" : "updated PIN");
+        }
+
+        String previousImage = vendor.getImagePath();
+        if (removeImage && previousImage != null) {
+            vendor.setImagePath(null);
+            changeNotes.add("removed image");
+        } else if (newImage != null && !newImage.isEmpty()) {
+            String contentType = newImage.getContentType();
+            if (contentType != null && !contentType.startsWith("image/")) {
+                redirectAttributes.addFlashAttribute("toastError", "Please upload a valid image file.");
+                return "redirect:/admin/events/" + eventCode + "/vendors";
+            }
+            try {
+                vendor.setImagePath(assetStorageService.storeVendorImage(newImage));
+                changeNotes.add(previousImage == null ? "added image" : "updated image");
+            } catch (IOException ex) {
+                redirectAttributes.addFlashAttribute("toastError", "Failed to store image: " + ex.getMessage());
+                return "redirect:/admin/events/" + eventCode + "/vendors";
+            }
+        }
+
+        vendorRepo.save(vendor);
+        String auditMessage = changeNotes.isEmpty()
+                ? "Updated vendor '" + vendor.getName() + "'"
+                : "Updated vendor '" + vendor.getName() + "' (" + String.join(", ", changeNotes) + ")";
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth != null ? auth.getName() : "anonymous";
+        auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.VENDOR, auditMessage, username);
+        redirectAttributes.addFlashAttribute("toastMessage", "Vendor updated.");
+        return "redirect:/admin/events/" + eventCode + "/vendors";
+    }
+
+    @PostMapping("/{eventCode}/vendors/{vendorId}/delete")
+    public String deleteVendor(@PathVariable String eventCode,
+                               @PathVariable Long vendorId,
+                               RedirectAttributes redirectAttributes) {
+        Event event = policyService.get(eventCode);
+        Vendor vendor = vendorRepo.findById(vendorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendor not found"));
+        if (!vendor.getEvent().getId().equals(event.getId())) {
+            throw new IllegalArgumentException("Vendor does not belong to this event");
+        }
+        if (!vendor.isActive()) {
+            redirectAttributes.addFlashAttribute("toastMessage", "Vendor is already inactive.");
+            return "redirect:/admin/events/" + eventCode + "/vendors";
+        }
+
+        archiveVendor(vendor);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth != null ? auth.getName() : "anonymous";
+        auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.VENDOR,
+                "Archived vendor '" + vendor.getName() + "' (event=" + eventCode + ")", username);
+        redirectAttributes.addFlashAttribute("toastMessage", vendor.getName() + " has been removed from the lineup.");
+        return "redirect:/admin/events/" + eventCode + "/vendors";
     }
 
     @PostMapping("/{eventCode}/vendors/{vendorId}/menu/add")
@@ -401,7 +517,10 @@ public class AdminEventController {
             menuItem.setVendor(vendor);
             menuItem.setName(name.trim());
             menuItem.setPrice(new BigDecimal(price).setScale(2, RoundingMode.HALF_UP));
-            menuItem.setCategory(category != null && !category.trim().isEmpty() ? category.trim() : null);
+            String normalizedCategory = normalizeCategoryValue(category);
+            menuItem.setCategory(normalizedCategory);
+            menuItem.setCategoryOrder(resolveCategoryOrder(vendor, normalizedCategory));
+            menuItem.setItemOrder(nextItemOrder(vendor, normalizedCategory));
             menuItem.setMaxPerOrder(maxPerOrder);
             menuItem.setAvailable(available);
 
@@ -455,7 +574,14 @@ public class AdminEventController {
 
             menuItem.setName(name.trim());
             menuItem.setPrice(new BigDecimal(price).setScale(2, RoundingMode.HALF_UP));
-            menuItem.setCategory(category != null && !category.trim().isEmpty() ? category.trim() : null);
+            String normalizedCategory = normalizeCategoryValue(category);
+            String existingCategory = normalizeCategoryValue(menuItem.getCategory());
+            boolean categoryChanged = !Objects.equals(existingCategory, normalizedCategory);
+            menuItem.setCategory(normalizedCategory);
+            if (categoryChanged) {
+                menuItem.setCategoryOrder(resolveCategoryOrder(vendor, normalizedCategory));
+                menuItem.setItemOrder(nextItemOrder(vendor, normalizedCategory));
+            }
             menuItem.setMaxPerOrder(maxPerOrder);
             menuItem.setAvailable(available);
 
@@ -515,6 +641,95 @@ public class AdminEventController {
         }
 
         return "redirect:/admin/events/" + eventCode + "/vendors/" + vendorId;
+    }
+
+    @PostMapping(value = "/{eventCode}/vendors/{vendorId}/categories/reorder", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Object>> reorderCategories(@PathVariable String eventCode,
+                                                                 @PathVariable Long vendorId,
+                                                                 @RequestBody CategoryReorderRequest request) {
+        if (request == null || request.categories() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "No categories provided."));
+        }
+        Event event = policyService.get(eventCode);
+        Vendor vendor = vendorRepo.findById(vendorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendor not found"));
+        if (!vendor.getEvent().getId().equals(event.getId())) {
+            throw new IllegalArgumentException("Vendor does not belong to this event");
+        }
+
+        LinkedHashMap<String, Integer> desiredOrder = new LinkedHashMap<>();
+        int position = 0;
+        for (CategoryPosition entry : request.categories()) {
+            String value = normalizeCategoryValue(entry.value());
+            String key = categoryKey(value);
+            if (!desiredOrder.containsKey(key)) {
+                desiredOrder.put(key, position);
+                position += 100;
+            }
+        }
+
+        List<MenuItem> items = menuItemRepo.findByVendorOrderByNameAsc(vendor);
+        for (MenuItem item : items) {
+            String key = categoryKey(normalizeCategoryValue(item.getCategory()));
+            if (!desiredOrder.containsKey(key)) {
+                desiredOrder.put(key, position);
+                position += 100;
+            }
+            Integer newOrder = desiredOrder.get(key);
+            if (!Objects.equals(item.getCategoryOrder(), newOrder)) {
+                item.setCategoryOrder(newOrder);
+            }
+        }
+        menuItemRepo.saveAll(items);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth != null ? auth.getName() : "anonymous";
+        auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.VENDOR,
+                "Reordered categories for vendor " + vendor.getName() + " (event=" + eventCode + ")", username);
+
+        return ResponseEntity.ok(Map.of("status", "ok"));
+    }
+
+    @PostMapping(value = "/{eventCode}/vendors/{vendorId}/items/reorder", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Object>> reorderItems(@PathVariable String eventCode,
+                                                            @PathVariable Long vendorId,
+                                                            @RequestBody ItemReorderRequest request) {
+        if (request == null || request.itemIds() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "No items provided."));
+        }
+        Event event = policyService.get(eventCode);
+        Vendor vendor = vendorRepo.findById(vendorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendor not found"));
+        if (!vendor.getEvent().getId().equals(event.getId())) {
+            throw new IllegalArgumentException("Vendor does not belong to this event");
+        }
+
+        String normalizedCategory = normalizeCategoryValue(request.categoryValue());
+        List<MenuItem> items = menuItemRepo.findAllById(request.itemIds());
+        Map<Long, MenuItem> vendorItems = items.stream()
+                .filter(item -> item.getVendor().getId().equals(vendorId))
+                .collect(Collectors.toMap(MenuItem::getId, item -> item));
+
+        int order = 0;
+        for (Long itemId : request.itemIds()) {
+            MenuItem item = vendorItems.get(itemId);
+            if (item == null) {
+                continue;
+            }
+            String itemCategory = normalizeCategoryValue(item.getCategory());
+            if (!Objects.equals(itemCategory, normalizedCategory)) {
+                continue;
+            }
+            item.setItemOrder(order++);
+        }
+        menuItemRepo.saveAll(vendorItems.values());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth != null ? auth.getName() : "anonymous";
+        auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.VENDOR,
+                "Reordered items for vendor " + vendor.getName() + " (event=" + eventCode + ")", username);
+
+        return ResponseEntity.ok(Map.of("status", "ok"));
     }
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -596,6 +811,101 @@ public class AdminEventController {
     }
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
+    @PostMapping("/{eventCode}/promo-codes")
+    public String createPromoCode(@PathVariable String eventCode,
+                                  @RequestParam String code,
+                                  @RequestParam(defaultValue = "AMOUNT") PromoCode.DiscountType discountType,
+                                  @RequestParam BigDecimal discountValue,
+                                  @RequestParam(required = false) String description,
+                                  @RequestParam(defaultValue = "true") boolean active,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            Event event = policyService.get(eventCode);
+            String normalizedCode = code == null ? "" : code.trim().toUpperCase();
+            if (!StringUtils.hasText(normalizedCode)) {
+                throw new IllegalArgumentException("Promo code is required.");
+            }
+            if (promoCodeRepo.existsByEventAndCodeIgnoreCase(event, normalizedCode)) {
+                throw new IllegalArgumentException("Promo code already exists for this event.");
+            }
+            PromoCode promo = new PromoCode();
+            promo.setEvent(event);
+            promo.setCode(normalizedCode);
+            promo.setDiscountType(discountType);
+            promo.setDiscountValue(normalizeDiscountValue(discountType, discountValue));
+            promo.setDescription(StringUtils.hasText(description) ? description.trim() : null);
+            promo.setActive(active);
+            promoCodeRepo.save(promo);
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT,
+                    "Created promo code '" + promo.getCode() + "' for event=" + eventCode, username);
+
+            redirectAttributes.addFlashAttribute("toastMessage", "Promo code " + promo.getCode() + " created.");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("toastError", "Unable to save promo code: " + ex.getMessage());
+        }
+        return "redirect:/admin/events/" + eventCode + "/policies";
+    }
+
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
+    @PostMapping("/{eventCode}/promo-codes/{promoId}/toggle")
+    public String togglePromoCode(@PathVariable String eventCode,
+                                  @PathVariable Long promoId,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            Event event = policyService.get(eventCode);
+            PromoCode promo = promoCodeRepo.findById(promoId)
+                    .orElseThrow(() -> new IllegalArgumentException("Promo code not found."));
+            if (!promo.getEvent().getId().equals(event.getId())) {
+                throw new IllegalArgumentException("Promo code does not belong to this event.");
+            }
+            promo.setActive(!promo.isActive());
+            promoCodeRepo.save(promo);
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            String action = promo.isActive() ? "Activated" : "Deactivated";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT,
+                    action + " promo code '" + promo.getCode() + "' for event=" + eventCode, username);
+
+            redirectAttributes.addFlashAttribute("toastMessage",
+                    "Promo " + promo.getCode() + (promo.isActive() ? " enabled." : " disabled."));
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("toastError", "Unable to update promo code: " + ex.getMessage());
+        }
+        return "redirect:/admin/events/" + eventCode + "/policies";
+    }
+
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
+    @PostMapping("/{eventCode}/promo-codes/{promoId}/delete")
+    public String deletePromoCode(@PathVariable String eventCode,
+                                  @PathVariable Long promoId,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            Event event = policyService.get(eventCode);
+            PromoCode promo = promoCodeRepo.findById(promoId)
+                    .orElseThrow(() -> new IllegalArgumentException("Promo code not found."));
+            if (!promo.getEvent().getId().equals(event.getId())) {
+                throw new IllegalArgumentException("Promo code does not belong to this event.");
+            }
+            String codeValue = promo.getCode();
+            promoCodeRepo.delete(promo);
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT,
+                    "Deleted promo code '" + codeValue + "' for event=" + eventCode, username);
+
+            redirectAttributes.addFlashAttribute("toastMessage", "Promo " + codeValue + " deleted.");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("toastError", "Unable to delete promo code: " + ex.getMessage());
+        }
+        return "redirect:/admin/events/" + eventCode + "/policies";
+    }
+
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
     @PostMapping("/{eventCode}/delete")
     public String deleteEvent(@PathVariable String eventCode, RedirectAttributes redirectAttributes){
         try {
@@ -631,5 +941,53 @@ public class AdminEventController {
         public String name;
         public String price;
         public Integer maxPerOrder;
+    }
+
+    private String normalizeCategoryValue(String category) {
+        if (category == null) {
+            return null;
+        }
+        String trimmed = category.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String categoryKey(String value) {
+        return value == null ? "__UNCATEGORIZED__" : value;
+    }
+
+    private int resolveCategoryOrder(Vendor vendor, String category) {
+        Integer existing = menuItemRepo.findCategoryOrderForCategory(vendor, category);
+        if (existing != null) {
+            return existing;
+        }
+        Integer max = menuItemRepo.findMaxCategoryOrder(vendor);
+        int base = max == null ? 0 : max;
+        return base + 100;
+    }
+
+    private int nextItemOrder(Vendor vendor, String category) {
+        Integer max = menuItemRepo.findMaxItemOrderForCategory(vendor, category);
+        int base = max == null ? 0 : max;
+        return base + 1;
+    }
+
+    public record CategoryGroup(String value, String displayName, List<MenuItem> items) {}
+
+    public record CategoryReorderRequest(List<CategoryPosition> categories) {}
+
+    public record CategoryPosition(String value) {}
+
+    public record ItemReorderRequest(String categoryValue, List<Long> itemIds) {}
+
+    private void archiveVendor(Vendor vendor) {
+        if (vendor.isActive()) {
+            vendor.setActive(false);
+            vendorRepo.save(vendor);
+        }
+        List<MenuItem> items = menuItemRepo.findByVendorOrderByNameAsc(vendor);
+        if (!items.isEmpty()) {
+            items.forEach(item -> item.setAvailable(false));
+            menuItemRepo.saveAll(items);
+        }
     }
 }

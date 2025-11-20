@@ -1,7 +1,0 @@
-com\fbcorp\gleo\web\OrganizerEventControllerTest.class
-com\fbcorp\gleo\service\TicketServiceTest.class
-com\fbcorp\gleo\web\UsherControllerTest.class
-com\fbcorp\gleo\web\HomeControllerTest.class
-com\fbcorp\gleo\AdminPreferenceIntegrationTest.class
-com\fbcorp\gleo\service\TicketImportServiceTest.class
-com\fbcorp\gleo\service\EventServiceDeletionTest.class

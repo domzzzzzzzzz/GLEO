@@ -1,13 +1,17 @@
 package com.fbcorp.gleo.service;
 
+import com.fbcorp.gleo.domain.Event;
 import com.fbcorp.gleo.domain.MenuItem;
+import com.fbcorp.gleo.domain.PromoCode;
 import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.repo.MenuItemRepo;
+import com.fbcorp.gleo.repo.PromoCodeRepo;
 import com.fbcorp.gleo.repo.VendorRepo;
 import com.fbcorp.gleo.web.CartSession;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,13 +20,15 @@ public class CartViewService {
 
     private final MenuItemRepo menuItemRepo;
     private final VendorRepo vendorRepo;
+    private final PromoCodeRepo promoCodeRepo;
 
-    public CartViewService(MenuItemRepo menuItemRepo, VendorRepo vendorRepo) {
+    public CartViewService(MenuItemRepo menuItemRepo, VendorRepo vendorRepo, PromoCodeRepo promoCodeRepo) {
         this.menuItemRepo = menuItemRepo;
         this.vendorRepo = vendorRepo;
+        this.promoCodeRepo = promoCodeRepo;
     }
 
-    public CartSummary summarize(CartSession cartSession) {
+    public CartSummary summarize(Event event, CartSession cartSession) {
         if (cartSession == null || cartSession.isEmpty()) {
             return CartSummary.empty();
         }
@@ -65,25 +71,38 @@ public class CartViewService {
             return CartSummary.empty();
         }
 
-        // Simple service fee: 5% (could be externalized to config later)
-    BigDecimal serviceFee = grandTotal.multiply(BigDecimal.valueOf(0.05)).setScale(2, java.math.RoundingMode.HALF_UP);
-        // Basic promo code handling (temporary):  if promo == SAVE10 -> 10% off; if FLAT5 -> 5 currency units off
+        BigDecimal serviceFee = grandTotal.multiply(BigDecimal.valueOf(0.05))
+                .setScale(2, RoundingMode.HALF_UP);
         BigDecimal discount = BigDecimal.ZERO;
         String appliedPromo = null;
-        if (cartSession.getPromoCode() != null) {
-            String code = cartSession.getPromoCode().toUpperCase();
-            appliedPromo = code;
-            switch (code) {
-                case "SAVE10" -> discount = grandTotal.multiply(BigDecimal.valueOf(0.10));
-                case "FLAT5" -> discount = BigDecimal.valueOf(5);
-                default -> appliedPromo = null; // unrecognized; treat as not applied
-            }
+
+        PromoCode promo = resolvePromo(event, cartSession);
+        if (promo != null) {
+            discount = promo.calculateDiscount(grandTotal);
+            appliedPromo = promo.getCode();
         }
+
         if (discount.compareTo(grandTotal) > 0) {
-            discount = grandTotal; // cap
+            discount = grandTotal;
         }
         BigDecimal finalTotal = grandTotal.add(serviceFee).subtract(discount);
+        if (finalTotal.compareTo(BigDecimal.ZERO) < 0) {
+            finalTotal = BigDecimal.ZERO;
+        }
         return new CartSummary(groups, grandTotal, serviceFee, discount, appliedPromo, finalTotal, totalQty);
+    }
+
+    private PromoCode resolvePromo(Event event, CartSession cartSession) {
+        if (event == null || cartSession == null) {
+            return null;
+        }
+        String code = cartSession.getPromoCode();
+        if (code == null || code.isBlank()) {
+            return null;
+        }
+        return promoCodeRepo
+                .findByEventAndCodeIgnoreCaseAndActiveTrue(event, code.trim())
+                .orElse(null);
     }
 
     public record CartSummary(List<VendorGroup> groups,

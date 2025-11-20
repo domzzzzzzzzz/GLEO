@@ -1,0 +1,12 @@
+-------------------------------------------------------------------------------
+Test set: com.fbcorp.gleo.web.UsherControllerTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.124 s <<< FAILURE! -- in com.fbcorp.gleo.web.UsherControllerTest
+com.fbcorp.gleo.web.UsherControllerTest.usherBoardLoads -- Time elapsed: 0.091 s <<< ERROR!
+java.util.NoSuchElementException: No value present
+	at java.base/java.util.Optional.orElseThrow(Optional.java:377)
+	at com.fbcorp.gleo.web.UsherControllerTest.setUpOrder(UsherControllerTest.java:53)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+

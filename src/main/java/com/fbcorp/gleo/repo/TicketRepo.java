@@ -14,5 +14,7 @@ public interface TicketRepo extends JpaRepository<Ticket, Long> {
 
     Optional<Ticket> findByIdAndEvent_Code(Long id, String eventCode);
 
+    boolean existsByIdAndEvent_Code(Long id, String eventCode);
+
     List<Ticket> findByEvent(Event event);
 }

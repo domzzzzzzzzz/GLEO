@@ -1,10 +1,13 @@
 package com.fbcorp.gleo.web;
 
+import com.fbcorp.gleo.config.TicketSessionInterceptor;
+import com.fbcorp.gleo.domain.Event;
 import com.fbcorp.gleo.domain.MenuItem;
 import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.domain.Ticket;
 import com.fbcorp.gleo.repo.MenuItemRepo;
 import com.fbcorp.gleo.repo.TicketRepo;
+import com.fbcorp.gleo.repo.PromoCodeRepo;
 import com.fbcorp.gleo.service.CartViewService;
 import com.fbcorp.gleo.service.EventPolicyService;
 import com.fbcorp.gleo.service.CartService;
@@ -16,7 +19,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.security.core.Authentication;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -34,17 +36,20 @@ public class CartController {
     private final EventPolicyService policyService;
     private final CartViewService cartViewService;
     private final CartService cartService;
+    private final PromoCodeRepo promoCodeRepo;
 
     public CartController(MenuItemRepo menuItemRepo,
                           TicketRepo ticketRepo,
                           EventPolicyService policyService,
                           CartViewService cartViewService,
-                          CartService cartService){
+                          CartService cartService,
+                          PromoCodeRepo promoCodeRepo){
         this.menuItemRepo = menuItemRepo;
         this.ticketRepo = ticketRepo;
         this.policyService = policyService;
         this.cartViewService = cartViewService;
         this.cartService = cartService;
+        this.promoCodeRepo = promoCodeRepo;
     }
 
     private CartSession cart(HttpSession session){
@@ -62,9 +67,18 @@ public class CartController {
 
     private void populateCartModel(String eventCode, CartSession cartSession, Model model){
         var event = policyService.get(eventCode);
+        populateCartModel(event, cartSession, model);
+    }
+
+    private void populateCartModel(Event event, CartSession cartSession, Model model){
         model.addAttribute("event", event);
-        model.addAttribute("isMultiVendor", policyService.multiVendorCart(eventCode));
-        model.addAttribute("cartSummary", cartViewService.summarize(cartSession));
+        if (event == null) {
+            model.addAttribute("cartSummary", CartViewService.CartSummary.empty());
+            model.addAttribute("isMultiVendor", false);
+            return;
+        }
+        model.addAttribute("isMultiVendor", policyService.multiVendorCart(event.getCode()));
+        model.addAttribute("cartSummary", cartViewService.summarize(event, cartSession));
     }
 
     // --- New endpoints for quantity, notes, and promo code updates ---
@@ -76,8 +90,7 @@ public class CartController {
                          @RequestParam int qty,
                          HttpSession session,
                          HttpServletRequest request,
-                         Model model,
-                         Authentication authentication){
+                         Model model){
         CartSession cart = cart(session);
         
         if (qty <= 0){
@@ -96,8 +109,7 @@ public class CartController {
             }
             
             Vendor vendor = item.getVendor();
-            String username = authentication != null && authentication.isAuthenticated() ? authentication.getName() : null;
-            Ticket ticket = username != null ? ticketRepo.findByQrCode(username).orElse(null) : null;
+            Ticket ticket = activeTicket(eventCode, session);
             
             // Check category limits before updating quantity
             if (ticket != null && ticket.getEvent().getCode().equals(eventCode)) {
@@ -171,9 +183,26 @@ public class CartController {
                              HttpServletRequest request,
                              Model model){
         CartSession cart = cart(session);
-        cart.setPromoCode(code);
-        populateCartModel(eventCode, cart, model);
-        model.addAttribute("successMessage", "Promo applied (if valid).");
+        Event event = policyService.get(eventCode);
+
+        String sanitized = code == null ? "" : code.trim();
+        if (sanitized.isEmpty()) {
+            cart.setPromoCode(null);
+            populateCartModel(event, cart, model);
+            model.addAttribute("successMessage", "Promo removed.");
+            return isHx(request) ? CART_FRAGMENT : "redirect:/e/" + eventCode + "/cart";
+        }
+
+        var promo = promoCodeRepo.findByEventAndCodeIgnoreCaseAndActiveTrue(event, sanitized);
+        if (promo.isPresent()) {
+            cart.setPromoCode(promo.get().getCode());
+            populateCartModel(event, cart, model);
+            model.addAttribute("successMessage", "Promo " + promo.get().getCode() + " applied.");
+        } else {
+            cart.setPromoCode(null);
+            populateCartModel(event, cart, model);
+            model.addAttribute("errorMessage", "Promo code not found or inactive.");
+        }
         return isHx(request) ? CART_FRAGMENT : "redirect:/e/" + eventCode + "/cart";
     }
 
@@ -184,7 +213,6 @@ public class CartController {
                       HttpSession session,
                       HttpServletRequest request,
                       Model model,
-                      Authentication authentication,
                       RedirectAttributes redirectAttributes){
         MenuItem item = menuItemRepo.findById(itemId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -212,8 +240,7 @@ public class CartController {
         }
 
         // Category restrictions check - works for both authenticated and guest users
-        String username = authentication != null && authentication.isAuthenticated() ? authentication.getName() : null;
-        Ticket ticket = username != null ? ticketRepo.findByQrCode(username).orElse(null) : null;
+        Ticket ticket = activeTicket(eventCode, session);
         
         // Check vendor restriction FIRST (for oneVendorOnly policy)
         if (ticket != null && ticket.getEvent().getCode().equals(eventCode)) {
@@ -328,5 +355,15 @@ public class CartController {
         populateCartModel(eventCode, cart, model);
         model.addAttribute("successMessage", "Cart cleared.");
         return isHx(request) ? CART_FRAGMENT : "redirect:/e/" + eventCode + "/cart";
+    }
+
+    private Ticket activeTicket(String eventCode, HttpSession session) {
+        Object attr = session.getAttribute(TicketSessionInterceptor.SESSION_TICKET_ATTR);
+        if (attr instanceof Long ticketId) {
+            return ticketRepo.findById(ticketId)
+                    .filter(t -> t.getEvent().getCode().equals(eventCode))
+                    .orElse(null);
+        }
+        return null;
     }
 }

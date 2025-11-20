@@ -309,6 +309,22 @@
       border-color: #667eea;
       color: white;
     }
+    .promo-remove-form {
+      margin-top: 6px;
+      text-align: right;
+    }
+    .btn-remove-promo {
+      background: transparent;
+      border: none;
+      color: #ef4444;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0;
+    }
+    .btn-remove-promo:hover {
+      text-decoration: underline;
+    }
     .btn-checkout {
       width: 100%;
       padding: 14px 20px;
@@ -461,6 +477,10 @@
               <button class="btn-apply" type="submit">Apply</button>
             </div>
           </form>
+          <form th:if="${cartSummary.promoCode}" th:action="@{|/e/${event.code}/cart/promo|}" method="post" class="promo-remove-form">
+            <input type="hidden" name="code" value=""/>
+            <button type="submit" class="btn-remove-promo">Remove promo</button>
+          </form>
 
           <!-- Checkout Button -->
           <form th:action="@{|/e/${event.code}/checkout|}" method="post">
@@ -507,7 +527,7 @@
       if (alertBar && alertBar.textContent.trim()) {
         const message = alertBar.textContent.trim();
         // Check if it's an error (contains emoji or starts with certain words)
-        const isError = message.includes('🍔') || message.includes('🚫') || message.includes('⚠️') || 
+        const isError = message.includes('🍔') || message.includes('🚫') || message.includes('') || 
                        message.includes('limit') || message.includes('Only');
         showToast(message, isError ? 'error' : 'success');
       }

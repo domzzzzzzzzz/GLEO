@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${statusCode} + ' • ' + ${title}">404 • Not found</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, #c7d2fe, #ede9fe 50%, #f8fafc 100%);
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+    .card {
+      width: min(640px, 100%);
+      background: rgba(255,255,255,0.9);
+      border-radius: 28px;
+      padding: 48px;
+      box-shadow: 0 30px 60px rgba(79,70,229,0.2);
+      text-align: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(99,102,241,0.1);
+      color: #4c1d95;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 3.5rem);
+      margin: 24px 0 8px;
+    }
+    p {
+      margin: 8px 0 24px;
+      color: #475569;
+      line-height: 1.6;
+    }
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: #475569;
+    }
+    .btn {
+      margin-top: 32px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 14px;
+      text-decoration: none;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 15px 35px rgba(79,70,229,0.35);
+    }
+    .constellation {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 20% 20%, rgba(79,70,229,0.15), transparent 35%),
+                  radial-gradient(circle at 80% 10%, rgba(248,113,113,0.15), transparent 30%),
+                  radial-gradient(circle at 50% 80%, rgba(34,197,94,0.12), transparent 40%);
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+<div class="constellation"></div>
+<main class="card">
+  <div class="badge">
+    <span th:text="'HTTP ' + ${statusCode}">404</span>
+    <span th:text="${statusText}">Not Found</span>
+  </div>
+  <h1 th:text="${title}">Page not found</h1>
+  <p th:text="${message}">We couldn't locate that page.</p>
+  <div class="meta">
+    <span th:text="'Requested path • ' + ${path}">/</span>
+    <span th:text="'Timestamp • ' + ${timestamp}">now</span>
+  </div>
+  <a class="btn" href="/" aria-label="Back home">
+    <span>&larr;</span>
+    <span>Return to home</span>
+  </a>
+</main>
+</body>
+</html>

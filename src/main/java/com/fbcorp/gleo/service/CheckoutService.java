@@ -27,27 +27,19 @@ public class CheckoutService {
     public static class CheckoutResult {
         public final List<Order> orders = new ArrayList<>();
         public final Map<Long, String> rejectedByVendor = new LinkedHashMap<>();
-        private Ticket ticket;
-
-        public Ticket getTicket() {
-            return ticket;
-        }
     }
 
-    private final TicketService ticketService;
     private final VendorRepo vendorRepo;
     private final MenuItemRepo menuItemRepo;
     private final OrderRepo orderRepo;
     private final CartService cartService;
     private final OrderService orderService;
 
-    public CheckoutService(TicketService ticketService,
-                           VendorRepo vendorRepo,
+    public CheckoutService(VendorRepo vendorRepo,
                            MenuItemRepo menuItemRepo,
                            OrderRepo orderRepo,
                            CartService cartService,
                            OrderService orderService) {
-        this.ticketService = ticketService;
         this.vendorRepo = vendorRepo;
         this.menuItemRepo = menuItemRepo;
         this.orderRepo = orderRepo;
@@ -55,21 +47,17 @@ public class CheckoutService {
         this.orderService = orderService;
     }
 
-    public List<Order> recentOrdersForDevice(String eventCode, String deviceHash) {
-        return ticketService.findTicketForDevice(eventCode, deviceHash)
-                .map(orderRepo::findByTicketOrderByCreatedAtDesc)
-                .orElseGet(List::of);
-    }
-
     public List<Order> recentOrdersForTicket(Ticket ticket) {
         return orderRepo.findByTicketOrderByCreatedAtDesc(ticket);
     }
 
     @Transactional
-    public CheckoutResult checkout(String eventCode, String qr, String deviceHash, Map<Long, List<CartLine>> groupedLines) {
-        Ticket ticket = ticketService.resolveTicket(eventCode, qr, deviceHash);
+    public CheckoutResult checkout(String eventCode, Ticket ticket, Map<Long, List<CartLine>> groupedLines) {
+        if (ticket == null || !ticket.getEvent().getCode().equals(eventCode)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Valid ticket required.");
+        }
+
         CheckoutResult result = new CheckoutResult();
-        result.ticket = ticket;
 
         for (var entry : groupedLines.entrySet()) {
             Long vendorId = entry.getKey();

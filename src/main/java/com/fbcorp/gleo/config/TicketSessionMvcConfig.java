@@ -17,14 +17,13 @@ public class TicketSessionMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(ticketSessionInterceptor)
                 .addPathPatterns(
-                        "/e/*/cart/**",
-                        "/e/*/checkout/**"
+                        "/e/*/**"
                 )
                 .excludePathPatterns(
                         "/e/*/ticket",
                         "/e/*/ticket/**",
-                        "/e/*/checkout/ticket",
-                        "/e/*/checkout/ticket/**"
+                        "/css/**",
+                        "/js/**"
                 );
     }
 }

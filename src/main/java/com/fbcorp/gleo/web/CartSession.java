@@ -62,5 +62,11 @@ public class CartSession implements Serializable {
 
     // Promo API
     public String getPromoCode() { return promoCode; }
-    public void setPromoCode(String promoCode) { this.promoCode = (promoCode == null || promoCode.isBlank()) ? null : promoCode.trim(); }
+    public void setPromoCode(String promoCode) {
+        if (promoCode == null || promoCode.isBlank()) {
+            this.promoCode = null;
+        } else {
+            this.promoCode = promoCode.trim().toUpperCase();
+        }
+    }
 }

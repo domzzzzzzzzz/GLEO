@@ -286,14 +286,23 @@ public class OrganizerEventController {
         menuItem.setPrice(price);
         menuItem.setMaxPerOrder(maxPerOrder);
         // Normalize category (empty -> null)
+        String normalizedCategory = null;
         if (category != null) {
             String c = category.trim();
-            menuItem.setCategory(c.isEmpty() ? null : c);
-        } else {
-            menuItem.setCategory(null);
+            normalizedCategory = c.isEmpty() ? null : c;
         }
+        menuItem.setCategory(normalizedCategory);
         // Category order: organizer may supply an integer to control category sorting.
-        menuItem.setCategoryOrder(categoryOrder == null ? 0 : categoryOrder);
+        if (categoryOrder != null) {
+            menuItem.setCategoryOrder(categoryOrder);
+        } else if (menuItem.getCategoryOrder() == null) {
+            menuItem.setCategoryOrder(0);
+        }
+        if (menuItem.getItemOrder() == null) {
+            Integer maxOrder = menuItemRepo.findMaxItemOrderForCategory(vendor, normalizedCategory);
+            int base = maxOrder == null ? 0 : maxOrder;
+            menuItem.setItemOrder(base + 1);
+        }
 
         if (!isNew && removeImage) {
             menuItem.setImagePath(null);

@@ -20,4 +20,13 @@ public interface MenuItemRepo extends JpaRepository<MenuItem, Long> {
     
     @Query("SELECT DISTINCT m.category FROM MenuItem m WHERE m.vendor.event = :event AND m.category IS NOT NULL AND m.category != ''")
     List<String> findDistinctCategoriesByEvent(@Param("event") Event event);
+
+    @Query("select coalesce(max(m.categoryOrder),0) from MenuItem m where m.vendor = :vendor")
+    Integer findMaxCategoryOrder(@Param("vendor") Vendor vendor);
+
+    @Query("select min(m.categoryOrder) from MenuItem m where m.vendor = :vendor and ((:category is null and (m.category is null or m.category = '')) or m.category = :category)")
+    Integer findCategoryOrderForCategory(@Param("vendor") Vendor vendor, @Param("category") String category);
+
+    @Query("select coalesce(max(m.itemOrder),0) from MenuItem m where m.vendor = :vendor and ((:category is null and (m.category is null or m.category = '')) or m.category = :category)")
+    Integer findMaxItemOrderForCategory(@Param("vendor") Vendor vendor, @Param("category") String category);
 }

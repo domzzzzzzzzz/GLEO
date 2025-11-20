@@ -1,5 +1,6 @@
 package com.fbcorp.gleo.web;
 
+import com.fbcorp.gleo.config.TicketSessionInterceptor;
 import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.domain.Ticket;
 import com.fbcorp.gleo.repo.MenuItemRepo;
@@ -12,9 +13,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.security.core.Authentication;
-
 import jakarta.servlet.http.HttpSession;
+import java.util.Comparator;
 
 @Controller
 @RequestMapping("/e/{eventCode}/v")
@@ -34,26 +34,14 @@ public class VendorController {
     }
 
     @GetMapping("/{vendorId}")
-    public String menu(@PathVariable String eventCode, @PathVariable Long vendorId, Model model, HttpSession session, Authentication authentication){
+    public String menu(@PathVariable String eventCode, @PathVariable Long vendorId, Model model, HttpSession session){
         var event = policyService.get(eventCode);
         Vendor v = vendorRepo.findById(vendorId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!v.getEvent().getId().equals(event.getId())) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         
-        // Require ticket authentication to access vendor menu
-        if (authentication == null || !authentication.isAuthenticated()) {
-            // Redirect to ticket upload page instead of throwing 403
-            return "redirect:/e/" + eventCode + "/ticket?next=/e/" + eventCode + "/v/" + vendorId;
-        }
-        
-        // Verify ticket exists and belongs to this event
-        String username = authentication.getName();
-        Ticket ticket = ticketRepo.findByQrCode(username).orElse(null);
+        Ticket ticket = resolveActiveTicket(eventCode, session);
         if (ticket == null) {
             return "redirect:/e/" + eventCode + "/ticket?next=/e/" + eventCode + "/v/" + vendorId;
-        }
-        
-        if (!ticket.getEvent().getCode().equals(eventCode)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This ticket is not valid for this event.");
         }
         
         // Add ticket info to model for display/policy enforcement
@@ -63,9 +51,13 @@ public class VendorController {
         model.addAttribute("event", event);
         model.addAttribute("vendor", v);
     var items = menuItemRepo.findByVendorAndAvailableTrue(v);
+    items.sort(Comparator
+        .comparing((com.fbcorp.gleo.domain.MenuItem i) -> i.getCategoryOrder() == null ? Integer.MAX_VALUE : i.getCategoryOrder())
+        .thenComparing(i -> i.getItemOrder() == null ? Integer.MAX_VALUE : i.getItemOrder())
+        .thenComparing(i -> i.getName() == null ? "" : i.getName(), String.CASE_INSENSITIVE_ORDER));
     model.addAttribute("items", items);
     // group items by category for display; use "Uncategorized" for blanks
-    java.util.Map<String, java.util.List<com.fbcorp.gleo.domain.MenuItem>> grouped = new java.util.HashMap<>();
+    java.util.Map<String, java.util.List<com.fbcorp.gleo.domain.MenuItem>> grouped = new java.util.LinkedHashMap<>();
     for (com.fbcorp.gleo.domain.MenuItem i : items) {
         String key = (i.getCategory() == null || i.getCategory().isBlank()) ? "Uncategorized" : i.getCategory();
         grouped.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(i);
@@ -81,12 +73,14 @@ public class VendorController {
     java.util.LinkedHashMap<String, java.util.List<com.fbcorp.gleo.domain.MenuItem>> ordered = new java.util.LinkedHashMap<>();
     for (var e : entries) {
         // Sort items inside a category alphabetically by name for deterministic order
-        e.getValue().sort(java.util.Comparator.comparing(i -> i.getName() == null ? "" : i.getName()));
+        e.getValue().sort(Comparator
+            .comparing((com.fbcorp.gleo.domain.MenuItem i) -> i.getItemOrder() == null ? Integer.MAX_VALUE : i.getItemOrder())
+            .thenComparing(i -> i.getName() == null ? "" : i.getName()));
         ordered.put(e.getKey(), e.getValue());
     }
     model.addAttribute("itemsByCategory", ordered);
         model.addAttribute("multiVendorEnabled", policyService.multiVendorCart(eventCode));
-        var cartSummary = cartViewService.summarize(getOrCreateCart(session));
+        var cartSummary = cartViewService.summarize(event, getOrCreateCart(session));
         model.addAttribute("cartSummary", cartSummary);
         // Derived, safe flags for template (avoid indexing into groups):
         boolean hasCartGroups = cartSummary != null && cartSummary.groups() != null && !cartSummary.groups().isEmpty();
@@ -115,5 +109,18 @@ public class VendorController {
             session.setAttribute("CART", cart);
         }
         return cart;
+    }
+
+    private Ticket resolveActiveTicket(String eventCode, HttpSession session) {
+        Object attr = session.getAttribute(TicketSessionInterceptor.SESSION_TICKET_ATTR);
+        if (attr instanceof Long ticketId) {
+            return ticketRepo.findById(ticketId)
+                    .filter(t -> t.isActive() && t.getEvent().getCode().equals(eventCode))
+                    .orElseGet(() -> {
+                        session.removeAttribute(TicketSessionInterceptor.SESSION_TICKET_ATTR);
+                        return null;
+                    });
+        }
+        return null;
     }
 }

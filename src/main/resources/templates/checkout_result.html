@@ -337,7 +337,7 @@
 
   <!-- Rejected Section -->
   <section class="rejected-card" th:if="${!#maps.isEmpty(rejected)}">
-    <h3>⚠️ Rejected Orders</h3>
+    <h3> Rejected Orders</h3>
     <div class="reject-item" th:each="entry : ${rejected.entrySet()}">
       <div class="reject-vendor" th:text="'Vendor #' + ${entry.key}">Vendor</div>
       <div class="reject-reason" th:text="${entry.value}">Reason</div>

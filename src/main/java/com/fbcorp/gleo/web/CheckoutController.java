@@ -10,19 +10,24 @@ import com.fbcorp.gleo.service.TicketService;
 import com.fbcorp.gleo.web.util.DeviceFingerprint;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.util.StringUtils;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/e/{eventCode}")
@@ -34,9 +39,9 @@ public class CheckoutController {
     private final TicketRepo ticketRepo;
 
     public CheckoutController(CheckoutService checkoutService,
-                              TicketService ticketService,
-                              QrDecoderService qrDecoderService,
-                              TicketRepo ticketRepo){
+            TicketService ticketService,
+            QrDecoderService qrDecoderService,
+            TicketRepo ticketRepo) {
         this.checkoutService = checkoutService;
         this.ticketService = ticketService;
         this.qrDecoderService = qrDecoderService;
@@ -45,10 +50,9 @@ public class CheckoutController {
 
     @GetMapping("/checkout")
     public String checkoutSummary(@PathVariable String eventCode,
-                                  HttpServletRequest request,
-                                  HttpSession session,
-                                  Model model){
-        var activeTicket = resolveActiveTicket(eventCode, session, request);
+            HttpSession session,
+            Model model) {
+        var activeTicket = resolveActiveTicket(eventCode, session);
         activeTicket.ifPresent(ticket -> model.addAttribute("activeTicket", ticket));
 
         // Only show orders for the current ticket holder (not old device orders)
@@ -62,13 +66,16 @@ public class CheckoutController {
 
     @PostMapping("/checkout")
     public String checkout(@PathVariable String eventCode,
-                           @RequestParam(name = "qr", required = false) String qr,
-                           HttpServletRequest request,
-                           HttpSession session,
-                           Model model){
+            HttpSession session,
+            Model model) {
         CartSession cart = (CartSession) session.getAttribute("CART");
-        if (cart == null || cart.isEmpty()){
+        if (cart == null || cart.isEmpty()) {
             return "redirect:/e/" + eventCode + "/cart";
+        }
+
+        Ticket ticket = resolveActiveTicket(eventCode, session).orElse(null);
+        if (ticket == null) {
+            return redirectToTicket(eventCode);
         }
 
         Map<Long, List<CheckoutService.CartLine>> groups = new LinkedHashMap<>();
@@ -78,144 +85,87 @@ public class CheckoutController {
             groups.put(vendorId, lines);
         });
 
-        var normalizedQr = (qr != null && !qr.isBlank()) ? qr.trim() : null;
-        var result = checkoutService.checkout(eventCode, normalizedQr, DeviceFingerprint.from(request), groups);
-        if (result.getTicket() != null) {
-            session.setAttribute(TicketSessionInterceptor.SESSION_TICKET_ATTR, result.getTicket().getId());
-        }
+        var result = checkoutService.checkout(eventCode, ticket, groups);
         // remove accepted groups from cart
         result.orders.forEach(o -> cart.removeVendorGroup(o.getVendor().getId()));
 
-        // Use PRG pattern: redirect to GET /checkout so refresh doesn't resubmit the form
+        // Use PRG pattern: redirect to GET /checkout so refresh doesn't resubmit the
+        // form
         // Summary page will load recent orders for this device via checkoutSummary()
         return "redirect:/e/" + eventCode + "/checkout";
     }
 
     @GetMapping("/ticket")
     public String ticketEntry(@PathVariable String eventCode,
-                              @RequestParam(value = "next", required = false) String next,
-                              HttpServletRequest request,
-                              HttpSession session,
-                              Model model) {
-        // Check if this device already has a ticket bound to it for this event
-        String currentDeviceHash = DeviceFingerprint.from(request);
-        Optional<Ticket> existingTicket = ticketRepo.findFirstByEvent_CodeAndBoundDeviceHash(eventCode, currentDeviceHash);
-        
-        if (existingTicket.isPresent() && existingTicket.get().isActive()) {
-            // Device already has a ticket! Auto-login instead of showing upload form
-            Ticket ticket = existingTicket.get();
-            
-            // Restore Spring Security authentication
-            UsernamePasswordAuthenticationToken authentication = 
-                new UsernamePasswordAuthenticationToken(ticket.getQrCode(), null, List.of());
-            SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-            securityContext.setAuthentication(authentication);
-            SecurityContextHolder.setContext(securityContext);
-            
-            // Save to session
-            session.setAttribute(
-                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, 
-                securityContext
-            );
-            
-            // Redirect to target page
-            String redirectTarget = sanitizeNext(eventCode, next);
-            return "redirect:" + redirectTarget;
+            @RequestParam(value = "next", required = false) String next,
+            @RequestParam(value = "message", required = false) String message,
+            HttpSession session,
+            Model model) {
+        Optional<Ticket> activeTicket = resolveActiveTicket(eventCode, session);
+        if (activeTicket.isPresent()) {
+            return "redirect:" + sanitizeNext(eventCode, next);
         }
-        
+
         model.addAttribute("eventCode", eventCode);
         model.addAttribute("next", sanitizeNext(eventCode, next));
+        model.addAttribute("message", message);
         return "ticket_entry";
     }
 
     @PostMapping("/ticket")
     public String linkTicketSession(@PathVariable String eventCode,
-                                    @RequestParam(value = "qrFile", required = false) MultipartFile qrFile,
-                                    @RequestParam(value = "next", required = false) String next,
-                                    HttpServletRequest request,
-                                    jakarta.servlet.http.HttpServletResponse response,
-                                    HttpSession session,
-                                    RedirectAttributes redirectAttributes) {
-        // FIRST: Check if this device already has a ticket bound to it
-        String currentDeviceHash = DeviceFingerprint.from(request);
-        Optional<Ticket> existingDeviceTicket = ticketRepo.findFirstByEvent_CodeAndBoundDeviceHash(eventCode, currentDeviceHash);
-        
-        if (existingDeviceTicket.isPresent()) {
-            // Device already has a ticket! Don't allow uploading a different QR code
-            Ticket boundTicket = existingDeviceTicket.get();
-            redirectAttributes.addFlashAttribute("toastError", 
-                "This device is already linked to a ticket (" + boundTicket.getSerial() + "). " +
-                "Please use your original QR code or use a different device.");
-            return "redirect:/e/" + eventCode + "/ticket";
-        }
-        
+            @RequestParam(value = "qrFile", required = false) MultipartFile qrFile,
+            @RequestParam(value = "next", required = false) String next,
+            HttpServletRequest request,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        // FIRST: decode the QR payload so we can compare it against any ticket
+        // already bound to this device. Decoding first allows the case where
+        // the same ticket is re-uploaded from the same device.
         String decoded = qrDecoderService.decode(qrFile).orElse(null);
         if (!StringUtils.hasText(decoded)) {
             redirectAttributes.addFlashAttribute("toastError", "Please upload a clear QR code image.");
             return "redirect:/e/" + eventCode + "/ticket";
         }
-        
-        // Find ticket by QR code
-        Ticket ticket = ticketRepo.findByQrCode(decoded).orElse(null);
-        if (ticket == null) {
-            redirectAttributes.addFlashAttribute("toastError", "Invalid QR code. Ticket not found.");
+
+        // SECOND: Check if this device already has a ticket bound to it. If so,
+        // ensure it's the same QR that was just uploaded; otherwise block the
+        // upload and instruct the user to use the original QR or another device.
+        String currentDeviceHash = DeviceFingerprint.from(request);
+        Optional<Ticket> existingDeviceTicket = ticketRepo.findFirstByEvent_CodeAndBoundDeviceHash(eventCode,
+                currentDeviceHash);
+
+        if (existingDeviceTicket.isPresent()) {
+            Ticket boundTicket = existingDeviceTicket.get();
+            // Allow re-upload of the same ticket from the same device
+            if (!boundTicket.getQrCode().equals(decoded)) {
+                redirectAttributes.addFlashAttribute("toastError",
+                        "This device is already linked to a ticket (" + boundTicket.getSerial() + "). " +
+                                "Please use your original QR code or use a different device.");
+                return "redirect:/e/" + eventCode + "/ticket";
+            }
+        }
+
+        Ticket ticket;
+        try {
+            ticket = ticketService.validateAndBind(eventCode, decoded, currentDeviceHash);
+        } catch (ResponseStatusException ex) {
+            String message = ex.getReason() != null ? ex.getReason() : "Unable to link this ticket.";
+            redirectAttributes.addFlashAttribute("toastError", message);
             return "redirect:/e/" + eventCode + "/ticket";
         }
-        
-        // Verify ticket belongs to this event
-        if (!ticket.getEvent().getCode().equals(eventCode)) {
-            redirectAttributes.addFlashAttribute("toastError", "This ticket is not valid for this event.");
-            return "redirect:/e/" + eventCode + "/ticket";
-        }
-        
-        // Check if ticket is active
-        if (!ticket.isActive()) {
-            redirectAttributes.addFlashAttribute("toastError", "This ticket has been deactivated.");
-            return "redirect:/e/" + eventCode + "/ticket";
-        }
-        
-        // Check if ticket is already bound to a different device (reuse currentDeviceHash from above)
-        if (ticket.getBoundDeviceHash() != null && !ticket.getBoundDeviceHash().equals(currentDeviceHash)) {
-            redirectAttributes.addFlashAttribute("toastError", "This QR code is already linked to another device. Please use your QR code on your original device.");
-            return "redirect:/e/" + eventCode + "/ticket";
-        }
-        
-        // Bind ticket to this device if not already bound
-        if (ticket.getBoundDeviceHash() == null) {
-            ticket.setBoundDeviceHash(currentDeviceHash);
-            ticketRepo.save(ticket);
-        }
-        
-        // Perform Spring Security authentication with the ticket's QR code as username
-        UsernamePasswordAuthenticationToken authentication = 
-            new UsernamePasswordAuthenticationToken(ticket.getQrCode(), null, List.of());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        
-        // Save authentication to session
-        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, 
-            SecurityContextHolder.getContext());
-        
-        // Make session persistent for 30 days
-        session.setMaxInactiveInterval(86400 * 30); // 30 days in seconds
-        
-        // Create persistent cookie to remember this device-ticket binding
-        jakarta.servlet.http.Cookie deviceTicketCookie = new jakarta.servlet.http.Cookie(
-            "gleo_device_" + eventCode, 
-            java.util.Base64.getEncoder().encodeToString((currentDeviceHash + ":" + ticket.getQrCode()).getBytes())
-        );
-        deviceTicketCookie.setMaxAge(86400 * 30); // 30 days
-        deviceTicketCookie.setPath("/");
-        deviceTicketCookie.setHttpOnly(true);
-        response.addCookie(deviceTicketCookie);
-        
+
+        session.setAttribute(TicketSessionInterceptor.SESSION_TICKET_ATTR, ticket.getId());
+        session.setMaxInactiveInterval(86400 * 30);
+
         String redirectTarget = sanitizeNext(eventCode, next);
         return "redirect:" + redirectTarget;
     }
 
     private void populateSummary(Model model,
-                                 String eventCode,
-                                 List<Order> orders,
-                                 Map<Long, String> rejected){
+            String eventCode,
+            List<Order> orders,
+            Map<Long, String> rejected) {
         model.addAttribute("eventCode", eventCode);
         model.addAttribute("orders", orders);
         model.addAttribute("rejected", rejected);
@@ -223,7 +173,7 @@ public class CheckoutController {
         model.addAttribute("rejectedCount", rejected.size());
     }
 
-    private Optional<Ticket> resolveActiveTicket(String eventCode, HttpSession session, HttpServletRequest request) {
+    private Optional<Ticket> resolveActiveTicket(String eventCode, HttpSession session) {
         Object attr = session.getAttribute(TicketSessionInterceptor.SESSION_TICKET_ATTR);
         if (attr instanceof Long ticketId) {
             var ticketOpt = ticketService.findTicketByIdAndEvent(ticketId, eventCode);
@@ -233,7 +183,7 @@ public class CheckoutController {
                 session.removeAttribute(TicketSessionInterceptor.SESSION_TICKET_ATTR);
             }
         }
-        return ticketService.findTicketForDevice(eventCode, DeviceFingerprint.from(request));
+        return Optional.empty();
     }
 
     private String sanitizeNext(String eventCode, String next) {
@@ -241,5 +191,10 @@ public class CheckoutController {
             return next;
         }
         return "/e/" + eventCode;
+    }
+
+    private String redirectToTicket(String eventCode) {
+        return "redirect:/e/" + eventCode + "/ticket?message=" + java.net.URLEncoder.encode(
+                "Please scan your QR code to enter the event.", java.nio.charset.StandardCharsets.UTF_8);
     }
 }
