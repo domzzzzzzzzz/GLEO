@@ -7,6 +7,16 @@
   <link th:href="@{/css/tailwind.css?v=20241020}" rel="stylesheet">
   <link th:href="@{/css/modern.css?v=20241110}" rel="stylesheet">
   <style>
+    body.has-ticket-overlay {
+      overflow: hidden;
+    }
+    .page {
+      transition: filter 0.25s ease, transform 0.25s ease;
+    }
+    body.has-ticket-overlay .page {
+      filter: blur(4px);
+      transform: scale(0.996);
+    }
     .ticket-overlay-root {
       position: fixed;
       inset: 0;
@@ -14,7 +24,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      pointer-events: none;
+      pointer-events: auto;
       animation: fadeIn 0.3s ease;
       padding: 16px;
     }
@@ -25,8 +35,8 @@
     .ticket-overlay-backdrop {
       position: absolute;
       inset: 0;
-      background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(8px);
+      background: rgba(244, 247, 255, 0.28);
+      backdrop-filter: blur(8px) saturate(110%);
       pointer-events: auto;
     }
     .ticket-overlay-card {
@@ -34,7 +44,7 @@
       width: 100%;
       max-width: 420px;
       border-radius: 20px;
-      background: white;
+      background: rgba(255,255,255,0.78);
       box-shadow: 0 20px 40px rgba(0,0,0,0.15);
       padding: 32px 24px;
       display: flex;
@@ -42,7 +52,7 @@
       gap: 24px;
       pointer-events: auto;
       animation: slideUp 0.4s ease;
-    }
+      }
     @keyframes slideUp {
       from { 
         opacity: 0;
@@ -173,6 +183,27 @@
       font-size: 0.8125rem;
       line-height: 1.5;
     }
+    .ticket-toast {
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ticket-toast svg {
+      width: 18px;
+      height: 18px;
+    }
+    .ticket-toast--info {
+      background: rgba(125, 146, 255, 0.15);
+      color: #4c51bf;
+    }
+    .ticket-toast--error {
+      background: rgba(248, 113, 113, 0.18);
+      color: #b91c1c;
+    }
     
     @media (max-width: 480px) {
       .ticket-overlay-card {
@@ -258,29 +289,96 @@
       transform: none !important;
       box-shadow: none !important;
     }
+    /* Vendor hero tile */
+    .vendor-hero-thumb {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      background-size: cover;
+      background-position: center;
+      border: none;
+      box-shadow: 0 12px 28px rgba(15,23,42,0.12);
+      width: 124px;
+      height: 124px;
+      border-radius: 24px;
+    }
+    .vendor-hero-thumb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(170deg, rgba(248,250,252,0.22), rgba(246,248,252,0.18), rgba(255,255,255,0.35));
+      pointer-events: none;
+    }
+    .vendor-hero-thumb--has-image::after {
+      background: linear-gradient(190deg, rgba(248,250,252,0.18), rgba(248,250,252,0.14), rgba(255,255,255,0.3));
+    }
+    .vendor-hero-thumb--has-image {
+      filter: saturate(0.92) brightness(0.98);
+    }
+    .vendor-hero-logo {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid rgba(226,232,240,0.9);
+      box-shadow: 0 10px 24px rgba(15,23,42,0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      padding: 8px;
+    }
+    .vendor-hero-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .vendor-hero-logo--placeholder {
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    @media (max-width: 768px) {
+      .vendor-hero-thumb {
+        width: 112px;
+        height: 112px;
+        border-radius: 22px;
+      }
+      .vendor-hero-logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        padding: 5px;
+      }
+    }
   </style>
 </head>
-<body>
+<body th:classappend="${needsTicket} ? 'has-ticket-overlay' : ''">
 <div class="page">
-  <div th:replace="fragments/nav :: top(${event}, ${cartSummary})"></div>
+  <div th:replace="~{fragments/nav :: top(${event}, ${cartSummary})}"></div>
 
   <section class="section section-vendors">
     <div class="card section-card">
       <div class="vendor-meta">
         <h3 style="margin:0;">Food &amp; beverage partners</h3>
-        <span class="badge" th:text="${#lists.size(vendors)} + ' active vendor(s)'">0 vendors</span>
+        <span class="badge" th:text="${#lists.size(vendors)} + ' active vendors'">0 vendors</span>
       </div>
     </div>
     <div class="grid-vendors">
       <div class="card vendor-card" th:each="vendor : ${vendors}"
            th:classappend="${oneVendorOnlyPolicy and lockedVendorId != null and lockedVendorId != vendor.id ? 'vendor-card--locked' : ''}">
-        <div class="vendor-photo vendor-photo--card"
-             th:classappend="${vendor.imagePath} == null ? ' vendor-photo--empty' : ''">
-          <img th:if="${vendor.imagePath != null}"
-               th:src="${vendor.imagePath}"
-               th:alt="${vendor.name} + ' photo'">
-          <span th:if="${vendor.imagePath == null}"
-                th:text="${#strings.isEmpty(vendor.name) ? 'V' : #strings.toUpperCase(#strings.substring(vendor.name,0,1))}">V</span>
+        <div class="vendor-photo vendor-photo--card vendor-hero-thumb"
+             th:with="hero=${vendorHeroMap[vendor.id]}"
+             th:classappend="${hero} != null ? ' vendor-hero-thumb--has-image' : ' vendor-photo--empty'"
+             th:styleappend="${hero} != null ? 'background-image:url(' + @{${hero}} + ');background-size:cover;background-position:center;' : ''">
+          <div class="vendor-hero-logo" th:if="${vendor.imagePath != null}">
+            <img th:src="${vendor.imagePath}" th:alt="${vendor.name} + ' logo'">
+          </div>
+          <div class="vendor-hero-logo vendor-hero-logo--placeholder" th:if="${vendor.imagePath == null}">
+            <span th:text="${#strings.isEmpty(vendor.name) ? 'V' : #strings.toUpperCase(#strings.substring(vendor.name,0,1))}">V</span>
+          </div>
         </div>
         
         <!-- Locked overlay -->
@@ -328,6 +426,18 @@
       <h2 th:text="'Welcome to ' + ${event.name}">Welcome to Event</h2>
       <p class="ticket-subtitle">Scan your ticket to access vendors and track your orders</p>
     </div>
+    <div class="ticket-toast ticket-toast--info" th:if="${ticketOverlayMessage}">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span th:text="${ticketOverlayMessage}">Please scan your QR code to enter the event.</span>
+    </div>
+    <div class="ticket-toast ticket-toast--error" th:if="${toastError}">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span th:text="${toastError}">Something went wrong.</span>
+    </div>
 
     <form th:action="${ticketPostUrl}" method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:20px;">
       <label class="ticket-upload-field" id="ticket-upload-field">
@@ -341,12 +451,10 @@
         <img id="ticket-upload-preview" class="ticket-upload-preview" alt="QR preview">
         <input type="file" name="qrFile" accept="image/*" required>
       </label>
+      <input type="hidden" name="next" th:value="${ticketNext}" th:if="${ticketNext}">
       <button type="submit">Continue</button>
     </form>
     
-    <div class="ticket-footer">
-      <small>Need to switch tickets? Upload a new one anytime</small>
-    </div>
   </div>
 </div>
 <script>
