@@ -357,6 +357,29 @@ public class AdminEventController {
         return "admin/vendor_management";
     }
 
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
+    @GetMapping("/{eventCode}/inventory/export")
+    public ResponseEntity<String> exportInventoryAll(@PathVariable String eventCode) {
+        Event event = policyService.get(eventCode);
+        List<MenuItem> items = menuItemRepo.findByVendor_EventOrderByVendor_NameAscNameAsc(event);
+        StringBuilder csv = new StringBuilder();
+        csv.append("vendor,item,stockLevel,lowStockThreshold,available\n");
+        for (MenuItem item : items) {
+            csv.append('"').append(escape(item.getVendor().getName())).append('"').append(",");
+            csv.append('"').append(escape(item.getName())).append('"').append(",");
+            csv.append(item.getStockLevel() == null ? "" : item.getStockLevel()).append(",");
+            csv.append(item.getLowStockThreshold() == null ? "" : item.getLowStockThreshold()).append(",");
+            csv.append(item.isAvailable()).append("\n");
+        }
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=inventory-" + event.getCode() + ".csv")
+                .body(csv.toString());
+    }
+
+    private String escape(String value) {
+        return value == null ? "" : value.replace("\"", "\"\"");
+    }
+
     @GetMapping("/{eventCode}/vendors/{vendorId}")
     public String vendorDetails(@PathVariable String eventCode, 
                                 @PathVariable Long vendorId, 

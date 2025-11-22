@@ -31,4 +31,6 @@ public interface MenuItemRepo extends JpaRepository<MenuItem, Long> {
     Integer findMaxItemOrderForCategory(@Param("vendor") Vendor vendor, @Param("category") String category);
 
     MenuItem findFirstByVendorAndImagePathIsNotNullOrderByItemOrderAscIdAsc(Vendor vendor);
+
+    List<MenuItem> findByVendor_EventOrderByVendor_NameAscNameAsc(Event event);
 }
