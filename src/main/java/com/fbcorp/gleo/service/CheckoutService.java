@@ -90,6 +90,7 @@ public class CheckoutService {
 
             List<OrderItem> orderItems = new ArrayList<>();
             String rejection = null;
+            Map<MenuItem, Integer> stockUpdates = new LinkedHashMap<>();
             for (CartLine line : entry.getValue()) {
                 MenuItem menuItem = menuItemRepo.findById(line.itemId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"));
@@ -100,6 +101,17 @@ public class CheckoutService {
                 if (!menuItem.isAvailable()) {
                     rejection = menuItem.getName() + " is unavailable";
                     break;
+                }
+                // Stock check (null = unlimited)
+                Integer stock = menuItem.getStockLevel();
+                if (stock != null) {
+                    int remaining = stock - line.qty();
+                    if (remaining < 0) {
+                        int available = Math.max(0, stock);
+                        rejection = "Only " + available + " of '" + menuItem.getName() + "' left in stock.";
+                        break;
+                    }
+                    stockUpdates.put(menuItem, remaining);
                 }
                 OrderItem orderItem = new OrderItem();
                 orderItem.setMenuItem(menuItem);
@@ -125,6 +137,11 @@ public class CheckoutService {
             orderItems.forEach(order::addItem);
 
             orderRepo.save(order);
+            // apply stock updates
+            stockUpdates.forEach((item, remaining) -> item.setStockLevel(remaining));
+            if (!stockUpdates.isEmpty()) {
+                menuItemRepo.saveAll(stockUpdates.keySet());
+            }
             result.orders.add(order);
             
             // Use OrderService to broadcast the new order

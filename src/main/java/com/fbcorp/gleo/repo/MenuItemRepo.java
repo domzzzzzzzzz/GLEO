@@ -29,4 +29,6 @@ public interface MenuItemRepo extends JpaRepository<MenuItem, Long> {
 
     @Query("select coalesce(max(m.itemOrder),0) from MenuItem m where m.vendor = :vendor and ((:category is null and (m.category is null or m.category = '')) or m.category = :category)")
     Integer findMaxItemOrderForCategory(@Param("vendor") Vendor vendor, @Param("category") String category);
+
+    MenuItem findFirstByVendorAndImagePathIsNotNullOrderByItemOrderAscIdAsc(Vendor vendor);
 }

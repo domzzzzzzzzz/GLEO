@@ -16,6 +16,7 @@ public class TicketSessionInterceptor implements HandlerInterceptor {
 
     public static final String SESSION_TICKET_ATTR = "ACTIVE_TICKET_ID";
     private static final String REDIRECT_MESSAGE = "Please scan your QR code to enter the event.";
+    private static final String DEFAULT_EVENT_CODE = "G2025";
 
     private final TicketRepo ticketRepo;
 
@@ -36,8 +37,25 @@ public class TicketSessionInterceptor implements HandlerInterceptor {
         }
         String eventCode = segments[2];
 
+        // Force all event routes to the default event code
+        if (!DEFAULT_EVENT_CODE.equals(eventCode)) {
+            String newUri = uri.replaceFirst("/e/[^/]+", "/e/" + DEFAULT_EVENT_CODE);
+            if (request.getQueryString() != null) {
+                newUri = newUri + "?" + request.getQueryString();
+            }
+            response.sendRedirect(newUri);
+            return false;
+        }
+
+        String eventRoot = "/e/" + eventCode;
+
+        // Allow landing page to render so the inline overlay can prompt for ticket upload
+        if (isEventHomeRequest(uri, eventRoot) && "GET".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
         // Allow access to ticket upload/validation endpoints
-        if (uri.startsWith("/e/" + eventCode + "/ticket")) {
+        if (uri.startsWith(eventRoot + "/ticket")) {
             return true;
         }
 
@@ -57,14 +75,17 @@ public class TicketSessionInterceptor implements HandlerInterceptor {
         if (request.getQueryString() != null) {
             next = next + "?" + request.getQueryString();
         }
-        String redirect = new StringBuilder("/e/")
-                .append(eventCode)
-                .append("/ticket?message=")
+        String redirect = new StringBuilder(eventRoot)
+                .append("?message=")
                 .append(URLEncoder.encode(REDIRECT_MESSAGE, StandardCharsets.UTF_8))
                 .append("&next=")
                 .append(URLEncoder.encode(next, StandardCharsets.UTF_8))
                 .toString();
         response.sendRedirect(redirect);
         return false;
+    }
+
+    private boolean isEventHomeRequest(String uri, String eventRoot) {
+        return uri.equals(eventRoot) || uri.equals(eventRoot + "/");
     }
 }

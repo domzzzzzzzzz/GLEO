@@ -35,4 +35,11 @@ public class MenuItem {
     // Order of the item within its category.
     @Column(name = "item_order")
     private Integer itemOrder = 0;
+
+    // Inventory tracking (null means unlimited)
+    @Column(name = "stock_level")
+    private Integer stockLevel;
+
+    @Column(name = "low_stock_threshold")
+    private Integer lowStockThreshold;
 }

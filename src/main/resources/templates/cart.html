@@ -42,7 +42,7 @@
     .back-link:active { opacity: 0.7; }
     .cart-title {
       font-size: 1.5rem;
-      font-weight: 700;
+      font-weight: 600;
       color: #1e293b;
       margin-bottom: 4px;
       letter-spacing: -0.02em;
@@ -105,7 +105,7 @@
     }
     .empty-cart h3 {
       font-size: 1.125rem;
-      font-weight: 700;
+      font-weight: 600;
       color: #1e293b;
       margin-bottom: 8px;
     }
@@ -138,7 +138,7 @@
     }
     .cart-vendor-header {
       font-size: 1.125rem;
-      font-weight: 700;
+      font-weight: 600;
       color: #1e293b;
       margin-bottom: 16px;
       padding-bottom: 12px;
@@ -215,7 +215,7 @@
       padding-top: 16px;
       border-top: 2px solid #f1f5f9;
       font-size: 1rem;
-      font-weight: 700;
+      font-weight: 600;
       color: #1e293b;
     }
     /* Order Summary */
@@ -227,7 +227,7 @@
     }
     .summary-title {
       font-size: 1.25rem;
-      font-weight: 700;
+      font-weight: 600;
       color: #1e293b;
       margin-bottom: 20px;
     }
@@ -260,7 +260,7 @@
     }
     .summary-total {
       font-size: 1.125rem;
-      font-weight: 700;
+      font-weight: 600;
       color: #1e293b;
     }
     .summary-total span:last-child {
@@ -552,22 +552,23 @@
       `;
       toast.style.cssText = `
         position: fixed;
-        top: 24px;
-        right: 24px;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        background: rgba(17, 24, 39, 0.9);
         color: white;
-        padding: 16px 20px;
+        padding: 12px 14px;
         border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
         display: flex;
         align-items: center;
-        gap: 12px;
-        font-size: 15px;
-        font-weight: 500;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 600;
         z-index: 10000;
-        max-width: 420px;
-        min-width: 280px;
-        animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        max-width: 260px;
+        min-width: 200px;
+        animation: toastSlideIn 0.32s ease;
       `;
     } else if (type === 'error') {
       icon.innerHTML = `
@@ -578,22 +579,23 @@
       `;
       toast.style.cssText = `
         position: fixed;
-        top: 24px;
-        right: 24px;
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        background: rgba(239, 68, 68, 0.93);
         color: white;
-        padding: 16px 20px;
+        padding: 12px 14px;
         border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(239, 68, 68, 0.3), 0 4px 12px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 12px 32px rgba(239, 68, 68, 0.25);
         display: flex;
         align-items: center;
-        gap: 12px;
-        font-size: 15px;
-        font-weight: 500;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 600;
         z-index: 10000;
-        max-width: 420px;
-        min-width: 280px;
-        animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        max-width: 260px;
+        min-width: 200px;
+        animation: toastSlideIn 0.32s ease;
       `;
     }
     
@@ -616,7 +618,7 @@
     closeBtn.onmouseover = () => closeBtn.style.opacity = '1';
     closeBtn.onmouseout = () => closeBtn.style.opacity = '0.7';
     closeBtn.onclick = () => {
-      toast.style.animation = 'toastSlideOut 0.3s ease-out';
+      toast.style.animation = 'toastSlideOut 0.35s ease 2.6s forwards';
       setTimeout(() => toast.remove(), 300);
     };
     
@@ -628,7 +630,7 @@
     // Auto remove after 5 seconds
     setTimeout(() => {
       if (toast.parentElement) {
-        toast.style.animation = 'toastSlideOut 0.3s ease-out';
+        toast.style.animation = 'toastSlideOut 0.35s ease 2.6s forwards';
         setTimeout(() => toast.remove(), 300);
       }
     }, 5000);
@@ -636,12 +638,12 @@
 </script>
 <style>
   @keyframes toastSlideIn {
-    from { transform: translateX(450px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from { transform: translate(-50%, 16px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
   }
   @keyframes toastSlideOut {
-    from { transform: translateX(0) scale(1); opacity: 1; }
-    to { transform: translateX(450px) scale(0.9); opacity: 0; }
+    from { transform: translate(-50%, 0) scale(1); opacity: 1; }
+    to { transform: translate(-50%, 16px) scale(0.95); opacity: 0; }
   }
   .professional-toast:hover {
     transform: translateY(-2px);

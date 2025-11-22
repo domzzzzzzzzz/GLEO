@@ -114,23 +114,8 @@ public class AdminEventController {
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
     @GetMapping
-    public String listEvents(Model model){
-        var events = eventRepo.findAll();
-        model.addAttribute("events", events);
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated()) {
-            adminPreferenceService.findByUsername(auth.getName()).ifPresent(pref -> {
-                if (pref.getTheme() != null) model.addAttribute("adminTheme", pref.getTheme());
-                if (pref.getMenuOrderJson() != null) {
-                    try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        var list = mapper.readValue(pref.getMenuOrderJson(), new TypeReference<java.util.List<MenuOrderItem>>(){});
-                        model.addAttribute("adminMenuItems", list);
-                    } catch (Exception ex) { }
-                }
-            });
-        }
-        return "admin/events";
+    public String listEvents(){
+        return "redirect:/dashboard";
     }
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -414,6 +399,8 @@ public class AdminEventController {
                              @RequestParam(required = false) String pin,
                              @RequestParam(value = "image", required = false) MultipartFile newImage,
                              @RequestParam(value = "removeImage", defaultValue = "false") boolean removeImage,
+                             @RequestParam(value = "heroImage", required = false) MultipartFile heroImage,
+                             @RequestParam(value = "removeHeroImage", defaultValue = "false") boolean removeHeroImage,
                              RedirectAttributes redirectAttributes) {
         Event event = policyService.get(eventCode);
         Vendor vendor = vendorRepo.findById(vendorId)
@@ -455,6 +442,25 @@ public class AdminEventController {
                 changeNotes.add(previousImage == null ? "added image" : "updated image");
             } catch (IOException ex) {
                 redirectAttributes.addFlashAttribute("toastError", "Failed to store image: " + ex.getMessage());
+                return "redirect:/admin/events/" + eventCode + "/vendors";
+            }
+        }
+
+        String previousHero = vendor.getHeroImagePath();
+        if (removeHeroImage && previousHero != null) {
+            vendor.setHeroImagePath(null);
+            changeNotes.add("removed featured image");
+        } else if (heroImage != null && !heroImage.isEmpty()) {
+            String contentType = heroImage.getContentType();
+            if (contentType != null && !contentType.startsWith("image/")) {
+                redirectAttributes.addFlashAttribute("toastError", "Please upload a valid featured image file.");
+                return "redirect:/admin/events/" + eventCode + "/vendors";
+            }
+            try {
+                vendor.setHeroImagePath(assetStorageService.storeVendorHeroImage(heroImage));
+                changeNotes.add(previousHero == null ? "added featured image" : "updated featured image");
+            } catch (IOException ex) {
+                redirectAttributes.addFlashAttribute("toastError", "Failed to store featured image: " + ex.getMessage());
                 return "redirect:/admin/events/" + eventCode + "/vendors";
             }
         }
@@ -501,6 +507,8 @@ public class AdminEventController {
                              @RequestParam String price,
                              @RequestParam(required = false) String category,
                              @RequestParam(required = false) Integer maxPerOrder,
+                             @RequestParam(required = false) Integer stockLevel,
+                             @RequestParam(required = false) Integer lowStockThreshold,
                              @RequestParam(required = false) MultipartFile image,
                              @RequestParam(required = false, defaultValue = "false") boolean available,
                              RedirectAttributes redirectAttributes) {
@@ -523,6 +531,8 @@ public class AdminEventController {
             menuItem.setItemOrder(nextItemOrder(vendor, normalizedCategory));
             menuItem.setMaxPerOrder(maxPerOrder);
             menuItem.setAvailable(available);
+            menuItem.setStockLevel(stockLevel);
+            menuItem.setLowStockThreshold(lowStockThreshold);
 
             // Handle image upload
             if (image != null && !image.isEmpty()) {
@@ -553,6 +563,8 @@ public class AdminEventController {
                               @RequestParam String price,
                               @RequestParam(required = false) String category,
                               @RequestParam(required = false) Integer maxPerOrder,
+                              @RequestParam(required = false) Integer stockLevel,
+                              @RequestParam(required = false) Integer lowStockThreshold,
                               @RequestParam(required = false) MultipartFile image,
                               @RequestParam(required = false, defaultValue = "false") boolean available,
                               RedirectAttributes redirectAttributes) {
@@ -584,6 +596,8 @@ public class AdminEventController {
             }
             menuItem.setMaxPerOrder(maxPerOrder);
             menuItem.setAvailable(available);
+            menuItem.setStockLevel(stockLevel);
+            menuItem.setLowStockThreshold(lowStockThreshold);
 
             // Handle image upload
             if (image != null && !image.isEmpty()) {

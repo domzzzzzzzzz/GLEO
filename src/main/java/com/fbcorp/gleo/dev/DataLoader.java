@@ -21,13 +21,15 @@ public class DataLoader implements CommandLineRunner {
     private final UserAccountRepo userAccountRepo;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final boolean seedDemoTickets;
+    private final boolean seedDemoData;
 
     public DataLoader(EventRepo eventRepo, VendorRepo vendorRepo,
                       MenuItemRepo menuItemRepo, TicketRepo ticketRepo,
                       TierPolicyRepo tierPolicyRepo,
                       RoleRepo roleRepo, UserAccountRepo userAccountRepo,
                       org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
-                      @Value("${gleo.seed-demo-tickets:false}") boolean seedDemoTickets){
+                      @Value("${gleo.seed-demo-tickets:false}") boolean seedDemoTickets,
+                      @Value("${gleo.seed-demo-data:false}") boolean seedDemoData){
         this.eventRepo = eventRepo;
         this.vendorRepo = vendorRepo;
         this.menuItemRepo = menuItemRepo;
@@ -37,11 +39,19 @@ public class DataLoader implements CommandLineRunner {
         this.userAccountRepo = userAccountRepo;
         this.passwordEncoder = passwordEncoder;
         this.seedDemoTickets = seedDemoTickets;
+        this.seedDemoData = seedDemoData;
     }
 
     @Override
     public void run(String... args) {
-        Event event = eventRepo.findByCode("G2025").orElseGet(() -> {
+        // All demo seeding is disabled by default for production safety.
+        if (!seedDemoData && !seedDemoTickets) {
+            return;
+        }
+
+        var existingEvent = eventRepo.findByCode("G2025");
+        boolean isNewEvent = existingEvent.isEmpty();
+        Event event = existingEvent.orElseGet(() -> {
             Event created = new Event();
             created.setCode("G2025");
             created.setName("GLEO Demo Event");
@@ -50,63 +60,79 @@ public class DataLoader implements CommandLineRunner {
             return eventRepo.save(created);
         });
 
-        Vendor v1 = ensureVendor(event, "BRGR", "1234", "/images/brgr.png");
-        Vendor v2 = ensureVendor(event, "DESOUKY&SODA", "4321", "/images/desoky-soda.png");
-        Vendor v3 = ensureVendor(event, "Koffee Kulture", "9876", "/images/koffee-kulture.jpg");
+        Vendor v1 = vendorRepo.findByEventAndNameIgnoreCase(event, "BRGR").orElse(null);
+        Vendor v2 = vendorRepo.findByEventAndNameIgnoreCase(event, "DESOUKY&SODA").orElse(null);
+        Vendor v3 = vendorRepo.findByEventAndNameIgnoreCase(event, "Koffee Kulture").orElse(null);
 
-        ensureTierPolicy(event, TierCode.VIP, true, null);
-        ensureTierPolicy(event, TierCode.REG, false, 1);
+        if (seedDemoData && isNewEvent) {
+            v1 = ensureVendor(event, "BRGR", "1234", "/images/brgr.png");
+            v2 = ensureVendor(event, "DESOUKY&SODA", "4321", "/images/desoky-soda.png");
+            v3 = ensureVendor(event, "Koffee Kulture", "9876", "/images/koffee-kulture.jpg");
 
-        ensureMenuItem(v1, "Smash BRGR", "Burgers");
-        ensureMenuItem(v1, "Truffle Fries", "Sides");
+            ensureMenuItem(v1, "Smash BRGR", "Burgers");
+            ensureMenuItem(v1, "Truffle Fries", "Sides");
 
-        ensureMenuItem(v2, "Desouky Street Pizza", "Burgers");
-        ensureMenuItem(v2, "Creamy Macarona Bechamel", "Sides");
-        ensureMenuItem(v2, "Desouky Liver Sandwich", "Burgers");
+            ensureMenuItem(v2, "Desouky Street Pizza", "Burgers");
+            ensureMenuItem(v2, "Creamy Macarona Bechamel", "Sides");
+            ensureMenuItem(v2, "Desouky Liver Sandwich", "Burgers");
 
-        ensureMenuItem(v3, "Signature Cappuccino", "Drinks");
-        ensureMenuItem(v3, "Cold Brew Tonic", "Drinks");
-        ensureMenuItem(v3, "Hazelnut Latte", "Drinks");
+            ensureMenuItem(v3, "Signature Cappuccino", "Drinks");
+            ensureMenuItem(v3, "Cold Brew Tonic", "Drinks");
+            ensureMenuItem(v3, "Hazelnut Latte", "Drinks");
+
+            ensureTierPolicy(event, TierCode.VIP, true, null);
+            ensureTierPolicy(event, TierCode.REG, false, 1);
+        }
 
         if (seedDemoTickets) {
+            ensureTierPolicy(event, TierCode.VIP, true, null);
+            ensureTierPolicy(event, TierCode.REG, false, 1);
             ensureTicket(event, "VIP-001", TierCode.VIP, "VIP Guest", "01000000001", "S-VIP-1");
             ensureTicket(event, "REG-001", TierCode.REG, "REG Guest", "01000000002", "S-REG-1");
         }
 
-        Role adminRole = ensureRole("ADMIN");
-        Role organizerRole = ensureRole("ORGANIZER");
-        Role vendorRole = ensureRole("VENDOR");
-        Role staffRole = ensureRole("STAFF");
-        Role usherRole = ensureRole("USHER");
+        if (seedDemoData) {
+            Role adminRole = ensureRole("ADMIN");
+            Role organizerRole = ensureRole("ORGANIZER");
+            Role vendorRole = ensureRole("VENDOR");
+            Role staffRole = ensureRole("STAFF");
+            Role usherRole = ensureRole("USHER");
 
-        UserAccount admin = ensureUser("admin", "Admin@123");
-        addRole(admin, adminRole);
-        addRole(admin, organizerRole);
-        admin.setEvent(null);
-        admin.setVendor(null);
-        userAccountRepo.save(admin);
+            UserAccount admin = ensureUser("admin", "Admin@123");
+            addRole(admin, adminRole);
+            addRole(admin, organizerRole);
+            admin.setEvent(null);
+            admin.setVendor(null);
+            userAccountRepo.save(admin);
 
-        UserAccount organizer = ensureUser("organizer", "Organizer@123");
-        addRole(organizer, organizerRole);
-        organizer.setEvent(event);
-        organizer.setVendor(null);
-        userAccountRepo.save(organizer);
+            UserAccount organizer = ensureUser("organizer", "Organizer@123");
+            addRole(organizer, organizerRole);
+            organizer.setEvent(event);
+            organizer.setVendor(null);
+            userAccountRepo.save(organizer);
 
-        UserAccount vendorUser = ensureUser("vendor1", "Vendor@123");
-        addRole(vendorUser, vendorRole);
-        vendorUser.setVendor(v1);
-        vendorUser.setEvent(event);
-        userAccountRepo.save(vendorUser);
+            if (v1 != null) {
+                UserAccount vendorUser = ensureUser("vendor1", "Vendor@123");
+                addRole(vendorUser, vendorRole);
+                vendorUser.setVendor(v1);
+                vendorUser.setEvent(event);
+                userAccountRepo.save(vendorUser);
 
-        UserAccount staff = ensureUser("staff1", "Staff@123");
-        addRole(staff, staffRole);
-        staff.setVendor(v1);
-        staff.setEvent(event);
-        userAccountRepo.save(staff);
+                UserAccount staff = ensureUser("staff1", "Staff@123");
+                addRole(staff, staffRole);
+                staff.setVendor(v1);
+                staff.setEvent(event);
+                userAccountRepo.save(staff);
 
-        ensureUsherAccount("usher_brgr", v1, usherRole);
-        ensureUsherAccount("usher_desouky", v2, usherRole);
-        ensureUsherAccount("usher_koffee", v3, usherRole);
+                ensureUsherAccount("usher_brgr", v1, usherRole);
+            }
+            if (v2 != null) {
+                ensureUsherAccount("usher_desouky", v2, usherRole);
+            }
+            if (v3 != null) {
+                ensureUsherAccount("usher_koffee", v3, usherRole);
+            }
+        }
     }
 
     private Role ensureRole(String name){
@@ -157,6 +183,8 @@ public class DataLoader implements CommandLineRunner {
             item.setCategory(category);
             item.setPrice(BigDecimal.ZERO);
             item.setAvailable(true);
+            item.setStockLevel(200); // default demo stock
+            item.setLowStockThreshold(25);
             menuItemRepo.save(item);
             return;
         }
@@ -172,6 +200,9 @@ public class DataLoader implements CommandLineRunner {
             item.setPrice(BigDecimal.ZERO);
         }
         item.setAvailable(true);
+        if (item.getStockLevel() == null) {
+            item.setStockLevel(200);
+        }
         return menuItemRepo.save(item);
     }
 

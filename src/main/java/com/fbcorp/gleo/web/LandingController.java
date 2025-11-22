@@ -15,9 +15,8 @@ public class LandingController {
 
     @GetMapping("/")
     public String root(){
-        return eventRepo.findAll().stream()
-                .findFirst()
-                .map(event -> "redirect:/e/" + event.getCode())
+        return eventRepo.findByCode("G2025")
+                .map(event -> "redirect:/e/G2025")
                 .orElse("Event not found"); // never redirect to login, just show error if no event
     }
 }

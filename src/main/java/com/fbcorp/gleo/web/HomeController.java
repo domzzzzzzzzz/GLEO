@@ -9,9 +9,11 @@ import com.fbcorp.gleo.service.EventPolicyService;
 import com.fbcorp.gleo.service.TicketService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -25,24 +27,31 @@ public class HomeController {
     private final EventPolicyService policyService;
     private final CartViewService cartViewService;
     private final TicketService ticketService;
+    private final com.fbcorp.gleo.repo.MenuItemRepo menuItemRepo;
 
     public HomeController(VendorRepo vendorRepo,
                           EventPolicyService policyService,
                           CartViewService cartViewService,
-                          TicketService ticketService) {
+                          TicketService ticketService,
+                          com.fbcorp.gleo.repo.MenuItemRepo menuItemRepo) {
         this.vendorRepo = vendorRepo;
         this.policyService = policyService;
         this.cartViewService = cartViewService;
         this.ticketService = ticketService;
+        this.menuItemRepo = menuItemRepo;
     }
 
     @GetMapping
     public String landing(@PathVariable String eventCode,
+                          @RequestParam(value = "message", required = false) String message,
+                          @RequestParam(value = "next", required = false) String next,
                           Model model,
                           HttpSession session){
         var event = policyService.get(eventCode);
         model.addAttribute("event", event);
-        model.addAttribute("vendors", vendorRepo.findByEventAndActiveTrue(event));
+        var vendors = vendorRepo.findByEventAndActiveTrue(event);
+        model.addAttribute("vendors", vendors);
+        model.addAttribute("vendorHeroMap", buildVendorHeroMap(vendors));
         
         var cartSummary = cartViewService.summarize(event, getOrCreateCart(session));
         model.addAttribute("cartSummary", cartSummary);
@@ -61,6 +70,15 @@ public class HomeController {
 
         model.addAttribute("needsTicket", !hasTicket);
         model.addAttribute("ticketPostUrl", "/e/" + eventCode + "/ticket");
+        String sanitizedNext = sanitizeNext(eventCode, next);
+        boolean hasCustomNext = StringUtils.hasText(next) && !("/e/" + eventCode).equals(sanitizedNext);
+        if (hasCustomNext) {
+            model.addAttribute("ticketNext", sanitizedNext);
+        }
+        if (StringUtils.hasText(message)) {
+            model.addAttribute("ticketOverlayMessage", message);
+        }
+
         return "index";
     }
 
@@ -83,5 +101,32 @@ public class HomeController {
             session.removeAttribute(TicketSessionInterceptor.SESSION_TICKET_ATTR);
         }
         return java.util.Optional.empty();
+    }
+
+    private String sanitizeNext(String eventCode, String next) {
+        if (StringUtils.hasText(next) && next.startsWith("/e/" + eventCode)) {
+            return next;
+        }
+        return "/e/" + eventCode;
+    }
+
+    private java.util.Map<Long, String> buildVendorHeroMap(java.util.List<com.fbcorp.gleo.domain.Vendor> vendors) {
+        java.util.Map<Long, String> heroMap = new java.util.HashMap<>();
+        for (var v : vendors) {
+            String hero = v.getHeroImagePath();
+            if (!StringUtils.hasText(hero)) {
+                if (StringUtils.hasText(v.getImagePath())) {
+                    hero = v.getImagePath();
+                }
+            }
+            if (!StringUtils.hasText(hero)) {
+                var menuHero = menuItemRepo.findFirstByVendorAndImagePathIsNotNullOrderByItemOrderAscIdAsc(v);
+                if (menuHero != null && StringUtils.hasText(menuHero.getImagePath())) {
+                    hero = menuHero.getImagePath();
+                }
+            }
+            heroMap.put(v.getId(), StringUtils.hasText(hero) ? hero : null);
+        }
+        return heroMap;
     }
 }

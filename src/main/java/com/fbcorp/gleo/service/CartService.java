@@ -46,7 +46,7 @@ public class CartService {
             // First check: if already completed an order and locked to a vendor
             if (consumption != null && consumption.getLockedVendor() != null) {
                 if (!consumption.getLockedVendor().getId().equals(vendor.getId())) {
-                    return CheckResult.deny("🔒 Your " + ticket.getTierCode() + " tier is restricted to "
+                    return CheckResult.deny("Your " + ticket.getTierCode() + " tier is restricted to "
                             + consumption.getLockedVendor().getName() + " only.");
                 }
             }
@@ -57,7 +57,7 @@ public class CartService {
             if (!existingOrders.isEmpty()) {
                 for (Order order : existingOrders) {
                     if (!order.getVendor().getId().equals(vendor.getId())) {
-                        return CheckResult.deny("🔒 Your " + ticket.getTierCode() + " tier is restricted to "
+                        return CheckResult.deny("Your " + ticket.getTierCode() + " tier is restricted to "
                                 + order.getVendor().getName() + " only. Complete your existing order first.");
                     }
                 }
@@ -69,13 +69,13 @@ public class CartService {
             Integer consumed = tcRepo.consumedCount(vendor.getEvent(), ticket, vendor);
             int alreadyConsumed = consumed != null ? consumed : 0;
             if (alreadyConsumed >= limit) {
-                return CheckResult.deny("Vendor limit reached for " + vendor.getName()
-                        + ". This tier allows up to " + limit + " item" + (limit == 1 ? "" : "s") + ".");
+                return CheckResult.deny("Limit reached for " + vendor.getName()
+                        + ". This tier allows up to " + limit + " item" + (limit == 1 ? "" : "s") + " from this vendor.");
             }
             if (alreadyConsumed + qtySum > limit) {
                 int remaining = Math.max(0, limit - alreadyConsumed);
-                return CheckResult.deny("Only " + remaining + " more item" + (remaining == 1 ? "" : "s")
-                        + " allowed from " + vendor.getName() + " (limit: " + limit + ").");
+                return CheckResult.deny("You can add only " + remaining + " more item" + (remaining == 1 ? "" : "s")
+                        + " from " + vendor.getName() + " (limit: " + limit + ").");
             }
         }
         return CheckResult.allow();
@@ -111,13 +111,15 @@ public class CartService {
                 Integer categoryLimit = tierPolicy.getCategoryLimit(item.category());
                 if (categoryLimit != null) {
                     if (alreadyConsumed >= categoryLimit) {
-                        return CheckResult.deny("🍔 Category limit reached! You've already ordered " + alreadyConsumed
-                                + " '" + item.category() + "' item(s) (max: " + categoryLimit + ").");
+                        return CheckResult.deny("Limit reached for " + item.category()
+                                + ". Your tier allows " + categoryLimit + " item"
+                                + (categoryLimit == 1 ? "" : "s") + " in this category.");
                     }
                     if (alreadyConsumed + item.quantity() > categoryLimit) {
                         int remaining = Math.max(0, categoryLimit - alreadyConsumed);
-                        return CheckResult.deny(" Only " + remaining + " more '" + item.category()
-                                + "' item(s) allowed (limit: " + categoryLimit + ").");
+                        return CheckResult.deny("You can add only " + remaining + " more item"
+                                + (remaining == 1 ? "" : "s") + " from category '" + item.category()
+                                + "' (limit: " + categoryLimit + ").");
                     }
                 }
             }

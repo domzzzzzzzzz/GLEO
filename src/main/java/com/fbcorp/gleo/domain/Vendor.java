@@ -23,6 +23,7 @@ public class Vendor {
     private boolean active = true;
 
     private String imagePath;
+    private String heroImagePath;
 
     // optional: PIN hash (demo simplifies to plain)
     private String pinPlain;

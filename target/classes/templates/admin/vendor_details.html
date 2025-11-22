@@ -586,6 +586,16 @@
             </div>
 
             <div class="form-group">
+              <label for="stockLevel">Stock (leave blank for unlimited)</label>
+              <input type="number" id="stockLevel" name="stockLevel" class="form-control" min="0" placeholder="500">
+            </div>
+
+            <div class="form-group">
+              <label for="lowStockThreshold">Low stock threshold (optional)</label>
+              <input type="number" id="lowStockThreshold" name="lowStockThreshold" class="form-control" min="0" placeholder="25">
+            </div>
+
+            <div class="form-group">
               <label for="category" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #2d3748; margin-bottom: 0.75rem;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
@@ -668,6 +678,16 @@
             <div class="form-group">
               <label for="edit_price">Price (EGP) *</label>
               <input type="number" id="edit_price" name="price" class="form-control" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label for="edit_stockLevel">Stock (leave blank for unlimited)</label>
+              <input type="number" id="edit_stockLevel" name="stockLevel" class="form-control" min="0">
+            </div>
+
+            <div class="form-group">
+              <label for="edit_lowStockThreshold">Low stock threshold (optional)</label>
+              <input type="number" id="edit_lowStockThreshold" name="lowStockThreshold" class="form-control" min="0">
             </div>
 
             <div class="form-group">

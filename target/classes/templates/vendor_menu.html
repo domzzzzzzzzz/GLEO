@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="page">
-  <div th:replace="fragments/nav :: top(${event}, ${cartSummary})"></div>
+  <div th:replace="~{fragments/nav :: top(${event}, ${cartSummary})}"></div>
   <div class="vendor-page-head">
     <a th:href="@{|/e/${event.code}|}" class="btn btn-muted btn-sm">&larr; Back to vendors</a>
     <h2 th:text="${vendor.name}">Vendor</h2>

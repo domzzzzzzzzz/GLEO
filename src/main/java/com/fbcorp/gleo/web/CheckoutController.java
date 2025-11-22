@@ -22,6 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -75,7 +77,7 @@ public class CheckoutController {
 
         Ticket ticket = resolveActiveTicket(eventCode, session).orElse(null);
         if (ticket == null) {
-            return redirectToTicket(eventCode);
+            return redirectToTicket(eventCode, "/e/" + eventCode + "/checkout");
         }
 
         Map<Long, List<CheckoutService.CartLine>> groups = new LinkedHashMap<>();
@@ -106,10 +108,7 @@ public class CheckoutController {
             return "redirect:" + sanitizeNext(eventCode, next);
         }
 
-        model.addAttribute("eventCode", eventCode);
-        model.addAttribute("next", sanitizeNext(eventCode, next));
-        model.addAttribute("message", message);
-        return "ticket_entry";
+        return redirectToOverlay(eventCode, next, message);
     }
 
     @PostMapping("/ticket")
@@ -125,7 +124,7 @@ public class CheckoutController {
         String decoded = qrDecoderService.decode(qrFile).orElse(null);
         if (!StringUtils.hasText(decoded)) {
             redirectAttributes.addFlashAttribute("toastError", "Please upload a clear QR code image.");
-            return "redirect:/e/" + eventCode + "/ticket";
+            return redirectToOverlay(eventCode, next);
         }
 
         // SECOND: Check if this device already has a ticket bound to it. If so,
@@ -139,10 +138,13 @@ public class CheckoutController {
             Ticket boundTicket = existingDeviceTicket.get();
             // Allow re-upload of the same ticket from the same device
             if (!boundTicket.getQrCode().equals(decoded)) {
+                String serial = boundTicket.getSerial();
+                boolean hasSerial = StringUtils.hasText(serial);
+                String ticketLabel = hasSerial ? ("ticket " + serial) : "another ticket";
                 redirectAttributes.addFlashAttribute("toastError",
-                        "This device is already linked to a ticket (" + boundTicket.getSerial() + "). " +
+                        "This device is already linked to " + ticketLabel + ". " +
                                 "Please use your original QR code or use a different device.");
-                return "redirect:/e/" + eventCode + "/ticket";
+                return redirectToOverlay(eventCode, next);
             }
         }
 
@@ -152,7 +154,7 @@ public class CheckoutController {
         } catch (ResponseStatusException ex) {
             String message = ex.getReason() != null ? ex.getReason() : "Unable to link this ticket.";
             redirectAttributes.addFlashAttribute("toastError", message);
-            return "redirect:/e/" + eventCode + "/ticket";
+            return redirectToOverlay(eventCode, next);
         }
 
         session.setAttribute(TicketSessionInterceptor.SESSION_TICKET_ATTR, ticket.getId());
@@ -193,8 +195,32 @@ public class CheckoutController {
         return "/e/" + eventCode;
     }
 
-    private String redirectToTicket(String eventCode) {
-        return "redirect:/e/" + eventCode + "/ticket?message=" + java.net.URLEncoder.encode(
-                "Please scan your QR code to enter the event.", java.nio.charset.StandardCharsets.UTF_8);
+    private String redirectToTicket(String eventCode, String next) {
+        return redirectToOverlay(eventCode, next,
+                "Please scan your QR code to enter the event.");
+    }
+
+    private String redirectToOverlay(String eventCode, String next) {
+        return redirectToOverlay(eventCode, next, null);
+    }
+
+    private String redirectToOverlay(String eventCode, String next, String message) {
+        StringBuilder redirect = new StringBuilder("redirect:/e/").append(eventCode);
+        List<String> params = new ArrayList<>();
+
+        if (StringUtils.hasText(message)) {
+            params.add("message=" + URLEncoder.encode(message, StandardCharsets.UTF_8));
+        }
+
+        String sanitizedNext = sanitizeNext(eventCode, next);
+        boolean hasCustomNext = StringUtils.hasText(next) && !sanitizedNext.equals("/e/" + eventCode);
+        if (hasCustomNext) {
+            params.add("next=" + URLEncoder.encode(sanitizedNext, StandardCharsets.UTF_8));
+        }
+
+        if (!params.isEmpty()) {
+            redirect.append("?").append(String.join("&", params));
+        }
+        return redirect.toString();
     }
 }
