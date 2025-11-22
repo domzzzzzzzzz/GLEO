@@ -29,6 +29,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -41,6 +43,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.io.IOException;
@@ -154,8 +157,8 @@ public class AdminEventController {
         }
         eventRepo.save(event);
 
-        policyService.updateTierPolicy(event.getCode(), TierCode.VIP, true, null);
-        policyService.updateTierPolicy(event.getCode(), TierCode.REG, false, 1);
+        policyService.updateTierPolicy(event.getCode(), TierCode.VIP, true, null, false, false, false, false);
+        policyService.updateTierPolicy(event.getCode(), TierCode.REG, false, 1, false, false, false, false);
 
     // Audit log
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -359,25 +362,130 @@ public class AdminEventController {
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
     @GetMapping("/{eventCode}/inventory/export")
-    public ResponseEntity<String> exportInventoryAll(@PathVariable String eventCode) {
+    public ResponseEntity<byte[]> exportInventoryAll(@PathVariable String eventCode) {
         Event event = policyService.get(eventCode);
         List<MenuItem> items = menuItemRepo.findByVendor_EventOrderByVendor_NameAscNameAsc(event);
-        StringBuilder csv = new StringBuilder();
-        csv.append("vendor,item,stockLevel,lowStockThreshold,available\n");
-        for (MenuItem item : items) {
-            csv.append('"').append(escape(item.getVendor().getName())).append('"').append(",");
-            csv.append('"').append(escape(item.getName())).append('"').append(",");
-            csv.append(item.getStockLevel() == null ? "" : item.getStockLevel()).append(",");
-            csv.append(item.getLowStockThreshold() == null ? "" : item.getLowStockThreshold()).append(",");
-            csv.append(item.isAvailable()).append("\n");
-        }
-        return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=inventory-" + event.getCode() + ".csv")
-                .body(csv.toString());
-    }
 
-    private String escape(String value) {
-        return value == null ? "" : value.replace("\"", "\"\"");
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Inventory");
+
+            // Styles
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 14);
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+
+            CellStyle textStyle = workbook.createCellStyle();
+            textStyle.setWrapText(true);
+            textStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            textStyle.setBorderBottom(BorderStyle.THIN);
+            textStyle.setBorderTop(BorderStyle.THIN);
+            textStyle.setBorderLeft(BorderStyle.THIN);
+            textStyle.setBorderRight(BorderStyle.THIN);
+
+            CellStyle numberStyle = workbook.createCellStyle();
+            numberStyle.cloneStyleFrom(textStyle);
+            numberStyle.setAlignment(HorizontalAlignment.RIGHT);
+
+            // Title row
+            int rowIdx = 0;
+            Row titleRow = sheet.createRow(rowIdx++);
+            titleRow.setHeightInPoints(22);
+            Cell tcell = titleRow.createCell(0);
+            tcell.setCellValue("Inventory - " + event.getName() + " (" + event.getCode() + ")");
+            tcell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 4));
+
+            // Group by vendor
+            Map<Vendor, List<MenuItem>> byVendor = items.stream()
+                    .collect(Collectors.groupingBy(MenuItem::getVendor));
+
+            for (Map.Entry<Vendor, List<MenuItem>> entry : byVendor.entrySet()) {
+                Vendor vendor = entry.getKey();
+                List<MenuItem> vendorItems = entry.getValue();
+
+                // Vendor heading merged
+                Row vRow = sheet.createRow(rowIdx++);
+                Cell vCell = vRow.createCell(0);
+                vCell.setCellValue(vendor.getName());
+                vCell.setCellStyle(headerStyle);
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(vRow.getRowNum(), vRow.getRowNum(), 0, 4));
+
+                // Header row
+                Row hRow = sheet.createRow(rowIdx++);
+                String[] headers = { "Item", "Stock", "Low threshold", "Available", "Vendor" };
+                for (int i = 0; i < headers.length; i++) {
+                    Cell c = hRow.createCell(i);
+                    c.setCellValue(headers[i]);
+                    c.setCellStyle(headerStyle);
+                }
+
+                for (MenuItem item : vendorItems) {
+                    Row r = sheet.createRow(rowIdx++);
+                    Cell c0 = r.createCell(0);
+                    c0.setCellValue(item.getName());
+                    c0.setCellStyle(textStyle);
+
+                    Cell c1 = r.createCell(1);
+                    if (item.getStockLevel() == null) {
+                        c1.setCellValue("Unlimited");
+                        c1.setCellStyle(textStyle);
+                    } else {
+                        c1.setCellValue(item.getStockLevel());
+                        c1.setCellStyle(numberStyle);
+                    }
+
+                    Cell c2 = r.createCell(2);
+                    if (item.getLowStockThreshold() == null) {
+                        c2.setCellValue("");
+                        c2.setCellStyle(textStyle);
+                    } else {
+                        c2.setCellValue(item.getLowStockThreshold());
+                        c2.setCellStyle(numberStyle);
+                    }
+
+                    Cell c3 = r.createCell(3);
+                    c3.setCellValue(item.isAvailable() ? "Yes" : "No");
+                    c3.setCellStyle(textStyle);
+
+                    Cell c4 = r.createCell(4);
+                    c4.setCellValue(vendor.getName());
+                    c4.setCellStyle(textStyle);
+                }
+
+                rowIdx++; // spacer
+            }
+
+            for (int i = 0; i <= 4; i++) {
+                sheet.autoSizeColumn(i);
+                int width = sheet.getColumnWidth(i);
+                sheet.setColumnWidth(i, Math.min(10000, width + 500));
+            }
+
+            workbook.write(out);
+            byte[] bytes = out.toByteArray();
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "attachment; filename=inventory-" + event.getCode() + ".xlsx")
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(bytes);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to build inventory export", ex);
+        }
     }
 
     @GetMapping("/{eventCode}/vendors/{vendorId}")
@@ -797,7 +905,8 @@ public class AdminEventController {
                                    @RequestParam String accessMode,
                                    @RequestParam(required = false) Integer maxItemsPerVendor,
                                    @RequestParam(required = false, defaultValue = "false") boolean oneVendorOnly,
-                                   @RequestParam(required = false, defaultValue = "false") boolean oneItemPerCategory,
+                                   @RequestParam(required = false, defaultValue = "false") boolean lockVendorAfterOrder,
+                                   @RequestParam(required = false, defaultValue = "false") boolean singleOrderOnly,
                                    @RequestParam(required = false) Map<String, String> allParams,
                                    RedirectAttributes redirectAttributes){
         String normalizedMode = accessMode == null ? "unlimited" : accessMode.trim().toLowerCase();
@@ -805,39 +914,33 @@ public class AdminEventController {
         
         // Extract category limits from form parameters FIRST
         Map<String, Integer> categoryLimits = new HashMap<>();
-        if (oneItemPerCategory) {
-            for (Map.Entry<String, String> entry : allParams.entrySet()) {
-                String key = entry.getKey();
-                if (key.startsWith("categoryLimit_")) {
-                    String category = key.substring("categoryLimit_".length());
-                    try {
-                        int limit = Integer.parseInt(entry.getValue());
-                        if (limit > 0) {
-                            categoryLimits.put(category, limit);
-                        }
-                    } catch (NumberFormatException e) {
-                        // Skip invalid values
+        // Always parse category limits (checkbox removed)
+        for (Map.Entry<String, String> entry : allParams.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith("categoryLimit_")) {
+                String category = key.substring("categoryLimit_".length()).trim();
+                if (category.isEmpty()) {
+                    continue;
+                }
+                try {
+                    int limit = Integer.parseInt(entry.getValue());
+                    if (limit > 0) {
+                        categoryLimits.put(category, limit);
                     }
+                } catch (NumberFormatException e) {
+                    // Skip invalid values
                 }
             }
         }
-        
+
         if (unlimited) {
             oneVendorOnly = false;
-            oneItemPerCategory = false;
             categoryLimits.clear();
         }
 
-        // Validation: If not unlimited AND no category limits are set, then maxItemsPerVendor is required
-        if (!unlimited && categoryLimits.isEmpty()) {
-            if (maxItemsPerVendor == null || maxItemsPerVendor < 1) {
-                redirectAttributes.addFlashAttribute("toastError", "Please provide a positive limit for this tier or set category limits.");
-                return "redirect:/admin/events/" + eventCode + "/policies";
-            }
-        }
-        
-        policyService.updateTierPolicy(eventCode, tierCode, unlimited, unlimited ? null : maxItemsPerVendor, 
-                                       oneVendorOnly, oneItemPerCategory, categoryLimits);
+        // Validation: category limits only; ignore maxItemsPerVendor requirement
+        policyService.updateTierPolicy(eventCode, tierCode, unlimited, unlimited ? null : maxItemsPerVendor,
+                                       oneVendorOnly, false, singleOrderOnly, lockVendorAfterOrder, categoryLimits);
 
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String username = auth != null ? auth.getName() : "anonymous";

@@ -4,11 +4,15 @@ import com.fbcorp.gleo.domain.MenuItem;
 import com.fbcorp.gleo.domain.Order;
 import com.fbcorp.gleo.domain.OrderItem;
 import com.fbcorp.gleo.domain.OrderStatus;
+import com.fbcorp.gleo.domain.TierConsumption;
+import com.fbcorp.gleo.domain.TierPolicy;
 import com.fbcorp.gleo.domain.Ticket;
 import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.repo.MenuItemRepo;
 import com.fbcorp.gleo.repo.OrderRepo;
 import com.fbcorp.gleo.repo.VendorRepo;
+import com.fbcorp.gleo.repo.TierConsumptionRepo;
+import com.fbcorp.gleo.service.EventPolicyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,17 +38,23 @@ public class CheckoutService {
     private final OrderRepo orderRepo;
     private final CartService cartService;
     private final OrderService orderService;
+    private final TierConsumptionRepo tierConsumptionRepo;
+    private final EventPolicyService policyService;
 
     public CheckoutService(VendorRepo vendorRepo,
                            MenuItemRepo menuItemRepo,
                            OrderRepo orderRepo,
                            CartService cartService,
-                           OrderService orderService) {
+                           OrderService orderService,
+                           TierConsumptionRepo tierConsumptionRepo,
+                           EventPolicyService policyService) {
         this.vendorRepo = vendorRepo;
         this.menuItemRepo = menuItemRepo;
         this.orderRepo = orderRepo;
         this.cartService = cartService;
         this.orderService = orderService;
+        this.tierConsumptionRepo = tierConsumptionRepo;
+        this.policyService = policyService;
     }
 
     public List<Order> recentOrdersForTicket(Ticket ticket) {
@@ -58,6 +68,10 @@ public class CheckoutService {
         }
 
         CheckoutResult result = new CheckoutResult();
+        TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket.getTierCode());
+        boolean singleOrderOnly = tierPolicy.isSingleOrderOnly();
+        boolean hasExistingOrder = singleOrderOnly && orderRepo.existsByTicket_Id(ticket.getId());
+        boolean lockVendorAfterOrder = tierPolicy.isLockVendorAfterOrder();
 
         for (var entry : groupedLines.entrySet()) {
             Long vendorId = entry.getKey();
@@ -68,18 +82,30 @@ public class CheckoutService {
                 continue;
             }
 
+            if (singleOrderOnly && hasExistingOrder) {
+                result.rejectedByVendor.put(vendorId, "This ticket already placed an order. Policy allows only one order total.");
+                continue;
+            }
+            if (lockVendorAfterOrder && orderRepo.existsByTicket_IdAndVendor_Id(ticket.getId(), vendorId)) {
+                result.rejectedByVendor.put(vendorId, "You already placed an order with this vendor.");
+                continue;
+            }
+
             int qtySum = entry.getValue().stream().mapToInt(CartLine::qty).sum();
             
             // Build category items list for validation
-            List<CartService.CategoryItem> categoryItems = new ArrayList<>();
+            Map<String, Integer> categoryTotals = new LinkedHashMap<>();
             for (CartLine line : entry.getValue()) {
                 MenuItem menuItem = menuItemRepo.findById(line.itemId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu item not found"));
-                String category = menuItem.getCategory();
+                String category = menuItem.getCategory() != null ? menuItem.getCategory().trim() : null;
                 if (category != null && !category.isBlank()) {
-                    categoryItems.add(new CartService.CategoryItem(category, line.qty()));
+                    categoryTotals.merge(category, line.qty(), Integer::sum);
                 }
             }
+            List<CartService.CategoryItem> categoryItems = categoryTotals.entrySet().stream()
+                    .map(e -> new CartService.CategoryItem(e.getKey(), e.getValue()))
+                    .toList();
 
             // Check category restrictions
             var policyCheck = cartService.canAddItemsWithCategories(eventCode, ticket, vendor, categoryItems);
@@ -137,12 +163,30 @@ public class CheckoutService {
             orderItems.forEach(order::addItem);
 
             orderRepo.save(order);
+            // Lock to vendor immediately if one-vendor-only policy
+            if (tierPolicy.hasVendorRestriction()) {
+                TierConsumption tc = tierConsumptionRepo.findByEventAndTicket(vendor.getEvent(), ticket)
+                        .orElseGet(() -> {
+                            TierConsumption n = new TierConsumption();
+                            n.setEvent(vendor.getEvent());
+                            n.setTicket(ticket);
+                            return n;
+                        });
+                if (tc.getLockedVendor() == null) {
+                    tc.setLockedVendor(vendor);
+                }
+                tierConsumptionRepo.save(tc);
+            }
             // apply stock updates
             stockUpdates.forEach((item, remaining) -> item.setStockLevel(remaining));
             if (!stockUpdates.isEmpty()) {
                 menuItemRepo.saveAll(stockUpdates.keySet());
             }
             result.orders.add(order);
+
+            if (singleOrderOnly) {
+                hasExistingOrder = true;
+            }
             
             // Use OrderService to broadcast the new order
             orderService.markStatus(order.getId(), OrderStatus.NEW);

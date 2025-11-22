@@ -39,6 +39,16 @@ public class CartService {
 
         TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket.getTierCode());
 
+        // New policy: allow only ONE order total for this ticket
+        if (tierPolicy.isSingleOrderOnly() && orderRepo.existsByTicket_Id(ticket.getId())) {
+            return CheckResult.deny("This ticket already placed an order. Policy allows only one order total.");
+        }
+        // If policy says lock vendor after first order with it
+        if (tierPolicy.isLockVendorAfterOrder() &&
+                orderRepo.existsByTicket_IdAndVendor_Id(ticket.getId(), vendor.getId())) {
+            return CheckResult.deny("You already placed an order with " + vendor.getName() + ". This vendor is locked for this ticket.");
+        }
+
         // Check if tier is locked to a specific vendor
         if (tierPolicy.hasVendorRestriction()) {
             TierConsumption consumption = tcRepo.findByEventAndTicket(vendor.getEvent(), ticket).orElse(null);
@@ -64,20 +74,6 @@ public class CartService {
             }
         }
 
-        if (tierPolicy.hasLimit()) {
-            int limit = Math.max(0, tierPolicy.getMaxItemsPerVendor());
-            Integer consumed = tcRepo.consumedCount(vendor.getEvent(), ticket, vendor);
-            int alreadyConsumed = consumed != null ? consumed : 0;
-            if (alreadyConsumed >= limit) {
-                return CheckResult.deny("Limit reached for " + vendor.getName()
-                        + ". This tier allows up to " + limit + " item" + (limit == 1 ? "" : "s") + " from this vendor.");
-            }
-            if (alreadyConsumed + qtySum > limit) {
-                int remaining = Math.max(0, limit - alreadyConsumed);
-                return CheckResult.deny("You can add only " + remaining + " more item" + (remaining == 1 ? "" : "s")
-                        + " from " + vendor.getName() + " (limit: " + limit + ").");
-            }
-        }
         return CheckResult.allow();
     }
 
@@ -88,12 +84,7 @@ public class CartService {
      */
     public CheckResult canAddItemsWithCategories(String eventCode, Ticket ticket, Vendor vendor,
             List<CategoryItem> items) {
-        // First check basic vendor restrictions
-        CheckResult basicCheck = canAddToCart(eventCode, ticket, vendor,
-                items.stream().mapToInt(CategoryItem::quantity).sum());
-        if (!basicCheck.allowed()) {
-            return basicCheck;
-        }
+        // Skip maxItemsPerVendor checks; rely on category limits only
 
         TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket.getTierCode());
 

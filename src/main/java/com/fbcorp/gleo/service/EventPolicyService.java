@@ -49,13 +49,17 @@ public class EventPolicyService {
         return tierPolicyRepo.findByEvent(event);
     }
 
-    public TierPolicy updateTierPolicy(String eventCode, TierCode tierCode, boolean unlimited, Integer maxPerVendor, 
-                                       boolean oneVendorOnly, boolean oneItemPerCategory, Map<String, Integer> categoryLimits){
+    public TierPolicy updateTierPolicy(String eventCode, TierCode tierCode, boolean unlimited, Integer maxPerVendor,
+                                       boolean oneVendorOnly, boolean oneItemPerCategory, boolean singleOrderOnly,
+                                       boolean lockVendorAfterOrder,
+                                       Map<String, Integer> categoryLimits) {
         TierPolicy policy = tierPolicy(eventCode, tierCode);
         policy.setUnlimited(unlimited);
         policy.setMaxItemsPerVendor(unlimited ? null : maxPerVendor);
         policy.setOneVendorOnly(oneVendorOnly);
         policy.setOneItemPerCategory(oneItemPerCategory);
+        policy.setSingleOrderOnly(!unlimited && singleOrderOnly);
+        policy.setLockVendorAfterOrder(!unlimited && lockVendorAfterOrder);
         
         // Update category limits
         policy.getCategoryLimits().clear();
@@ -67,14 +71,15 @@ public class EventPolicyService {
     }
     
     // Overload without category limits (for backward compatibility)
-    public TierPolicy updateTierPolicy(String eventCode, TierCode tierCode, boolean unlimited, Integer maxPerVendor, 
-                                       boolean oneVendorOnly, boolean oneItemPerCategory){
-        return updateTierPolicy(eventCode, tierCode, unlimited, maxPerVendor, oneVendorOnly, oneItemPerCategory, null);
+    public TierPolicy updateTierPolicy(String eventCode, TierCode tierCode, boolean unlimited, Integer maxPerVendor,
+                                       boolean oneVendorOnly, boolean oneItemPerCategory, boolean singleOrderOnly,
+                                       boolean lockVendorAfterOrder) {
+        return updateTierPolicy(eventCode, tierCode, unlimited, maxPerVendor, oneVendorOnly, oneItemPerCategory, singleOrderOnly, lockVendorAfterOrder, null);
     }
 
     // Legacy method for backward compatibility
-    public TierPolicy updateTierPolicy(String eventCode, TierCode tierCode, boolean unlimited, Integer maxPerVendor){
-        return updateTierPolicy(eventCode, tierCode, unlimited, maxPerVendor, false, false, null);
+    public TierPolicy updateTierPolicy(String eventCode, TierCode tierCode, boolean unlimited, Integer maxPerVendor) {
+        return updateTierPolicy(eventCode, tierCode, unlimited, maxPerVendor, false, false, false, false, null);
     }
 
     /**

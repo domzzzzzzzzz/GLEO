@@ -3,6 +3,8 @@ package com.fbcorp.gleo.web;
 import com.fbcorp.gleo.config.TicketSessionInterceptor;
 import com.fbcorp.gleo.domain.Ticket;
 import com.fbcorp.gleo.domain.TierCode;
+import com.fbcorp.gleo.domain.TierPolicy;
+import com.fbcorp.gleo.domain.TierConsumption;
 import com.fbcorp.gleo.repo.VendorRepo;
 import com.fbcorp.gleo.service.CartViewService;
 import com.fbcorp.gleo.service.EventPolicyService;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpSession;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
 
 @Controller
 @RequestMapping("/e/{eventCode}")
@@ -28,17 +32,23 @@ public class HomeController {
     private final CartViewService cartViewService;
     private final TicketService ticketService;
     private final com.fbcorp.gleo.repo.MenuItemRepo menuItemRepo;
+    private final com.fbcorp.gleo.repo.TierConsumptionRepo tierConsumptionRepo;
+    private final com.fbcorp.gleo.repo.OrderRepo orderRepo;
 
     public HomeController(VendorRepo vendorRepo,
                           EventPolicyService policyService,
                           CartViewService cartViewService,
                           TicketService ticketService,
-                          com.fbcorp.gleo.repo.MenuItemRepo menuItemRepo) {
+                          com.fbcorp.gleo.repo.MenuItemRepo menuItemRepo,
+                          com.fbcorp.gleo.repo.TierConsumptionRepo tierConsumptionRepo,
+                          com.fbcorp.gleo.repo.OrderRepo orderRepo) {
         this.vendorRepo = vendorRepo;
         this.policyService = policyService;
         this.cartViewService = cartViewService;
         this.ticketService = ticketService;
         this.menuItemRepo = menuItemRepo;
+        this.tierConsumptionRepo = tierConsumptionRepo;
+        this.orderRepo = orderRepo;
     }
 
     @GetMapping
@@ -52,6 +62,7 @@ public class HomeController {
         var vendors = vendorRepo.findByEventAndActiveTrue(event);
         model.addAttribute("vendors", vendors);
         model.addAttribute("vendorHeroMap", buildVendorHeroMap(vendors));
+        Set<Long> exhaustedVendors = new HashSet<>();
         
         var cartSummary = cartViewService.summarize(event, getOrCreateCart(session));
         model.addAttribute("cartSummary", cartSummary);
@@ -68,6 +79,41 @@ public class HomeController {
         boolean oneVendorOnlyPolicy = tierCode != null && policyService.hasOneVendorOnlyPolicy(eventCode, tierCode);
         model.addAttribute("oneVendorOnlyPolicy", oneVendorOnlyPolicy);
 
+        if (hasTicket) {
+            tierConsumptionRepo.findByEventAndTicket(event, activeTicket.get())
+                    .map(tc -> tc.getLockedVendor() != null ? tc.getLockedVendor().getId() : null)
+                    .ifPresent(id -> model.addAttribute("lockedVendorId", id));
+
+            TierPolicy tp = policyService.tierPolicy(eventCode, tierCode);
+            if (tp != null && tp.hasLimit()) {
+                tierConsumptionRepo.findByEventAndTicket(event, activeTicket.get()).ifPresent(tc -> {
+                    int limit = Math.max(0, tp.getMaxItemsPerVendor());
+                    for (var v : vendors) {
+                        int consumed = tc.getVendorConsumption(v.getId());
+                        if (consumed >= limit) {
+                            exhaustedVendors.add(v.getId());
+                        }
+                    }
+                });
+            }
+
+            if (tp != null) {
+                // If policy allows only ONE order total and an order already exists, lock all vendors
+                if (tp.isSingleOrderOnly() && orderRepo.existsByTicket_Id(activeTicket.get().getId())) {
+                    vendors.forEach(v -> exhaustedVendors.add(v.getId()));
+                }
+                // If policy locks a vendor after first order, mark that vendor as exhausted
+                if (tp.isLockVendorAfterOrder()) {
+                    for (var v : vendors) {
+                        if (orderRepo.existsByTicket_IdAndVendor_Id(activeTicket.get().getId(), v.getId())) {
+                            exhaustedVendors.add(v.getId());
+                        }
+                    }
+                }
+            }
+        }
+
+        model.addAttribute("exhaustedVendors", exhaustedVendors);
         model.addAttribute("needsTicket", !hasTicket);
         model.addAttribute("ticketPostUrl", "/e/" + eventCode + "/ticket");
         String sanitizedNext = sanitizeNext(eventCode, next);

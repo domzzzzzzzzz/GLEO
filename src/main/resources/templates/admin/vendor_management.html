@@ -470,16 +470,21 @@
   </div>
 
   <!-- Main Card -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">Vendors</h2>
-      <a th:href="@{/dashboard}" class="btn btn-primary">
-        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-        </svg>
-        Add Vendor
-      </a>
-    </div>
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Vendors</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <a th:href="@{/admin/events/{code}/inventory/export(code=${event.code})}" target="_blank" class="btn btn-outline btn-sm">
+            Export inventory
+          </a>
+          <a th:href="@{/dashboard}" class="btn btn-primary">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            Add Vendor
+          </a>
+        </div>
+      </div>
 
     <!-- Vendors Grid -->
     <div th:if="${vendors != null && !vendors.isEmpty()}" class="vendors-grid" id="vendors-grid" th:attr="data-event-code=${event.code}">

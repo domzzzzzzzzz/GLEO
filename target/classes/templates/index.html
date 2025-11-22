@@ -410,7 +410,9 @@
     </div>
     <div class="grid-vendors">
       <div class="card vendor-card" th:each="vendor : ${vendors}"
-           th:classappend="${oneVendorOnlyPolicy and lockedVendorId != null and lockedVendorId != vendor.id ? 'vendor-card--locked' : ''}">
+           th:with="lockedPolicy=${oneVendorOnlyPolicy and lockedVendorId != null and lockedVendorId != vendor.id},
+                    exhausted=${exhaustedVendors != null and exhaustedVendors.contains(vendor.id)}"
+           th:classappend="${lockedPolicy or exhausted} ? 'vendor-card--locked' : ''">
         <div class="vendor-photo vendor-photo--card vendor-hero-thumb"
              th:with="hero=${vendorHeroMap[vendor.id]}"
              th:classappend="${hero} != null ? ' vendor-hero-thumb--has-image' : ' vendor-photo--empty'"
@@ -425,9 +427,9 @@
         
         <!-- Locked overlay -->
         <div class="vendor-locked-overlay" 
-             th:if="${oneVendorOnlyPolicy and lockedVendorId != null and lockedVendorId != vendor.id}">
+             th:if="${lockedPolicy or exhausted}">
           <div class="vendor-locked-icon">🔒</div>
-          <p class="vendor-locked-text">Locked by policy</p>
+          <p class="vendor-locked-text" th:text="${exhausted} ? 'Limit reached' : 'Locked by policy'">Locked by policy</p>
         </div>
         
         <div class="vendor-card-body vendor-card-main">

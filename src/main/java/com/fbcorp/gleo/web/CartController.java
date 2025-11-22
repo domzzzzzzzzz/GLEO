@@ -110,6 +110,15 @@ public class CartController {
             
             Vendor vendor = item.getVendor();
             Ticket ticket = activeTicket(eventCode, session);
+
+            if (ticket != null && ticket.getEvent().getCode().equals(eventCode)) {
+                CartService.CheckResult vendorCheck = cartService.canAddToCart(eventCode, ticket, vendor, qty);
+                if (!vendorCheck.allowed()) {
+                    populateCartModel(eventCode, cart, model);
+                    model.addAttribute("errorMessage", vendorCheck.message());
+                    return isHx(request) ? "cart" : "redirect:/e/" + eventCode + "/cart";
+                }
+            }
             
             // Check category limits before updating quantity
             if (ticket != null && ticket.getEvent().getCode().equals(eventCode)) {
@@ -119,14 +128,14 @@ public class CartController {
                 // Build category totals with NEW quantity
                 if (vendorCart != null) {
                     for (Map.Entry<Long, Integer> entry : vendorCart.entrySet()) {
-                        MenuItem cartItem = menuItemRepo.findById(entry.getKey()).orElse(null);
-                        if (cartItem != null) {
-                            String category = cartItem.getCategory() != null ? cartItem.getCategory() : "";
-                            if (!category.isBlank()) {
-                                int itemQty = entry.getKey().equals(itemId) ? qty : entry.getValue();
-                                categoryTotals.merge(category, itemQty, Integer::sum);
-                            }
+                    MenuItem cartItem = menuItemRepo.findById(entry.getKey()).orElse(null);
+                    if (cartItem != null) {
+                        String category = cartItem.getCategory() != null ? cartItem.getCategory().trim() : "";
+                        if (!category.isBlank()) {
+                            int itemQty = entry.getKey().equals(itemId) ? qty : entry.getValue();
+                            categoryTotals.merge(category, itemQty, Integer::sum);
                         }
+                    }
                     }
                 }
                 
@@ -270,16 +279,16 @@ public class CartController {
                 for (Map.Entry<Long, Integer> entry : vendorCart.entrySet()) {
                     MenuItem existingItem = menuItemRepo.findById(entry.getKey()).orElse(null);
                     if (existingItem != null) {
-                        String existingCategory = existingItem.getCategory() != null ? existingItem.getCategory() : "";
+                        String existingCategory = existingItem.getCategory() != null ? existingItem.getCategory().trim() : "";
                         if (!existingCategory.isBlank()) {
-                            categoryTotals.put(existingCategory, entry.getValue());
+                            categoryTotals.merge(existingCategory, entry.getValue(), Integer::sum);
                         }
                     }
                 }
             }
             
             // Then, simulate adding the new item
-            String newItemCategory = item.getCategory() != null ? item.getCategory() : "";
+            String newItemCategory = item.getCategory() != null ? item.getCategory().trim() : "";
             if (!newItemCategory.isBlank()) {
                 categoryTotals.merge(newItemCategory, Math.max(1, qty), Integer::sum);
             }

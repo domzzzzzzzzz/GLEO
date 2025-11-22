@@ -431,13 +431,6 @@
           </div>
         </label>
 
-        <div class="limit-box" th:classappend="${policy == null or policy.unlimited} ? 'disabled' : ''">
-          <label>Maximum items per vendor</label>
-          <input type="number" name="maxItemsPerVendor" min="1"
-                 th:disabled="${policy == null or policy.unlimited}"
-                 th:value="${policy != null && policy.maxItemsPerVendor != null ? policy.maxItemsPerVendor : 1}">
-        </div>
-
         <div class="advanced-section" th:classappend="${policy == null or policy.unlimited} ? 'hidden' : ''">
           <div class="checkbox-row">
             <input type="checkbox" id="oneVendorOnly-[[${tier.name()}]]" name="oneVendorOnly"
@@ -445,13 +438,16 @@
             <label for="oneVendorOnly-[[${tier.name()}]]">Lock this ticket to the first vendor it orders from.</label>
           </div>
           <div class="checkbox-row">
-            <input type="checkbox" id="oneCategory-[[${tier.name()}]]" name="oneItemPerCategory"
-                   th:checked="${policy != null and policy.oneItemPerCategory}">
-            <label for="oneCategory-[[${tier.name()}]]">Restrict to one item per category.</label>
+            <input type="checkbox" id="lockVendorAfterOrder-[[${tier.name()}]]" name="lockVendorAfterOrder"
+                   th:checked="${policy != null and policy.lockVendorAfterOrder}">
+            <label for="lockVendorAfterOrder-[[${tier.name()}]]">Lock a vendor after the first order from it (others stay open).</label>
           </div>
-
-          <div class="category-limits"
-               th:classappend="${policy == null or !policy.oneItemPerCategory} ? 'hidden' : ''">
+          <div class="checkbox-row">
+            <input type="checkbox" id="singleOrderOnly-[[${tier.name()}]]" name="singleOrderOnly"
+                   th:checked="${policy != null and policy.singleOrderOnly}">
+            <label for="singleOrderOnly-[[${tier.name()}]]">Allow only one order total (all vendors lock after first order).</label>
+          </div>
+          <div class="category-limits">
             <p style="margin:0 0 8px;font-weight:600;">Category limits per vendor</p>
             <div th:if="${#lists.isEmpty(vendorCategoryData)}" class="muted">
               No vendor categories available yet. Add menu items with categories first.
@@ -480,7 +476,6 @@
   document.querySelectorAll('.radio-stack').forEach(stack => {
     const cards = stack.querySelectorAll('.radio-card');
     const radios = stack.querySelectorAll('input[type="radio"]');
-    const limitBox = stack.querySelector('.limit-box');
     const advanced = stack.querySelector('.advanced-section');
     const categoryToggle = stack.querySelector('input[name="oneItemPerCategory"]');
     const categoryPanel = stack.querySelector('.category-limits');
@@ -492,13 +487,15 @@
         active.closest('.radio-card').classList.add('active');
       }
       const limited = active && active.value === 'customize';
-      limitBox.classList.toggle('disabled', !limited);
-      limitBox.querySelector('input').disabled = !limited;
       advanced.classList.toggle('hidden', !limited);
       if (!limited) {
         categoryPanel.classList.add('hidden');
-      } else if (categoryToggle) {
-        categoryPanel.classList.toggle('hidden', !categoryToggle.checked);
+      } else {
+        if (categoryToggle) {
+          categoryPanel.classList.toggle('hidden', !categoryToggle.checked);
+        } else {
+          categoryPanel.classList.remove('hidden');
+        }
       }
     }
 

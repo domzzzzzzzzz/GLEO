@@ -43,6 +43,20 @@ public class TierPolicy {
     private boolean oneVendorOnly = false;
 
     /**
+     * If true, this tier can place ONLY ONE order total. After the first order
+     * is placed, all vendors should be locked for this ticket.
+     */
+    @Column(name = "single_order_only")
+    private boolean singleOrderOnly = false;
+
+    /**
+     * If true, once the guest places an order with a vendor, that vendor is
+     * locked for the rest of the event (but other vendors remain available).
+     */
+    @Column(name = "lock_vendor_after_order")
+    private boolean lockVendorAfterOrder = false;
+
+    /**
      * If true, this tier can only order ONE item per category.
      * For example: one item from "Burgers", one from "Drinks", etc.
      */
@@ -75,6 +89,12 @@ public class TierPolicy {
 
     public Integer getCategoryLimit(String category) {
         if (oneItemPerCategory) return 1;
-        return categoryLimits.getOrDefault(category, null);
+        if (category == null) return null;
+        String trimmed = category.trim();
+        Integer limit = categoryLimits.get(trimmed);
+        if (limit == null && !trimmed.equals(category)) {
+            limit = categoryLimits.get(category);
+        }
+        return limit;
     }
 }

@@ -23,4 +23,6 @@ public interface OrderRepo extends JpaRepository<Order, Long> {
     Integer findMaxVendorOrderNumber(@Param("vendorId") Long vendorId);
 
     boolean existsByTicket_Id(Long ticketId);
+
+    boolean existsByTicket_IdAndVendor_Id(Long ticketId, Long vendorId);
 }
