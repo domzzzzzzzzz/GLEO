@@ -3,6 +3,7 @@ package com.fbcorp.gleo.web;
 import com.fbcorp.gleo.config.TicketSessionInterceptor;
 import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.domain.Ticket;
+import com.fbcorp.gleo.domain.TierCode;
 import com.fbcorp.gleo.repo.MenuItemRepo;
 import com.fbcorp.gleo.repo.VendorRepo;
 import com.fbcorp.gleo.repo.TicketRepo;
@@ -46,7 +47,8 @@ public class VendorController {
         
         // Add ticket info to model for display/policy enforcement
         model.addAttribute("ticket", ticket);
-        model.addAttribute("tierCode", ticket.getTierCode());
+        TierCode tierCode = ticket.getEffectiveTierCode();
+        model.addAttribute("tierCode", tierCode != null ? tierCode : (ticket.getTier() != null ? TierCode.fromCode(ticket.getTier().getCode()) : null));
         
         model.addAttribute("event", event);
         model.addAttribute("vendor", v);
@@ -90,7 +92,7 @@ public class VendorController {
         model.addAttribute("lockedVendorName", hasCartGroups ? cartSummary.groups().get(0).vendorName() : null);
         
         // Check if tier policy has "one vendor only" restriction
-        boolean oneVendorOnlyPolicy = policyService.hasOneVendorOnlyPolicy(eventCode, ticket.getTierCode());
+        boolean oneVendorOnlyPolicy = policyService.hasOneVendorOnlyPolicy(eventCode, ticket);
         model.addAttribute("oneVendorOnlyPolicy", oneVendorOnlyPolicy);
         
         // Lock only when multi-vendor is DISABLED and cart already has a different vendor

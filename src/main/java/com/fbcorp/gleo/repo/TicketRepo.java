@@ -2,6 +2,7 @@ package com.fbcorp.gleo.repo;
 
 import com.fbcorp.gleo.domain.Event;
 import com.fbcorp.gleo.domain.Ticket;
+import com.fbcorp.gleo.domain.Tier;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -17,4 +18,6 @@ public interface TicketRepo extends JpaRepository<Ticket, Long> {
     boolean existsByIdAndEvent_Code(Long id, String eventCode);
 
     List<Ticket> findByEvent(Event event);
+
+    boolean existsByTier(Tier tier);
 }

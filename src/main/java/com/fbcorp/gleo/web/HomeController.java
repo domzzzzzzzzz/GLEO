@@ -74,9 +74,9 @@ public class HomeController {
         
         var activeTicket = resolveActiveTicket(eventCode, session);
         boolean hasTicket = activeTicket.isPresent();
-        TierCode tierCode = activeTicket.map(Ticket::getTierCode).orElse(null);
+        TierCode tierCode = activeTicket.map(Ticket::getEffectiveTierCode).orElse(null);
 
-        boolean oneVendorOnlyPolicy = tierCode != null && policyService.hasOneVendorOnlyPolicy(eventCode, tierCode);
+        boolean oneVendorOnlyPolicy = activeTicket.isPresent() && policyService.hasOneVendorOnlyPolicy(eventCode, activeTicket.get());
         model.addAttribute("oneVendorOnlyPolicy", oneVendorOnlyPolicy);
 
         if (hasTicket) {
@@ -84,7 +84,7 @@ public class HomeController {
                     .map(tc -> tc.getLockedVendor() != null ? tc.getLockedVendor().getId() : null)
                     .ifPresent(id -> model.addAttribute("lockedVendorId", id));
 
-            TierPolicy tp = policyService.tierPolicy(eventCode, tierCode);
+            TierPolicy tp = policyService.tierPolicy(eventCode, activeTicket.get());
             if (tp != null && tp.hasLimit()) {
                 tierConsumptionRepo.findByEventAndTicket(event, activeTicket.get()).ifPresent(tc -> {
                     int limit = Math.max(0, tp.getMaxItemsPerVendor());

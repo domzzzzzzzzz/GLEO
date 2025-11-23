@@ -57,7 +57,7 @@ public class OrderService {
 
         // Track tier consumption
         Ticket t = o.getTicket();
-        TierPolicy tierPolicy = policyService.tierPolicy(o.getEvent().getCode(), t.getTierCode());
+        TierPolicy tierPolicy = policyService.tierPolicy(o.getEvent().getCode(), t);
         
         // Get or create tier consumption record
         TierConsumption tc = tierConsumptionRepo

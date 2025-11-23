@@ -37,7 +37,8 @@ public class CartService {
                     " You have an open order with this vendor. Please complete it first before ordering more items.");
         }
 
-        TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket.getTierCode());
+        TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket);
+        String tierLabel = tierLabel(ticket);
 
         // New policy: allow only ONE order total for this ticket
         if (tierPolicy.isSingleOrderOnly() && orderRepo.existsByTicket_Id(ticket.getId())) {
@@ -56,7 +57,7 @@ public class CartService {
             // First check: if already completed an order and locked to a vendor
             if (consumption != null && consumption.getLockedVendor() != null) {
                 if (!consumption.getLockedVendor().getId().equals(vendor.getId())) {
-                    return CheckResult.deny("Your " + ticket.getTierCode() + " tier is restricted to "
+                    return CheckResult.deny("Your " + tierLabel + " tier is restricted to "
                             + consumption.getLockedVendor().getName() + " only.");
                 }
             }
@@ -67,7 +68,7 @@ public class CartService {
             if (!existingOrders.isEmpty()) {
                 for (Order order : existingOrders) {
                     if (!order.getVendor().getId().equals(vendor.getId())) {
-                        return CheckResult.deny("Your " + ticket.getTierCode() + " tier is restricted to "
+                        return CheckResult.deny("Your " + tierLabel + " tier is restricted to "
                                 + order.getVendor().getName() + " only. Complete your existing order first.");
                     }
                 }
@@ -86,7 +87,7 @@ public class CartService {
             List<CategoryItem> items) {
         // Skip maxItemsPerVendor checks; rely on category limits only
 
-        TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket.getTierCode());
+        TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket);
 
         // Check category restrictions
         if (tierPolicy.hasCategoryRestriction()) {
@@ -120,5 +121,13 @@ public class CartService {
     }
 
     public record CategoryItem(String category, int quantity) {
+    }
+
+    private String tierLabel(Ticket ticket) {
+        if (ticket.getTier() != null && ticket.getTier().getCode() != null) {
+            return ticket.getTier().getCode();
+        }
+        TierCode code = ticket.getTierCode();
+        return code != null ? code.name() : "UNKNOWN";
     }
 }

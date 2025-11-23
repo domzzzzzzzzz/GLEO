@@ -376,8 +376,8 @@
       <div class="form-grid">
         <div class="form-group">
           <label class="form-label">Tier</label>
-          <select name="tier" class="form-select">
-            <option th:each="tier : ${tiers}" th:value="${tier}" th:text="${tier.name()}" th:selected="${tier.name() == 'REG'}"></option>
+          <select name="tierId" class="form-select">
+            <option th:each="tier : ${tiers}" th:value="${tier.id}" th:text="${tier.name}" th:selected="${tier.code == 'REG'}"></option>
           </select>
         </div>
         

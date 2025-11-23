@@ -23,8 +23,15 @@ public class TierPolicy {
     private Event event;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tier_code", nullable = false)
+    @Column(name = "tier_code")
     private TierCode tierCode;
+
+    /**
+     * New dynamic tier reference (nullable for backward compatibility).
+     */
+    @ManyToOne
+    @JoinColumn(name = "tier_id")
+    private Tier tier;
 
     @Column(nullable = false)
     private boolean unlimited = true;
@@ -96,5 +103,15 @@ public class TierPolicy {
             limit = categoryLimits.get(category);
         }
         return limit;
+    }
+
+    public TierCode getEffectiveTierCode() {
+        if (tier != null && tier.getCode() != null) {
+            TierCode resolved = TierCode.fromCode(tier.getCode());
+            if (resolved != null) {
+                return resolved;
+            }
+        }
+        return tierCode;
     }
 }

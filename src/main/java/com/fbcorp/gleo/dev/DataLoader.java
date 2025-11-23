@@ -5,6 +5,7 @@ import com.fbcorp.gleo.repo.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import com.fbcorp.gleo.service.TierService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class DataLoader implements CommandLineRunner {
     private final MenuItemRepo menuItemRepo;
     private final TicketRepo ticketRepo;
     private final TierPolicyRepo tierPolicyRepo;
+    private final TierService tierService;
     private final RoleRepo roleRepo;
     private final UserAccountRepo userAccountRepo;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
@@ -25,7 +27,7 @@ public class DataLoader implements CommandLineRunner {
 
     public DataLoader(EventRepo eventRepo, VendorRepo vendorRepo,
                       MenuItemRepo menuItemRepo, TicketRepo ticketRepo,
-                      TierPolicyRepo tierPolicyRepo,
+                      TierPolicyRepo tierPolicyRepo, TierService tierService,
                       RoleRepo roleRepo, UserAccountRepo userAccountRepo,
                       org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
                       @Value("${gleo.seed-demo-tickets:false}") boolean seedDemoTickets,
@@ -35,6 +37,7 @@ public class DataLoader implements CommandLineRunner {
         this.menuItemRepo = menuItemRepo;
         this.ticketRepo = ticketRepo;
         this.tierPolicyRepo = tierPolicyRepo;
+        this.tierService = tierService;
         this.roleRepo = roleRepo;
         this.userAccountRepo = userAccountRepo;
         this.passwordEncoder = passwordEncoder;
@@ -59,6 +62,8 @@ public class DataLoader implements CommandLineRunner {
             created.setEndAt(LocalDateTime.now().plusHours(6));
             return eventRepo.save(created);
         });
+        Tier vipTier = tierService.getOrCreate(event, "VIP", "VIP", 0);
+        Tier regTier = tierService.getOrCreate(event, "REG", "Regular", 1);
 
         Vendor v1 = vendorRepo.findByEventAndNameIgnoreCase(event, "BRGR").orElse(null);
         Vendor v2 = vendorRepo.findByEventAndNameIgnoreCase(event, "DESOUKY&SODA").orElse(null);
@@ -80,15 +85,15 @@ public class DataLoader implements CommandLineRunner {
             ensureMenuItem(v3, "Cold Brew Tonic", "Drinks");
             ensureMenuItem(v3, "Hazelnut Latte", "Drinks");
 
-            ensureTierPolicy(event, TierCode.VIP, true, null);
-            ensureTierPolicy(event, TierCode.REG, false, 1);
+            ensureTierPolicy(event, vipTier, TierCode.VIP, true, null);
+            ensureTierPolicy(event, regTier, TierCode.REG, false, 1);
         }
 
         if (seedDemoTickets) {
-            ensureTierPolicy(event, TierCode.VIP, true, null);
-            ensureTierPolicy(event, TierCode.REG, false, 1);
-            ensureTicket(event, "VIP-001", TierCode.VIP, "VIP Guest", "01000000001", "S-VIP-1");
-            ensureTicket(event, "REG-001", TierCode.REG, "REG Guest", "01000000002", "S-REG-1");
+            ensureTierPolicy(event, vipTier, TierCode.VIP, true, null);
+            ensureTierPolicy(event, regTier, TierCode.REG, false, 1);
+            ensureTicket(event, vipTier, TierCode.VIP, "VIP-001", "VIP Guest", "01000000001", "S-VIP-1");
+            ensureTicket(event, regTier, TierCode.REG, "REG-001", "REG Guest", "01000000002", "S-REG-1");
         }
 
         if (seedDemoData) {
@@ -206,17 +211,23 @@ public class DataLoader implements CommandLineRunner {
         return menuItemRepo.save(item);
     }
 
-    private void ensureTierPolicy(Event event, TierCode tierCode, boolean unlimited, Integer maxItemsPerVendor) {
+    private void ensureTierPolicy(Event event, Tier tier, TierCode tierCode, boolean unlimited, Integer maxItemsPerVendor) {
         tierPolicyRepo.findByEventAndTierCode(event, tierCode).ifPresentOrElse(existing -> {
             // Keep whatever restrictions the organizer configured previously; only ensure it belongs to this event.
             if (!event.equals(existing.getEvent())) {
                 existing.setEvent(event);
                 tierPolicyRepo.save(existing);
             }
+            if (existing.getTier() == null) {
+                existing.setTier(tier);
+                existing.setTierCode(tierCode);
+                tierPolicyRepo.save(existing);
+            }
         }, () -> {
             TierPolicy policy = new TierPolicy();
             policy.setEvent(event);
             policy.setTierCode(tierCode);
+            policy.setTier(tier);
             policy.setUnlimited(unlimited);
             policy.setMaxItemsPerVendor(unlimited ? null : maxItemsPerVendor);
             if (tierCode == TierCode.REG) {
@@ -226,7 +237,7 @@ public class DataLoader implements CommandLineRunner {
         });
     }
 
-    private void ensureTicket(Event event, String qrCode, TierCode tierCode, String holderName, String holderPhone, String serial) {
+    private void ensureTicket(Event event, Tier tier, TierCode tierCode, String qrCode, String holderName, String holderPhone, String serial) {
         Ticket ticket = ticketRepo.findByQrCode(qrCode).orElseGet(() -> {
             Ticket t = new Ticket();
             t.setQrCode(qrCode);
@@ -237,6 +248,7 @@ public class DataLoader implements CommandLineRunner {
         // Only update basic fields, preserve boundDeviceHash if already set
         ticket.setEvent(event);
         ticket.setTierCode(tierCode);
+        ticket.setTier(tier);
         ticket.setHolderName(holderName);
         ticket.setHolderPhone(holderPhone);
         ticket.setSerial(serial);

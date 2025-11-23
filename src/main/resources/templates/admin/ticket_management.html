@@ -338,8 +338,7 @@
       <div id="bulkActions">
         <select id="bulkTierSelect" style="padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem;">
           <option value="">Change Tier...</option>
-          <option value="VIP">VIP</option>
-          <option value="REG">REG</option>
+          <option th:each="tier : ${tiers}" th:value="${tier.id}" th:text="${tier.name}"></option>
         </select>
         <button type="button" onclick="bulkChangeTier()" class="btn btn-outline">Apply Tier</button>
         <button type="button" onclick="bulkDelete()" class="btn" style="background: #ef4444; color: white;">🗑️ Delete Selected</button>
@@ -377,9 +376,12 @@
             <td>
               <form th:action="@{|/admin/events/${event.code}/tickets/${ticket.id}/tier|}" method="post" style="display: inline;">
                 <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                <select name="tier" th:value="${ticket.tierCode}" onchange="this.form.submit()">
-                  <option value="VIP" th:selected="${ticket.tierCode.name() == 'VIP'}">VIP</option>
-                  <option value="REG" th:selected="${ticket.tierCode.name() == 'REG'}">REG</option>
+                <select name="tierId" onchange="this.form.submit()">
+                  <option th:each="tier : ${tiers}"
+                          th:value="${tier.id}"
+                          th:text="${tier.name}"
+                          th:selected="${ticket.tier != null ? ticket.tier.id == tier.id : (ticket.tierCode != null and ticket.tierCode.name() == tier.code)}">
+                  </option>
                 </select>
               </form>
             </td>
@@ -463,9 +465,10 @@
   // Bulk change tier
   function bulkChangeTier() {
     const tierSelect = document.getElementById('bulkTierSelect');
-    const tier = tierSelect.value;
+    const tierId = tierSelect.value;
+    const tierName = tierSelect.options[tierSelect.selectedIndex]?.text || '';
     
-    if (!tier) {
+    if (!tierId) {
       alert('Please select a tier');
       return;
     }
@@ -476,7 +479,7 @@
       return;
     }
 
-    if (!confirm(`Change tier to ${tier} for ${checkboxes.length} ticket(s)?`)) {
+    if (!confirm(`Change tier to ${tierName} for ${checkboxes.length} ticket(s)?`)) {
       return;
     }
 
@@ -484,7 +487,7 @@
     checkboxes.forEach((checkbox, index) => {
       const ticketId = checkbox.dataset.id;
       const formData = new FormData();
-      formData.append('tier', tier);
+      formData.append('tierId', tierId);
       formData.append('_csrf', csrfToken);
 
       fetch(`/admin/events/${eventCode}/tickets/${ticketId}/tier`, {

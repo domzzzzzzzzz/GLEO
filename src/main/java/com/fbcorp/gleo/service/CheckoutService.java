@@ -6,6 +6,7 @@ import com.fbcorp.gleo.domain.OrderItem;
 import com.fbcorp.gleo.domain.OrderStatus;
 import com.fbcorp.gleo.domain.TierConsumption;
 import com.fbcorp.gleo.domain.TierPolicy;
+import com.fbcorp.gleo.domain.TierCode;
 import com.fbcorp.gleo.domain.Ticket;
 import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.repo.MenuItemRepo;
@@ -68,7 +69,7 @@ public class CheckoutService {
         }
 
         CheckoutResult result = new CheckoutResult();
-        TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket.getTierCode());
+        TierPolicy tierPolicy = policyService.tierPolicy(eventCode, ticket);
         boolean singleOrderOnly = tierPolicy.isSingleOrderOnly();
         boolean hasExistingOrder = singleOrderOnly && orderRepo.existsByTicket_Id(ticket.getId());
         boolean lockVendorAfterOrder = tierPolicy.isLockVendorAfterOrder();

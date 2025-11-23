@@ -284,6 +284,26 @@
   <div th:if="${toastError}" class="toast toast-error" th:text="${toastError}">Error</div>
 
   <div class="card">
+    <h3 style="margin-top:0;">Add a tier</h3>
+    <form th:action="@{|/admin/events/${event.code}/tiers|}" method="post" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+      <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <div style="flex:1;min-width:160px;">
+        <label class="muted" for="tierCode">Code (e.g. VIP, REG, STAFF)</label>
+        <input id="tierCode" name="code" required maxlength="32" style="width:100%;padding:10px;border-radius:10px;border:1px solid #e2e8f0;">
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <label class="muted" for="tierName">Name</label>
+        <input id="tierName" name="name" required maxlength="128" style="width:100%;padding:10px;border-radius:10px;border:1px solid #e2e8f0;">
+      </div>
+      <div style="width:160px;">
+        <label class="muted" for="tierOrder">Display order</label>
+        <input id="tierOrder" type="number" name="displayOrder" min="0" max="9999" value="999" style="width:100%;padding:10px;border-radius:10px;border:1px solid #e2e8f0;">
+      </div>
+      <button class="btn btn-primary" type="submit" style="height:44px;">Add tier</button>
+    </form>
+  </div>
+
+  <div class="card">
     <h3 style="margin-top:0;">Checkout behaviour</h3>
     <form th:action="@{|/admin/events/${event.code}/policy|}" method="post" class="policy-form" style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
       <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -401,16 +421,27 @@
     </div>
   </div>
 
-  <div class="tier-card" th:each="tier : ${tiers}" th:with="policy=${tierPolicies.get(tier)}">
-    <form th:action="@{|/admin/events/${event.code}/tier-policy|}" method="post" th:id="'form-' + ${tier.name()}">
+  <div class="tier-card" th:each="tier : ${tiers}" th:with="policy=${tierPolicies[tier.id]}">
+    <form th:action="@{|/admin/events/${event.code}/tier-policy|}" method="post" th:id="'form-' + ${tier.code}">
       <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-      <input type="hidden" name="tierCode" th:value="${tier}">
+      <input type="hidden" name="tierId" th:value="${tier.id}">
+      <input type="hidden" name="tierCode" th:value="${tier.code}">
       <div class="tier-header">
         <div>
-          <h3 style="margin:0;font-size:1.6rem;" th:text="${tier.name()} + ' tier'">VIP tier</h3>
+          <h3 style="margin:0;font-size:1.6rem;" th:text="${tier.name} + ' tier'">VIP tier</h3>
           <small style="color:#64748b;">Access Mode</small>
         </div>
-        <span class="tier-pill" th:text="${tier.name() == 'VIP' ? 'PREMIUM' : 'STANDARD'}">PREMIUM</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="tier-pill" th:text="${tier.code == 'VIP' ? 'PREMIUM' : 'STANDARD'}">PREMIUM</span>
+          <button th:if="${tier.code != 'VIP' and tier.code != 'REG'}"
+                  type="submit"
+                  th:formaction="@{|/admin/events/${event.code}/tiers/${tier.id}/delete|}"
+                  formmethod="post"
+                  onclick="return confirm('Delete tier ' + '[[${tier.name}]]' + '? This cannot be undone.');"
+                  style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;padding:8px 12px;border-radius:10px;cursor:pointer;">
+            Delete tier
+          </button>
+        </div>
       </div>
 
       <div class="radio-stack">
@@ -433,19 +464,19 @@
 
         <div class="advanced-section" th:classappend="${policy == null or policy.unlimited} ? 'hidden' : ''">
           <div class="checkbox-row">
-            <input type="checkbox" id="oneVendorOnly-[[${tier.name()}]]" name="oneVendorOnly"
+            <input type="checkbox" id="oneVendorOnly-[[${tier.code}]]" name="oneVendorOnly"
                    th:checked="${policy != null and policy.oneVendorOnly}">
-            <label for="oneVendorOnly-[[${tier.name()}]]">Lock this ticket to the first vendor it orders from.</label>
+            <label for="oneVendorOnly-[[${tier.code}]]">Lock this ticket to the first vendor it orders from.</label>
           </div>
           <div class="checkbox-row">
-            <input type="checkbox" id="lockVendorAfterOrder-[[${tier.name()}]]" name="lockVendorAfterOrder"
+            <input type="checkbox" id="lockVendorAfterOrder-[[${tier.code}]]" name="lockVendorAfterOrder"
                    th:checked="${policy != null and policy.lockVendorAfterOrder}">
-            <label for="lockVendorAfterOrder-[[${tier.name()}]]">Lock a vendor after the first order from it (others stay open).</label>
+            <label for="lockVendorAfterOrder-[[${tier.code}]]">Lock a vendor after the first order from it (others stay open).</label>
           </div>
           <div class="checkbox-row">
-            <input type="checkbox" id="singleOrderOnly-[[${tier.name()}]]" name="singleOrderOnly"
+            <input type="checkbox" id="singleOrderOnly-[[${tier.code}]]" name="singleOrderOnly"
                    th:checked="${policy != null and policy.singleOrderOnly}">
-            <label for="singleOrderOnly-[[${tier.name()}]]">Allow only one order total (all vendors lock after first order).</label>
+            <label for="singleOrderOnly-[[${tier.code}]]">Allow only one order total (all vendors lock after first order).</label>
           </div>
           <div class="category-limits">
             <p style="margin:0 0 8px;font-weight:600;">Category limits per vendor</p>

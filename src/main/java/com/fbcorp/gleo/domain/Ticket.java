@@ -18,8 +18,18 @@ public class Ticket {
     @Column(unique = true, nullable = false)
     private String qrCode;
 
+    /**
+     * Legacy enum column (still kept for backward compatibility).
+     */
     @Enumerated(EnumType.STRING)
     private TierCode tierCode;
+
+    /**
+     * New dynamic tier reference (nullable for backward compatibility).
+     */
+    @ManyToOne
+    @JoinColumn(name = "tier_id")
+    private Tier tier;
 
     private String holderName;
     private String holderPhone;
@@ -35,9 +45,19 @@ public class Ticket {
     private LocalDateTime checkedInAt;
 
     public boolean isRegular(){
-        return tierCode == TierCode.REG;
+        return getEffectiveTierCode() == TierCode.REG;
     }
     public boolean isVip(){
-        return tierCode == TierCode.VIP;
+        return getEffectiveTierCode() == TierCode.VIP;
+    }
+
+    public TierCode getEffectiveTierCode() {
+        if (tier != null && tier.getCode() != null) {
+            TierCode resolved = TierCode.fromCode(tier.getCode());
+            if (resolved != null) {
+                return resolved;
+            }
+        }
+        return tierCode;
     }
 }

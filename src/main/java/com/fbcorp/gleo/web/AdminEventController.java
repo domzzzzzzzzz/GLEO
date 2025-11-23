@@ -5,16 +5,20 @@ import com.fbcorp.gleo.domain.Vendor;
 import com.fbcorp.gleo.domain.MenuItem;
 import com.fbcorp.gleo.domain.TierCode;
 import com.fbcorp.gleo.domain.TierPolicy;
+import com.fbcorp.gleo.domain.Tier;
 import com.fbcorp.gleo.domain.PromoCode;
 import com.fbcorp.gleo.repo.EventRepo;
 import com.fbcorp.gleo.repo.VendorRepo;
 import com.fbcorp.gleo.repo.MenuItemRepo;
 import com.fbcorp.gleo.repo.UserAccountRepo;
 import com.fbcorp.gleo.repo.PromoCodeRepo;
+import com.fbcorp.gleo.repo.TicketRepo;
+import com.fbcorp.gleo.repo.TierPolicyRepo;
 import com.fbcorp.gleo.service.EventPolicyService;
 import com.fbcorp.gleo.service.AuditLogService;
 import com.fbcorp.gleo.service.EventService;
 import com.fbcorp.gleo.service.AssetStorageService;
+import com.fbcorp.gleo.service.TierService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -64,6 +68,9 @@ public class AdminEventController {
     private final EventService eventService;
     private final AssetStorageService assetStorageService;
     private final PromoCodeRepo promoCodeRepo;
+    private final TierService tierService;
+    private final TicketRepo ticketRepo;
+    private final TierPolicyRepo tierPolicyRepo;
 
     @GetMapping("/policies")
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -102,7 +109,10 @@ public class AdminEventController {
                                 com.fbcorp.gleo.service.AdminPreferenceService adminPreferenceService,
                                 EventService eventService,
                                 AssetStorageService assetStorageService,
-                                PromoCodeRepo promoCodeRepo){
+                                PromoCodeRepo promoCodeRepo,
+                                TierService tierService,
+                                TicketRepo ticketRepo,
+                                TierPolicyRepo tierPolicyRepo){
         this.eventRepo = eventRepo;
         this.vendorRepo = vendorRepo;
         this.menuItemRepo = menuItemRepo;
@@ -113,6 +123,9 @@ public class AdminEventController {
         this.eventService = eventService;
         this.assetStorageService = assetStorageService;
         this.promoCodeRepo = promoCodeRepo;
+        this.tierService = tierService;
+        this.ticketRepo = ticketRepo;
+        this.tierPolicyRepo = tierPolicyRepo;
     }
 
     @PreAuthorize("@permissionService.isAdmin(authentication)")
@@ -193,12 +206,12 @@ public class AdminEventController {
                 vendor.setEvent(event);
                 vendor.setName(vendorInput.name.trim());
                 vendor.setPinPlain(StringUtils.hasText(vendorInput.pin) ? vendorInput.pin.trim() : null);
-                vendor.setActive(true);
-                vendorRepo.save(vendor);
+                    vendor.setActive(true);
+                    vendorRepo.save(vendor);
 
-                for (MenuItemInput menuInput : vendorInput.menuItems) {
-                    MenuItem menuItem = new MenuItem();
-                    menuItem.setVendor(vendor);
+                    for (MenuItemInput menuInput : vendorInput.menuItems) {
+                        MenuItem menuItem = new MenuItem();
+                        menuItem.setVendor(vendor);
                     menuItem.setName(menuInput.name.trim());
                     menuItem.setPrice(parsePrice(menuInput.price));
                     menuItem.setMaxPerOrder(menuInput.maxPerOrder);
@@ -213,10 +226,36 @@ public class AdminEventController {
                     "Created event '" + event.getName() + "' with wizard",
                     username);
 
+            policyService.updateTierPolicy(event.getCode(), TierCode.VIP, true, null, false, false, false, false);
+            policyService.updateTierPolicy(event.getCode(), TierCode.REG, false, 1, false, false, false, false);
+
             return ResponseEntity.ok(Map.of("message", "Event '" + event.getName() + "' created successfully."));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
+    }
+
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
+    @PostMapping("/{eventCode}/tiers")
+    public String createTier(@PathVariable String eventCode,
+                             @RequestParam String code,
+                             @RequestParam String name,
+                             @RequestParam(required = false) Integer displayOrder,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            Event event = policyService.get(eventCode);
+            Tier tier = tierService.getOrCreate(event, code, name, displayOrder == null ? 999 : displayOrder);
+            policyService.updateTierPolicy(eventCode, tier, true, null, false, false, false, false, Map.of());
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT,
+                    "Created tier '" + tier.getName() + "' (" + tier.getCode() + ") for event=" + eventCode, username);
+            redirectAttributes.addFlashAttribute("toastMessage", "Tier " + tier.getName() + " added.");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("toastError", "Unable to add tier: " + ex.getMessage());
+        }
+        return "redirect:/admin/events/" + eventCode + "/policies";
     }
 
     private void validateWizardRequest(WizardEventRequest request) {
@@ -304,10 +343,11 @@ public class AdminEventController {
     public String policies(@PathVariable String eventCode, Model model){
         var e = policyService.get(eventCode);
         model.addAttribute("event", e);
-        Map<TierCode, TierPolicy> tierPolicies = policyService.tierPolicies(eventCode).stream()
-                .collect(Collectors.toMap(TierPolicy::getTierCode, tp -> tp, (a, b) -> a, () -> new EnumMap<>(TierCode.class)));
+        List<Tier> tiers = tierService.list(e);
+        Map<Long, TierPolicy> tierPolicies = tiers.stream()
+                .collect(Collectors.toMap(Tier::getId, t -> policyService.tierPolicy(eventCode, t)));
         model.addAttribute("tierPolicies", tierPolicies);
-        model.addAttribute("tiers", TierCode.values());
+        model.addAttribute("tiers", tiers);
         
         // Build vendor-category structure
         List<Vendor> vendors = vendorRepo.findByEvent(e);
@@ -901,7 +941,8 @@ public class AdminEventController {
     @PreAuthorize("@permissionService.isAdmin(authentication)")
     @PostMapping("/{eventCode}/tier-policy")
     public String updateTierPolicy(@PathVariable String eventCode,
-                                   @RequestParam TierCode tierCode,
+                                   @RequestParam Long tierId,
+                                   @RequestParam String tierCode,
                                    @RequestParam String accessMode,
                                    @RequestParam(required = false) Integer maxItemsPerVendor,
                                    @RequestParam(required = false, defaultValue = "false") boolean oneVendorOnly,
@@ -909,44 +950,77 @@ public class AdminEventController {
                                    @RequestParam(required = false, defaultValue = "false") boolean singleOrderOnly,
                                    @RequestParam(required = false) Map<String, String> allParams,
                                    RedirectAttributes redirectAttributes){
-        String normalizedMode = accessMode == null ? "unlimited" : accessMode.trim().toLowerCase();
-        boolean unlimited = "unlimited".equals(normalizedMode);
-        
-        // Extract category limits from form parameters FIRST
-        Map<String, Integer> categoryLimits = new HashMap<>();
-        // Always parse category limits (checkbox removed)
-        for (Map.Entry<String, String> entry : allParams.entrySet()) {
-            String key = entry.getKey();
-            if (key.startsWith("categoryLimit_")) {
-                String category = key.substring("categoryLimit_".length()).trim();
-                if (category.isEmpty()) {
-                    continue;
-                }
-                try {
-                    int limit = Integer.parseInt(entry.getValue());
-                    if (limit > 0) {
-                        categoryLimits.put(category, limit);
+        try {
+            String normalizedMode = accessMode == null ? "unlimited" : accessMode.trim().toLowerCase();
+            boolean unlimited = "unlimited".equals(normalizedMode);
+            
+            Map<String, Integer> categoryLimits = new HashMap<>();
+            if (allParams != null) {
+                for (Map.Entry<String, String> entry : allParams.entrySet()) {
+                    String key = entry.getKey();
+                    if (key.startsWith("categoryLimit_")) {
+                        String category = key.substring("categoryLimit_".length()).trim();
+                        if (category.isEmpty()) {
+                            continue;
+                        }
+                        try {
+                            int limit = Integer.parseInt(entry.getValue());
+                            if (limit > 0) {
+                                categoryLimits.put(category, limit);
+                            }
+                        } catch (NumberFormatException e) {
+                            // ignore invalid
+                        }
                     }
-                } catch (NumberFormatException e) {
-                    // Skip invalid values
                 }
             }
+
+            if (unlimited) {
+                oneVendorOnly = false;
+                categoryLimits.clear();
+            }
+
+            Tier tier = tierService.require(policyService.get(eventCode), tierId);
+            policyService.updateTierPolicy(eventCode, tier, unlimited, unlimited ? null : maxItemsPerVendor,
+                                           oneVendorOnly, false, singleOrderOnly, lockVendorAfterOrder, categoryLimits);
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT, "Updated tier policy for event=" + eventCode + ", tier=" + tier.getCode(), username);
+            redirectAttributes.addFlashAttribute("toastMessage", "Tier policy updated for " + tier.getName() + ".");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("toastError", ex.getMessage() != null ? ex.getMessage() : "Unable to update tier policy.");
         }
+        return "redirect:/admin/events/" + eventCode + "/policies";
+    }
 
-        if (unlimited) {
-            oneVendorOnly = false;
-            categoryLimits.clear();
+    @PreAuthorize("@permissionService.isAdmin(authentication)")
+    @PostMapping("/{eventCode}/tiers/{tierId}/delete")
+    public String deleteTier(@PathVariable String eventCode,
+                             @PathVariable Long tierId,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            Event event = policyService.get(eventCode);
+            Tier tier = tierService.require(event, tierId);
+            TierCode coreCode = TierCode.fromCode(tier.getCode());
+            if (coreCode == TierCode.VIP || coreCode == TierCode.REG) {
+                throw new IllegalArgumentException("Cannot delete default tiers (VIP/REG).");
+            }
+            if (ticketRepo.existsByTier(tier)) {
+                throw new IllegalStateException("Cannot delete tier while tickets are assigned to it.");
+            }
+
+            tierPolicyRepo.findByEventAndTier(event, tier).ifPresent(tierPolicyRepo::delete);
+            tierService.delete(tier);
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "anonymous";
+            auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT,
+                    "Deleted tier '" + tier.getName() + "' (" + tier.getCode() + ") for event=" + eventCode, username);
+            redirectAttributes.addFlashAttribute("toastMessage", "Tier '" + tier.getName() + "' deleted.");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("toastError", ex.getMessage() != null ? ex.getMessage() : "Unable to delete tier.");
         }
-
-        // Validation: category limits only; ignore maxItemsPerVendor requirement
-        policyService.updateTierPolicy(eventCode, tierCode, unlimited, unlimited ? null : maxItemsPerVendor,
-                                       oneVendorOnly, false, singleOrderOnly, lockVendorAfterOrder, categoryLimits);
-
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    String username = auth != null ? auth.getName() : "anonymous";
-    auditLogService.record(com.fbcorp.gleo.domain.AuditLogEntry.Category.EVENT, "Updated tier policy for event=" + eventCode + ", tier=" + tierCode, username);
-
-        redirectAttributes.addFlashAttribute("toastMessage", "Tier policy updated for " + tierCode + ".");
         return "redirect:/admin/events/" + eventCode + "/policies";
     }
 

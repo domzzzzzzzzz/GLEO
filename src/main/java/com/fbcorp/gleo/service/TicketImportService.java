@@ -3,6 +3,8 @@ package com.fbcorp.gleo.service;
 import com.fbcorp.gleo.domain.Event;
 import com.fbcorp.gleo.domain.Ticket;
 import com.fbcorp.gleo.domain.TierCode;
+import com.fbcorp.gleo.domain.Tier;
+import com.fbcorp.gleo.service.TierService;
 import com.fbcorp.gleo.repo.TicketRepo;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -55,9 +57,11 @@ public class TicketImportService {
     private static final int MAX_ERROR_MESSAGES = 10;
 
     private final TicketRepo ticketRepo;
+    private final TierService tierService;
 
-    public TicketImportService(TicketRepo ticketRepo) {
+    public TicketImportService(TicketRepo ticketRepo, TierService tierService) {
         this.ticketRepo = ticketRepo;
+        this.tierService = tierService;
     }
 
     public byte[] generateCsvTemplate() {
@@ -103,19 +107,20 @@ public class TicketImportService {
                 continue;
             }
 
-            TierCode tierCode;
-            try {
-                tierCode = parseTier(row.tier());
-            } catch (IllegalArgumentException ex) {
+            String tierValue = trimToNull(row.tier());
+            if (tierValue == null) {
                 invalid++;
-                appendError(errors, row.index(), "Unknown tier '" + row.tier() + "'. Expected one of " + java.util.Arrays.toString(TierCode.values()));
+                appendError(errors, row.index(), "Tier missing.");
                 continue;
             }
+            TierCode tierCode = TierCode.fromCode(tierValue);
+            Tier tier = tierService.getOrCreate(event, tierValue, displayName(tierCode, tierValue), displayOrder(tierCode));
 
             Ticket ticket = new Ticket();
             ticket.setEvent(event);
             ticket.setQrCode(qr);
             ticket.setTierCode(tierCode);
+            ticket.setTier(tier);
             ticket.setHolderName(trimToNull(row.holderName()));
             ticket.setHolderPhone(trimToNull(row.phone()));
             ticket.setSerial(trimToNull(row.serial()));
@@ -132,12 +137,18 @@ public class TicketImportService {
         return new ImportResult(toPersist.size(), duplicates, invalid, rows.size(), errors);
     }
 
-    private TierCode parseTier(String tierRaw) {
-        String tier = trimToNull(tierRaw);
-        if (tier == null) {
-            throw new IllegalArgumentException("Tier missing");
+    private String displayName(TierCode tierCode, String fallback) {
+        if (tierCode == null) {
+            return fallback;
         }
-        return TierCode.valueOf(tier.toUpperCase(Locale.ROOT));
+        return tierCode == TierCode.VIP ? "VIP" : "Regular";
+    }
+
+    private int displayOrder(TierCode tierCode) {
+        if (tierCode == null) {
+            return 999;
+        }
+        return tierCode == TierCode.VIP ? 0 : 1;
     }
 
     private void appendError(List<String> errors, int row, String message) {

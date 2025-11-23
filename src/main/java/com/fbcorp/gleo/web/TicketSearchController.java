@@ -46,11 +46,14 @@ public class TicketSearchController {
         // Check if ticket belongs to this event
         if (ticket.isPresent() && ticket.get().getEvent().getId().equals(event.getId())) {
             Ticket t = ticket.get();
+            var effectiveTier = t.getEffectiveTierCode();
+            String tierText = effectiveTier != null ? effectiveTier.name() :
+                    (t.getTier() != null && t.getTier().getCode() != null ? t.getTier().getCode() : "REG");
             TicketDTO dto = new TicketDTO(
                     t.getId(),
                     t.getQrCode(),
                     t.getHolderName(),
-                    t.getTierCode() != null ? t.getTierCode().name() : "REG",
+                    tierText,
                     t.isActive()
             );
             return ResponseEntity.ok(dto);
